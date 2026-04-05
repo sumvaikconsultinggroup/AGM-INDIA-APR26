@@ -1,8 +1,9 @@
-// website/app/live/page.tsx
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useState } from 'react';
+import { CalendarDays, Loader2, Radio, PlayCircle } from 'lucide-react';
+import api from '@/lib/api';
+import { PageHero } from '@/components/ui/PageHero';
 
 interface Stream {
   _id: string;
@@ -22,102 +23,120 @@ export default function LivePage() {
   useEffect(() => {
     const fetchStreams = async () => {
       try {
-        const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
-        const res = await axios.get(`${apiUrl}/api/livestream/active`);
-        if (res.data.success) {
-          setActiveStream(res.data.data.active);
-          setUpcomingStreams(res.data.data.upcoming);
-        }
+        const res = await api.get('/livestream/active');
+        const payload = (res.data as any)?.data || res.data || {};
+        setActiveStream(payload.active || null);
+        setUpcomingStreams(Array.isArray(payload.upcoming) ? payload.upcoming : []);
       } catch {
-        // Handle error
+        setActiveStream(null);
+        setUpcomingStreams([]);
       } finally {
         setLoading(false);
       }
     };
+
     fetchStreams();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-spiritual-cream">
-        <div className="text-spiritual-warmGray">Loading...</div>
-      </div>
-    );
-  }
-
   return (
-    <main className="min-h-screen bg-spiritual-cream pt-20">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {activeStream ? (
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="px-2 py-1 bg-red-500 text-white text-xs rounded-full animate-pulse">
-                LIVE
-              </span>
-              <h1 className="text-2xl font-playfair text-spiritual-maroon">
-                {activeStream.title}
-              </h1>
+    <main className="min-h-screen pt-20">
+      <PageHero
+        tone="dark"
+        eyebrow="Live"
+        title="Watch spiritual"
+        highlight="broadcasts"
+        subtitle="Join live satsang, discourse, and special events, or review the next scheduled stream."
+        icon={<Radio className="h-7 w-7" />}
+      />
+
+      <section className="bg-temple-warm py-12">
+        <div className="container-custom">
+          {loading && (
+            <div className="flex min-h-[320px] flex-col items-center justify-center rounded-[28px] border border-[rgba(122,86,26,0.12)] bg-white/80 text-spiritual-warmGray shadow-[0_18px_40px_rgba(41,22,11,0.06)]">
+              <Loader2 className="mb-4 h-8 w-8 animate-spin text-spiritual-saffron" />
+              <p>Loading stream information...</p>
             </div>
+          )}
 
-            {/* YouTube Embed */}
-            <div className="aspect-video rounded-xl overflow-hidden shadow-warm-lg bg-black">
-              <iframe
-                src={`https://www.youtube.com/embed/${activeStream.youtubeVideoId}?autoplay=1&rel=0`}
-                title={activeStream.title}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
+          {!loading && (
+            <div className="grid gap-8 lg:grid-cols-[1.5fr,0.9fr]">
+              <div className="card-temple overflow-hidden p-4 md:p-6">
+                {activeStream ? (
+                  <>
+                    <div className="mb-5 flex items-center gap-3">
+                      <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
+                        Live now
+                      </span>
+                      <h1 className="font-display text-2xl text-spiritual-maroon md:text-3xl">
+                        {activeStream.title}
+                      </h1>
+                    </div>
+                    <div className="aspect-video overflow-hidden rounded-[24px] bg-black shadow-[0_18px_40px_rgba(17,10,8,0.18)]">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${activeStream.youtubeVideoId}?autoplay=1&rel=0`}
+                        title={activeStream.title}
+                        className="h-full w-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                    {activeStream.description && (
+                      <p className="mt-5 max-w-3xl text-base leading-relaxed text-spiritual-warmGray">
+                        {activeStream.description}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
+                    <PlayCircle className="h-16 w-16 text-spiritual-saffron" />
+                    <h2 className="mt-5 font-display text-3xl text-spiritual-maroon">
+                      No live stream right now
+                    </h2>
+                    <p className="mt-3 max-w-xl text-spiritual-warmGray">
+                      The next satsang or discourse will appear here automatically once it is scheduled.
+                    </p>
+                  </div>
+                )}
+              </div>
 
-            {activeStream.description && (
-              <p className="mt-4 text-gray-600 max-w-3xl">
-                {activeStream.description}
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4 text-spiritual-saffron/30">ॐ</div>
-            <h1 className="text-2xl font-playfair text-spiritual-maroon mb-2">
-              No Live Stream Right Now
-            </h1>
-            <p className="text-gray-500">
-              Check back during scheduled satsang times
-            </p>
-          </div>
-        )}
+              <aside className="card-warm p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-spiritual-saffron">
+                  Upcoming
+                </p>
+                <h2 className="mt-3 font-display text-2xl text-spiritual-maroon">
+                  Next scheduled streams
+                </h2>
 
-        {/* Upcoming Streams */}
-        {upcomingStreams.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-xl font-playfair text-spiritual-maroon mb-4">
-              Upcoming Streams
-            </h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {upcomingStreams.map((stream) => (
-                <div
-                  key={stream._id}
-                  className="bg-white rounded-xl p-4 shadow-warm border border-spiritual-sandstone/30"
-                >
-                  <span className="text-xs px-2 py-0.5 bg-spiritual-saffron/10 text-spiritual-saffron rounded-full">
-                    {stream.streamType}
-                  </span>
-                  <h3 className="mt-2 font-medium text-spiritual-maroon">
-                    {stream.title}
-                  </h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {new Date(stream.scheduledStart).toLocaleString("en-IN", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </p>
+                <div className="mt-6 space-y-4">
+                  {upcomingStreams.length > 0 ? (
+                    upcomingStreams.map((stream) => (
+                      <div key={stream._id} className="rounded-[22px] border border-[rgba(122,86,26,0.12)] bg-white/70 p-4">
+                        <span className="inline-flex rounded-full bg-[rgba(200,107,36,0.12)] px-2.5 py-1 text-xs font-semibold text-spiritual-saffron">
+                          {stream.streamType}
+                        </span>
+                        <h3 className="mt-3 font-display text-xl text-spiritual-maroon">
+                          {stream.title}
+                        </h3>
+                        <p className="mt-2 flex items-center gap-2 text-sm text-spiritual-warmGray">
+                          <CalendarDays className="h-4 w-4 text-spiritual-saffron" />
+                          {new Date(stream.scheduledStart).toLocaleString('en-IN', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          })}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-[22px] border border-dashed border-[rgba(122,86,26,0.18)] bg-white/55 p-5 text-sm text-spiritual-warmGray">
+                      No upcoming streams have been published yet.
+                    </div>
+                  )}
                 </div>
-              ))}
+              </aside>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </section>
     </main>
   );
 }

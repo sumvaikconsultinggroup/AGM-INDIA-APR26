@@ -1,5 +1,5 @@
-import { Events } from '@/components/sections/Events';
 import { Contact } from '@/components/sections/Contact';
+import { Events } from '@/components/sections/Events';
 import { ScheduleHero } from '@/components/sections/ScheduleHero';
 
 export const metadata = {
@@ -9,18 +9,9 @@ export const metadata = {
 
 export default function SchedulePage() {
   return (
-    <div className="pt-20">
-      {/* Spiritual Hero Banner */}
+    <div className="bg-parchment pt-20">
       <ScheduleHero />
-      
-      <div className="divider-rangoli" />
-      
-      <div className="bg-temple-warm">
-        <Events />
-      </div>
-      
-      <div className="divider-rangoli" />
-      
+      <Events />
       <Contact />
     </div>
   );

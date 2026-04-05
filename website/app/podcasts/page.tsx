@@ -1,12 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Headphones, Play, Clock, Radio, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import api from '../../lib/api';
+import { Clock, Headphones, Loader2, Play, Radio } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import api from '../../lib/api';
+import { PageHero } from '@/components/ui/PageHero';
+import { SectionHeading } from '@/components/ui/SectionHeading';
 
-// Fallback data in case API fails
 const fallbackPodcasts = [
   {
     title: 'Understanding Advaita Vedanta',
@@ -73,9 +74,10 @@ export default function PodcastsPage() {
   const [visibleCount, setVisibleCount] = useState(8);
 
   useEffect(() => {
-    api.get('/podcasts')
-      .then(r => {
-        const data = r.data?.data || r.data || [];
+    api
+      .get('/podcasts')
+      .then((response) => {
+        const data = response.data?.data || response.data || [];
         setPodcasts(data.length > 0 ? data : fallbackPodcasts);
       })
       .catch(() => {
@@ -98,191 +100,109 @@ export default function PodcastsPage() {
     return `Episode ${index + 1}`;
   };
 
-  const getPodcastLink = (podcast: Podcast) => {
-    return podcast.audioUrl || podcast.videoUrl || podcast.link || '';
-  };
+  const getPodcastLink = (podcast: Podcast) => podcast.audioUrl || podcast.videoUrl || podcast.link || '';
 
   const visiblePodcasts = podcasts.slice(0, visibleCount);
   const canLoadMore = visibleCount < podcasts.length;
+  const featuredPodcast = podcasts[0];
 
   return (
-    <div className="pt-20">
-      {/* Hero with Maroon Gradient */}
-      <section className="relative bg-maroon-gradient py-24 overflow-hidden">
-        {/* Audio wave decorative pattern */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-10">
-          <div className="flex items-end gap-1 h-32">
-            {[...Array(30)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="w-1 bg-gold-400 rounded-full"
-                animate={{
-                  height: [20, Math.random() * 100 + 30, 20],
-                }}
-                transition={{
-                  duration: 1 + Math.random(),
-                  repeat: Infinity,
-                  repeatType: 'reverse',
-                  delay: i * 0.05,
-                }}
-              />
-            ))}
-          </div>
-        </div>
-        
-        {/* Gold borders */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold-400 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold-400 to-transparent" />
-        
-        <div className="container-custom relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center max-w-3xl mx-auto"
-          >
-            {/* Icon */}
-            <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-glow animate-breathe">
-              <Headphones className="w-10 h-10 text-white" />
-            </div>
-            
-            <span className="text-gold-300/80 font-sanskrit text-lg tracking-wider">{t('hero.sanskritTitle')}</span>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-gold-200 mt-2 mb-6">
-              {t('hero.title')} <span className="text-gradient-gold">{t('hero.titleHighlight')}</span>
-            </h1>
-            <p className="text-gold-100/80 text-lg md:text-xl leading-relaxed font-body">
-              {t('hero.subtitle')}
-            </p>
-            
-            {/* Decorative divider */}
-            <div className="mt-8 flex items-center justify-center gap-4">
-              <span className="w-16 h-px bg-gradient-to-r from-transparent to-gold-400" />
-              <Radio className="w-5 h-5 text-gold-400" />
-              <span className="w-16 h-px bg-gradient-to-l from-transparent to-gold-400" />
-            </div>
-          </motion.div>
-        </div>
-      </section>
+    <div className="bg-parchment pt-20">
+      <PageHero
+        tone="dark"
+        eyebrow={t('hero.sanskritTitle')}
+        title={t('hero.title')}
+        highlight={t('hero.titleHighlight')}
+        subtitle={t('hero.subtitle')}
+        icon={<Headphones className="h-8 w-8" />}
+      />
 
-      <div className="divider-rangoli" />
-
-      {/* Featured Episode */}
       <section className="section-padding bg-parchment">
         <div className="container-custom">
-          {/* Loading State */}
+          <SectionHeading
+            eyebrow="Audio Library"
+            title="A quieter, more focused listening experience"
+            subtitle="The podcast page now leads with the newest episode, cleaner metadata, and clearer listening actions across the archive."
+          />
+
           {loading && (
             <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="w-12 h-12 text-spiritual-saffron animate-spin mb-4" />
-              <p className="text-spiritual-warmGray font-body">Loading podcasts...</p>
+              <Loader2 className="mb-4 h-12 w-12 animate-spin text-spiritual-saffron" />
+              <p className="text-spiritual-warmGray">Loading podcasts...</p>
             </div>
           )}
 
-          {/* Empty State */}
           {!loading && podcasts.length === 0 && (
-            <div className="text-center py-20">
-              <Headphones className="w-16 h-16 text-gold-400 mx-auto mb-4" />
-              <h3 className="font-display text-2xl text-spiritual-maroon mb-2">{t('noPodcasts')}</h3>
-              <p className="text-spiritual-warmGray"></p>
+            <div className="rounded-[30px] border border-[rgba(122,86,26,0.12)] bg-white/90 py-20 text-center shadow-[0_20px_48px_rgba(60,34,12,0.08)]">
+              <Headphones className="mx-auto mb-4 h-16 w-16 text-gold-500" />
+              <h3 className="font-display text-2xl text-spiritual-maroon">{t('noPodcasts')}</h3>
             </div>
           )}
 
-          {/* Featured Episode */}
-          {!loading && podcasts.length > 0 && (
+          {!loading && featuredPodcast && (
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="card-temple p-6 md:p-8 max-w-4xl mx-auto mb-16"
+              className="mb-14 rounded-[32px] border border-[rgba(122,86,26,0.12)] bg-white/92 p-8 shadow-[0_22px_50px_rgba(60,34,12,0.08)]"
             >
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                {/* Large Play Button */}
-                <div className="flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const podcastLink = getPodcastLink(podcasts[0]);
-                      if (podcastLink) {
-                        window.open(podcastLink, '_blank', 'noopener,noreferrer');
-                      }
-                    }}
-                    className="w-24 h-24 rounded-full bg-gradient-to-br from-spiritual-saffron to-primary-600 flex items-center justify-center text-white shadow-glow hover:scale-105 transition-transform animate-pulse-soft disabled:opacity-60 disabled:cursor-not-allowed"
-                    disabled={!getPodcastLink(podcasts[0])}
-                    aria-label="Play latest episode"
-                  >
-                    <Play className="w-10 h-10 ml-1" fill="currentColor" />
-                  </button>
-                </div>
-                
-                {/* Content */}
-                <div className="flex-grow text-center md:text-left">
-                  <span className="inline-block px-3 py-1 rounded-full bg-gold-100 text-gold-600 text-sm font-medium mb-3">
-                    Latest Episode
-                  </span>
-                  <h3 className="font-display text-2xl md:text-3xl text-spiritual-maroon mb-2">
-                    {podcasts[0].title}
-                  </h3>
-                  <p className="text-spiritual-warmGray mb-4">
-                    {podcasts[0].description}
+              <div className="grid gap-8 md:grid-cols-[auto_1fr] md:items-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const podcastLink = getPodcastLink(featuredPodcast);
+                    if (podcastLink) {
+                      window.open(podcastLink, '_blank', 'noopener,noreferrer');
+                    }
+                  }}
+                  className="flex h-24 w-24 items-center justify-center rounded-full bg-spiritual-maroon text-white shadow-[0_18px_40px_rgba(70,18,30,0.22)] transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={!getPodcastLink(featuredPodcast)}
+                  aria-label="Play latest episode"
+                >
+                  <Play className="ml-1 h-10 w-10" fill="currentColor" />
+                </button>
+
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-spiritual-saffron">Latest Episode</p>
+                  <h2 className="mt-3 font-display text-3xl leading-tight text-spiritual-maroon">
+                    {featuredPodcast.title}
+                  </h2>
+                  <p className="mt-3 text-base leading-relaxed text-spiritual-warmGray">
+                    {featuredPodcast.description}
                   </p>
-                  <div className="flex items-center justify-center md:justify-start gap-4 text-sm text-gold-600">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {podcasts[0].duration || '45 min'}
+                  <div className="mt-5 flex flex-wrap items-center gap-4 text-sm text-spiritual-warmGray">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock className="h-4 w-4 text-gold-500" />
+                      {featuredPodcast.duration || '45 min'}
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Headphones className="w-4 h-4" />
-                      {formatListens(podcasts[0].listens || podcasts[0].listenCount)} listens
+                    <span className="inline-flex items-center gap-1.5">
+                      <Headphones className="h-4 w-4 text-gold-500" />
+                      {formatListens(featuredPodcast.listens || featuredPodcast.listenCount)} listens
                     </span>
                   </div>
                 </div>
               </div>
-              
-              {/* Audio wave animation */}
-              <div className="mt-6 flex items-center justify-center gap-1 h-8">
-                {[...Array(50)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="w-1 bg-gradient-to-t from-gold-400 to-spiritual-saffron rounded-full"
-                    animate={{
-                      height: [4, Math.random() * 24 + 8, 4],
-                    }}
-                    transition={{
-                      duration: 0.8 + Math.random() * 0.5,
-                      repeat: Infinity,
-                      repeatType: 'reverse',
-                      delay: i * 0.02,
-                    }}
-                  />
-                ))}
-              </div>
             </motion.div>
           )}
 
-          {/* Section Header */}
           {!loading && podcasts.length > 0 && (
             <>
-              <div className="text-center mb-12">
-                <h2 className="font-display text-3xl text-spiritual-maroon mb-2">
-                  All Episodes
-                </h2>
-                <div className="flex items-center justify-center gap-3">
-                  <span className="w-8 h-px bg-gold-400" />
-                  <span className="text-gold-400">◆</span>
-                  <span className="w-8 h-px bg-gold-400" />
-                </div>
-              </div>
-
-              {/* Podcasts List */}
-              <div className="max-w-4xl mx-auto space-y-4">
+              <SectionHeading
+                eyebrow="Episodes"
+                title="Browse the full archive"
+                subtitle="Designed as a calm list, so listeners can scan titles and themes without wading through unnecessary motion or decoration."
+                align="left"
+              />
+              <div className="space-y-4">
                 {visiblePodcasts.map((podcast, index) => (
-                  <motion.div
+                  <motion.article
                     key={podcast._id || podcast.title}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 18 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ delay: index * 0.05 }}
-                    className="card-temple p-5 flex items-center gap-4 group hover:shadow-temple transition-shadow duration-300"
+                    transition={{ delay: index * 0.04 }}
+                    className="flex flex-col gap-4 rounded-[26px] border border-[rgba(122,86,26,0.12)] bg-white/92 p-5 shadow-[0_16px_36px_rgba(60,34,12,0.07)] sm:flex-row sm:items-center"
                   >
-                    {/* Play Button */}
                     <button
                       type="button"
                       onClick={() => {
@@ -291,53 +211,47 @@ export default function PodcastsPage() {
                           window.open(podcastLink, '_blank', 'noopener,noreferrer');
                         }
                       }}
-                      className="w-14 h-14 rounded-full bg-gradient-to-br from-spiritual-saffron to-primary-600 flex items-center justify-center text-white flex-shrink-0 shadow-warm group-hover:scale-105 group-hover:shadow-glow transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="flex h-14 w-14 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f3d894,#b57b1d)] text-white shadow-[0_12px_28px_rgba(181,123,29,0.24)] transition hover:scale-[1.03] disabled:cursor-not-allowed disabled:opacity-60"
                       disabled={!getPodcastLink(podcast)}
                       aria-label={`Play ${podcast.title}`}
                     >
-                      <Play className="w-6 h-6 ml-1" fill="currentColor" />
+                      <Play className="ml-1 h-6 w-6" fill="currentColor" />
                     </button>
-                    
-                    {/* Content */}
-                    <div className="flex-grow min-w-0">
-                      <div className="flex items-center gap-3 text-sm mb-1">
-                        <span className="px-2 py-0.5 rounded bg-gold-100 text-gold-600 font-medium">
+
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-2 flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-spiritual-warmGray">
+                        <span className="rounded-full bg-[rgba(128,0,32,0.06)] px-3 py-1 text-spiritual-saffron">
                           {getEpisode(podcast, index)}
                         </span>
-                        <span className="flex items-center gap-1 text-gold-500">
-                          <Clock className="w-3.5 h-3.5" />
+                        <span className="inline-flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5 text-gold-500" />
                           {podcast.duration || '30 min'}
                         </span>
                       </div>
-                      <h3 className="font-display text-lg text-spiritual-maroon truncate group-hover:text-spiritual-saffron transition-colors">
+                      <h3 className="font-display text-2xl leading-tight text-spiritual-maroon">
                         {podcast.title}
                       </h3>
-                      <p className="text-spiritual-warmGray text-sm truncate">
+                      <p className="mt-2 text-sm leading-relaxed text-spiritual-warmGray">
                         {podcast.description}
                       </p>
                     </div>
-                    
-                    {/* Listen count */}
-                    <div className="hidden sm:flex items-center gap-1 text-sm text-gold-600 flex-shrink-0">
-                      <Headphones className="w-4 h-4" />
-                      <span>{formatListens(podcast.listens || podcast.listenCount)}</span>
+
+                    <div className="inline-flex items-center gap-2 text-sm font-medium text-spiritual-warmGray sm:justify-end">
+                      <Headphones className="h-4 w-4 text-gold-500" />
+                      {formatListens(podcast.listens || podcast.listenCount)} listens
                     </div>
-                  </motion.div>
+                  </motion.article>
                 ))}
               </div>
 
-              {/* Load More */}
               {canLoadMore && (
                 <div className="mt-12 text-center">
                   <button
                     type="button"
-                    onClick={() => setVisibleCount((prev) => prev + 8)}
-                    className="btn-secondary group"
+                    onClick={() => setVisibleCount((current) => current + 8)}
+                    className="btn-secondary"
                   >
-                  Load More Episodes
-                  <svg className="w-4 h-4 ml-2 group-hover:translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
+                    Load More Episodes
                   </button>
                 </div>
               )}
@@ -346,49 +260,35 @@ export default function PodcastsPage() {
         </div>
       </section>
 
-      <div className="divider-rangoli" />
-
-      {/* Subscribe Section */}
       <section className="section-padding bg-temple-warm">
-        <div className="container-custom">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-2xl mx-auto text-center"
-          >
-            <div className="card-temple p-8 md:p-10">
-              <div className="w-14 h-14 mx-auto mb-6 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center">
-                <Radio className="w-7 h-7 text-white" />
-              </div>
-              
-              <h3 className="font-display text-2xl md:text-3xl text-spiritual-maroon mb-3">
-                Subscribe to Our Podcast
-              </h3>
-              <p className="text-spiritual-warmGray mb-8">
-                Never miss an episode. Listen on your favorite platform.
-              </p>
-              
-              <div className="flex flex-wrap justify-center gap-4">
-                {[
-                  { label: 'Spotify', href: 'https://open.spotify.com/search/avdheshanandg' },
-                  { label: 'Apple Podcasts', href: 'https://podcasts.apple.com/us/search?term=avdheshanandg' },
-                  { label: 'YouTube Music', href: 'https://music.youtube.com/search?q=avdheshanandg' },
-                  { label: 'YouTube (@avdheshanandg)', href: 'https://www.youtube.com/@avdheshanandg' },
-                ].map((platform) => (
-                  <a
-                    key={platform.label}
-                    href={platform.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-6 py-3 rounded-xl border-2 border-gold-300 text-spiritual-maroon font-medium hover:border-gold-400 hover:bg-gold-50 transition-colors"
-                  >
-                    {platform.label}
-                  </a>
-                ))}
-              </div>
+        <div className="container-custom max-w-3xl">
+          <div className="rounded-[30px] border border-[rgba(122,86,26,0.12)] bg-white/90 p-8 text-center shadow-[0_20px_48px_rgba(60,34,12,0.08)] md:p-10">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#f3d894,#b57b1d)] text-white shadow-[0_14px_34px_rgba(181,123,29,0.26)]">
+              <Radio className="h-8 w-8" />
             </div>
-          </motion.div>
+            <h3 className="font-display text-3xl text-spiritual-maroon">Listen on your preferred platform</h3>
+            <p className="mt-3 text-base leading-relaxed text-spiritual-warmGray">
+              Follow updates across Spotify, Apple Podcasts, YouTube Music, and the official YouTube channel.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              {[
+                { label: 'Spotify', href: 'https://open.spotify.com/search/avdheshanandg' },
+                { label: 'Apple Podcasts', href: 'https://podcasts.apple.com/us/search?term=avdheshanandg' },
+                { label: 'YouTube Music', href: 'https://music.youtube.com/search?q=avdheshanandg' },
+                { label: 'YouTube (@avdheshanandg)', href: 'https://www.youtube.com/@avdheshanandg' },
+              ].map((platform) => (
+                <a
+                  key={platform.label}
+                  href={platform.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full border border-[rgba(122,86,26,0.16)] bg-[rgba(248,243,232,0.92)] px-5 py-3 text-sm font-medium text-spiritual-maroon transition hover:border-[rgba(122,86,26,0.28)] hover:bg-white"
+                >
+                  {platform.label}
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
     </div>

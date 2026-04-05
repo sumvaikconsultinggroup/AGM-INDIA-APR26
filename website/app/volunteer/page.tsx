@@ -1,27 +1,43 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Heart, Users, Calendar, MapPin, Send, Award, Globe, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import {
+  Award,
+  Calendar,
+  CheckCircle,
+  Globe,
+  Heart,
+  Loader2,
+  MapPin,
+  Send,
+  Users,
+  XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
-import api from '../../lib/api';
 import { useTranslation } from 'react-i18next';
+import api from '../../lib/api';
+import { PageHero } from '@/components/ui/PageHero';
+import { SectionHeading } from '@/components/ui/SectionHeading';
 
 const volunteerAreas = [
   {
     title: 'Kumbh Mela Seva',
-    description: 'Join the sacred service during Maha Kumbh — from devotee assistance to environmental stewardship at the world\'s largest gathering.',
+    description:
+      "Join the sacred service during Maha Kumbh — from devotee assistance to environmental stewardship at the world's largest gathering.",
     icon: Calendar,
     volunteers: '5,000+',
   },
   {
     title: 'Ashram Seva',
-    description: 'Contribute to daily operations at Harihar Ashram, Kankhal — hospitality, kitchen service, maintenance, and spiritual program support.',
+    description:
+      'Contribute to daily operations at Harihar Ashram, Kankhal — hospitality, kitchen service, maintenance, and spiritual program support.',
     icon: MapPin,
     volunteers: '500+',
   },
   {
     title: 'Community Outreach',
-    description: 'Participate in healthcare camps, food distribution drives, and education programs in underserved communities across India.',
+    description:
+      'Participate in healthcare camps, food distribution drives, and education programs in underserved communities across India.',
     icon: Users,
     volunteers: '1,000+',
   },
@@ -58,23 +74,23 @@ export default function VolunteerPage() {
   const [statusMessage, setStatusMessage] = useState('');
 
   const handleAvailabilityChange = (option: string) => {
-    setFormData(prev => ({
-      ...prev,
-      availability: prev.availability.includes(option)
-        ? prev.availability.filter(a => a !== option)
-        : [...prev.availability, option],
+    setFormData((previous) => ({
+      ...previous,
+      availability: previous.availability.includes(option)
+        ? previous.availability.filter((value) => value !== option)
+        : [...previous.availability, option],
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setSubmitting(true);
     setSubmitStatus('idle');
 
     try {
       await api.post('/volunteer', formData);
       setSubmitStatus('success');
-      setStatusMessage('Thank you for your interest in volunteering! We will contact you soon.');
+      setStatusMessage('Thank you for your interest in volunteering. Our team will reach out soon.');
       setFormData({
         name: '',
         email: '',
@@ -83,18 +99,16 @@ export default function VolunteerPage() {
         availability: [],
         message: '',
       });
-      
-      // Auto-hide success message after 5 seconds
+
       setTimeout(() => {
         setSubmitStatus('idle');
         setStatusMessage('');
       }, 5000);
     } catch (error) {
       setSubmitStatus('error');
-      setStatusMessage('Failed to submit application. Please try again later.');
+      setStatusMessage('We could not submit your application right now. Please try again shortly.');
       console.error('Volunteer form error:', error);
-      
-      // Auto-hide error message after 5 seconds
+
       setTimeout(() => {
         setSubmitStatus('idle');
         setStatusMessage('');
@@ -105,359 +119,250 @@ export default function VolunteerPage() {
   };
 
   return (
-    <div className="pt-20">
-      {/* Hero Section */}
-      <section className="relative bg-maroon-gradient py-24 overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-1/4 w-64 h-64 rounded-full bg-gold-400 blur-3xl animate-pulse-soft" />
-          <div className="absolute bottom-10 right-1/4 w-48 h-48 rounded-full bg-gold-300 blur-3xl animate-pulse-soft animation-delay-500" />
-        </div>
-        
-        {/* Gold borders */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold-400 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold-400 to-transparent" />
-        
-        <div className="container-custom relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center max-w-3xl mx-auto"
-          >
-            {/* Icon */}
-            <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-glow animate-breathe">
-              <Heart className="w-10 h-10 text-white" />
-            </div>
-            
-            <span className="text-gold-300/80 font-sanskrit text-lg tracking-wider">{t('hero.sanskritTitle')}</span>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-gold-200 mt-2 mb-6">
-              {t('hero.title')} <span className="text-gradient-gold">{t('hero.titleHighlight')}</span>
-            </h1>
-            <p className="text-gold-100/80 text-lg md:text-xl leading-relaxed font-body">
-              {t('hero.subtitle')}
-            </p>
-            
-            {/* CTA Buttons */}
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="#register" className="btn-gold text-lg px-8 py-4">
-                {t('hero.ctaJoin')}
-                <Heart className="w-5 h-5 ml-2" />
-              </a>
-              <a href="#areas" className="btn-ghost text-gold-200 border-2 border-gold-400/50 hover:bg-gold-400/10 px-8 py-4 rounded-lg">
-                {t('hero.ctaLearn')}
-              </a>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+    <div className="bg-parchment pt-20">
+      <PageHero
+        tone="dark"
+        eyebrow={t('hero.sanskritTitle')}
+        title={t('hero.title')}
+        highlight={t('hero.titleHighlight')}
+        subtitle={t('hero.subtitle')}
+        icon={<Heart className="h-8 w-8" />}
+        actions={
+          <>
+            <a href="#register" className="btn-gold">
+              {t('hero.ctaJoin')}
+            </a>
+            <a href="#areas" className="btn-ghost rounded-full border border-white/18 px-6 py-3 text-white hover:bg-white/8">
+              {t('hero.ctaLearn')}
+            </a>
+          </>
+        }
+      />
 
-      <div className="divider-rangoli" />
-
-      {/* Impact Stats Section - Styled like JourneyStats */}
-      <section className="section-padding bg-maroon-gradient relative overflow-hidden">
-        {/* Background pattern */}
-        <div className="absolute inset-0 bg-mandala opacity-20" />
-        
-        <div className="container-custom relative z-10">
-          <div className="text-center mb-12">
-            <span className="text-gold-400 font-sanskrit text-lg">प्रभाव</span>
-            <h2 className="font-display text-3xl md:text-4xl text-gold-200 mt-2 mb-4">
-              Our <span className="text-gradient-gold">Impact</span>
-            </h2>
-            <div className="flex items-center justify-center gap-3">
-              <span className="w-8 h-px bg-gold-400" />
-              <Award className="w-5 h-5 text-gold-400" />
-              <span className="w-8 h-px bg-gold-400" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <section className="section-padding bg-parchment">
+        <div className="container-custom">
+          <SectionHeading
+            eyebrow="Impact"
+            title="Service at scale, presented with more clarity"
+            subtitle="Instead of decorative overload, the volunteer experience now focuses on credibility, outcomes, and a cleaner path to participation."
+          />
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {impactStats.map((stat, index) => (
               <motion.div
                 key={stat.label}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="text-center"
-              >
-                {/* Gold medallion */}
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-glow">
-                  <stat.icon className="w-8 h-8 text-white" />
-                </div>
-                <div className="text-3xl md:text-4xl font-display text-gold-200 mb-1">
-                  {stat.value}
-                </div>
-                <div className="text-gold-100/70 font-medium">
-                  {stat.label}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <div className="divider-rangoli" />
-
-      {/* Volunteer Areas */}
-      <section id="areas" className="section-padding bg-temple-warm">
-        <div className="container-custom">
-          <div className="text-center mb-12">
-            <span className="text-gold-500 font-sanskrit text-lg">सेवा के क्षेत्र</span>
-            <h2 className="font-display text-3xl md:text-4xl text-spiritual-maroon mt-2 mb-4">
-              Ways to <span className="text-gradient-gold">Volunteer</span>
-            </h2>
-            <p className="text-spiritual-warmGray max-w-xl mx-auto">
-              Choose how you&apos;d like to serve and make a difference
-            </p>
-            <div className="mt-4 flex items-center justify-center gap-3">
-              <span className="w-8 h-px bg-gold-400" />
-              <span className="text-gold-400">◆</span>
-              <span className="w-8 h-px bg-gold-400" />
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            {volunteerAreas.map((area, index) => (
-              <motion.div
-                key={area.title}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="card-temple p-8 text-center group hover:shadow-temple transition-shadow duration-300"
+                transition={{ delay: index * 0.05 }}
+                className="rounded-[28px] border border-[rgba(122,86,26,0.12)] bg-white/92 p-6 text-center shadow-[0_18px_42px_rgba(60,34,12,0.08)]"
               >
-                {/* Icon */}
-                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-gold-100 to-gold-200 flex items-center justify-center border-2 border-gold-400/30 group-hover:border-gold-400 transition-colors">
-                  <area.icon className="w-10 h-10 text-spiritual-maroon" />
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#f3d894,#b57b1d)] text-white shadow-[0_14px_30px_rgba(181,123,29,0.24)]">
+                  <stat.icon className="h-8 w-8" />
                 </div>
-                
-                <h3 className="font-display text-2xl text-spiritual-maroon mb-3 group-hover:text-spiritual-saffron transition-colors">
-                  {area.title}
-                </h3>
-                <p className="text-spiritual-warmGray mb-6 leading-relaxed">
-                  {area.description}
-                </p>
-                
-                {/* Volunteer count badge */}
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gold-100 text-gold-600">
-                  <Users className="w-4 h-4" />
-                  <span className="font-medium">{area.volunteers} volunteers</span>
-                </div>
+                <p className="font-display text-3xl text-spiritual-maroon">{stat.value}</p>
+                <p className="mt-2 text-sm uppercase tracking-[0.16em] text-spiritual-warmGray">{stat.label}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      <div className="divider-rangoli" />
-
-      {/* Registration Form */}
-      <section id="register" className="section-padding bg-parchment">
+      <section id="areas" className="section-padding bg-temple-warm">
         <div className="container-custom">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-2xl mx-auto"
-          >
-            <div className="card-temple p-8 md:p-10">
-              {/* Decorative top */}
-              <div className="flex justify-center mb-8">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-glow">
-                  <Heart className="w-8 h-8 text-white" />
+          <SectionHeading
+            eyebrow="Volunteer Areas"
+            title="Ways to serve"
+            subtitle="Each opportunity is now framed as a clear participation path, making it easier to understand where time and energy can help most."
+          />
+          <div className="grid gap-6 lg:grid-cols-3">
+            {volunteerAreas.map((area, index) => (
+              <motion.article
+                key={area.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.05 }}
+                className="rounded-[28px] border border-[rgba(122,86,26,0.12)] bg-white/92 p-7 shadow-[0_18px_42px_rgba(60,34,12,0.08)]"
+              >
+                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#f3d894,#b57b1d)] text-white shadow-[0_12px_28px_rgba(181,123,29,0.24)]">
+                  <area.icon className="h-7 w-7" />
                 </div>
-              </div>
-              
-              <h3 className="font-display text-2xl md:text-3xl text-spiritual-maroon text-center mb-2">
-                {t('register.title')}
-              </h3>
-              <p className="text-center text-spiritual-warmGray mb-8">
-                {t('register.subtitle')}
-              </p>
-
-              {/* Status Messages */}
-              {submitStatus === 'success' && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-3 p-4 rounded-lg bg-green-50 border border-green-200 mb-6"
-                >
-                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  <p className="text-green-700 text-sm">{statusMessage}</p>
-                </motion.div>
-              )}
-
-              {submitStatus === 'error' && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-3 p-4 rounded-lg bg-red-50 border border-red-200 mb-6"
-                >
-                  <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                  <p className="text-red-700 text-sm">{statusMessage}</p>
-                </motion.div>
-              )}
-              
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Name and Email */}
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-spiritual-maroon mb-2">
-                      {t('register.fullName')}
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Your name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-spiritual-warmWhite border-2 border-gold-300 focus:border-gold-500 focus:ring-4 focus:ring-gold-200/50 focus:outline-none text-spiritual-maroon placeholder:text-spiritual-warmGray/50 transition-all duration-300"
-                      required
-                      disabled={submitting}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-spiritual-maroon mb-2">
-                      {t('register.emailAddress')}
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="your@email.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl bg-spiritual-warmWhite border-2 border-gold-300 focus:border-gold-500 focus:ring-4 focus:ring-gold-200/50 focus:outline-none text-spiritual-maroon placeholder:text-spiritual-warmGray/50 transition-all duration-300"
-                      required
-                      disabled={submitting}
-                    />
-                  </div>
+                <h3 className="font-display text-2xl leading-tight text-spiritual-maroon">{area.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-spiritual-warmGray">{area.description}</p>
+                <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-[rgba(128,0,32,0.06)] px-4 py-2 text-sm font-medium text-spiritual-saffron">
+                  <Users className="h-4 w-4" />
+                  {area.volunteers} volunteers
                 </div>
-                
-                {/* Phone */}
-                <div>
-                  <label className="block text-sm font-medium text-spiritual-maroon mb-2">
-                    {t('register.phoneNumber')}
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="+91 XXXXX XXXXX"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-spiritual-warmWhite border-2 border-gold-300 focus:border-gold-500 focus:ring-4 focus:ring-gold-200/50 focus:outline-none text-spiritual-maroon placeholder:text-spiritual-warmGray/50 transition-all duration-300"
-                    disabled={submitting}
-                  />
-                </div>
-                
-                {/* Area of Interest */}
-                <div>
-                  <label className="block text-sm font-medium text-spiritual-maroon mb-2">
-                    Area of Interest
-                  </label>
-                  <select 
-                    value={formData.areaOfInterest}
-                    onChange={(e) => setFormData({ ...formData, areaOfInterest: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-spiritual-warmWhite border-2 border-gold-300 focus:border-gold-500 focus:ring-4 focus:ring-gold-200/50 focus:outline-none text-spiritual-maroon transition-all duration-300"
-                    disabled={submitting}
-                  >
-                    <option value="">Select your preferred area</option>
-                    <option value="events">Event Support</option>
-                    <option value="community">Community Service</option>
-                    <option value="ashram">Ashram Activities</option>
-                    <option value="all">All Areas</option>
-                  </select>
-                </div>
-                
-                {/* Availability */}
-                <div>
-                  <label className="block text-sm font-medium text-spiritual-maroon mb-2">
-                    Availability
-                  </label>
-                  <div className="flex flex-wrap gap-3">
-                    {['Weekdays', 'Weekends', 'Flexible'].map((option) => (
-                      <label key={option} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.availability.includes(option)}
-                          onChange={() => handleAvailabilityChange(option)}
-                          className="w-4 h-4 rounded border-gold-400 text-gold-500 focus:ring-gold-400"
-                          disabled={submitting}
-                        />
-                        <span className="text-spiritual-warmGray">{option}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Message */}
-                <div>
-                  <label className="block text-sm font-medium text-spiritual-maroon mb-2">
-                    Tell Us About Yourself
-                  </label>
-                  <textarea
-                    placeholder="Share your motivation to serve and any relevant experience..."
-                    rows={4}
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-spiritual-warmWhite border-2 border-gold-300 focus:border-gold-500 focus:ring-4 focus:ring-gold-200/50 focus:outline-none text-spiritual-maroon placeholder:text-spiritual-warmGray/50 resize-none transition-all duration-300"
-                    disabled={submitting}
-                  />
-                </div>
-                
-                {/* Submit Button */}
-                <button 
-                  type="submit" 
-                  disabled={submitting}
-                  className="btn-primary w-full py-4 text-lg group disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      {t('register.submitting')}
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5 mr-2 group-hover:translate-x-1 transition-transform" />
-                      {t('register.submitApplication')}
-                    </>
-                  )}
-                </button>
-              </form>
-              
-              {/* Trust note */}
-              <p className="mt-6 text-center text-sm text-spiritual-warmGray">
-                By submitting, you agree to be contacted about volunteer opportunities.
-                <br />
-                <span className="text-gold-600">We respect your privacy.</span>
-              </p>
-            </div>
-          </motion.div>
+              </motion.article>
+            ))}
+          </div>
         </div>
       </section>
 
-      <div className="divider-rangoli" />
-
-      {/* Testimonial Section */}
-      <section className="section-padding bg-temple-warm">
-        <div className="container-custom">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-3xl mx-auto text-center"
-          >
-            <div className="card-temple p-8 md:p-12">
-              <span className="text-6xl text-gold-400 font-serif leading-none">&ldquo;</span>
-              <blockquote className="font-spiritual text-xl md:text-2xl text-spiritual-maroon leading-relaxed mt-2 mb-6">
-                Seva is not just about giving your time or effort; it is about 
-                offering your heart. Through selfless service, we dissolve the ego 
-                and experience the divine within ourselves and others.
-              </blockquote>
-              <div className="flex items-center justify-center gap-3">
-                <span className="w-12 h-px bg-gold-400" />
-                <span className="font-display text-gold-600">Swami Avdheshanand Giri Ji</span>
-                <span className="w-12 h-px bg-gold-400" />
-              </div>
+      <section id="register" className="section-padding bg-parchment">
+        <div className="container-custom grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+          <div className="rounded-[30px] border border-[rgba(122,86,26,0.12)] bg-[linear-gradient(180deg,rgba(128,0,32,0.94),rgba(89,8,28,0.96))] p-8 text-white shadow-[0_26px_60px_rgba(45,10,18,0.22)]">
+            <SectionHeading
+              eyebrow="Why Volunteer"
+              title="Seva as lived practice"
+              subtitle="Volunteering is presented here not as a utility task, but as a spiritual offering grounded in humility, care, and participation."
+              align="left"
+            />
+            <div className="space-y-4">
+              {[
+                'Serve devotees, communities, and ashram initiatives with presence and dignity.',
+                'Learn directly through participation in dharmic and humanitarian work.',
+                'Offer time, attention, and skills where they can create measurable impact.',
+              ].map((point) => (
+                <div key={point} className="rounded-[20px] border border-white/10 bg-white/8 px-5 py-4 text-sm leading-relaxed text-gold-50/78">
+                  {point}
+                </div>
+              ))}
             </div>
-          </motion.div>
+            <div className="mt-8 rounded-[22px] border border-white/10 bg-white/8 p-5">
+              <div className="mb-2 flex items-center gap-2 text-gold-200">
+                <Award className="h-5 w-5" />
+                <span className="text-xs font-semibold uppercase tracking-[0.28em]">Reflection</span>
+              </div>
+              <p className="font-spiritual text-2xl leading-relaxed text-white">
+                “Seva is not only action. It is a way of softening the ego and widening the heart.”
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-[30px] border border-[rgba(122,86,26,0.12)] bg-white/92 p-8 shadow-[0_20px_48px_rgba(60,34,12,0.08)] md:p-10">
+            <SectionHeading
+              eyebrow="Application"
+              title={t('register.title')}
+              subtitle={t('register.subtitle')}
+              align="left"
+            />
+
+            {submitStatus === 'success' && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 flex items-start gap-3 rounded-[20px] border border-green-200 bg-green-50 px-4 py-4"
+              >
+                <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
+                <p className="text-sm text-green-800">{statusMessage}</p>
+              </motion.div>
+            )}
+
+            {submitStatus === 'error' && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 flex items-start gap-3 rounded-[20px] border border-red-200 bg-red-50 px-4 py-4"
+              >
+                <XCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
+                <p className="text-sm text-red-800">{statusMessage}</p>
+              </motion.div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-spiritual-maroon">{t('register.fullName')}</label>
+                  <input
+                    type="text"
+                    placeholder="Your name"
+                    value={formData.name}
+                    onChange={(event) => setFormData({ ...formData, name: event.target.value })}
+                    className="w-full rounded-[20px] border border-[rgba(122,86,26,0.16)] bg-[rgba(248,243,232,0.92)] px-4 py-3.5 text-spiritual-maroon outline-none transition focus:border-[rgba(122,86,26,0.32)] focus:bg-white"
+                    required
+                    disabled={submitting}
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-spiritual-maroon">{t('register.emailAddress')}</label>
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={formData.email}
+                    onChange={(event) => setFormData({ ...formData, email: event.target.value })}
+                    className="w-full rounded-[20px] border border-[rgba(122,86,26,0.16)] bg-[rgba(248,243,232,0.92)] px-4 py-3.5 text-spiritual-maroon outline-none transition focus:border-[rgba(122,86,26,0.32)] focus:bg-white"
+                    required
+                    disabled={submitting}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-spiritual-maroon">{t('register.phoneNumber')}</label>
+                <input
+                  type="tel"
+                  placeholder="+91 XXXXX XXXXX"
+                  value={formData.phone}
+                  onChange={(event) => setFormData({ ...formData, phone: event.target.value })}
+                  className="w-full rounded-[20px] border border-[rgba(122,86,26,0.16)] bg-[rgba(248,243,232,0.92)] px-4 py-3.5 text-spiritual-maroon outline-none transition focus:border-[rgba(122,86,26,0.32)] focus:bg-white"
+                  disabled={submitting}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-spiritual-maroon">Area of Interest</label>
+                <select
+                  value={formData.areaOfInterest}
+                  onChange={(event) => setFormData({ ...formData, areaOfInterest: event.target.value })}
+                  className="w-full rounded-[20px] border border-[rgba(122,86,26,0.16)] bg-[rgba(248,243,232,0.92)] px-4 py-3.5 text-spiritual-maroon outline-none transition focus:border-[rgba(122,86,26,0.32)] focus:bg-white"
+                  disabled={submitting}
+                >
+                  <option value="">Select your preferred area</option>
+                  <option value="events">Event Support</option>
+                  <option value="community">Community Service</option>
+                  <option value="ashram">Ashram Activities</option>
+                  <option value="all">All Areas</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-spiritual-maroon">Availability</label>
+                <div className="flex flex-wrap gap-3">
+                  {['Weekdays', 'Weekends', 'Flexible'].map((option) => (
+                    <label
+                      key={option}
+                      className="inline-flex items-center gap-2 rounded-full border border-[rgba(122,86,26,0.16)] bg-[rgba(248,243,232,0.92)] px-4 py-2.5 text-sm text-spiritual-warmGray"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.availability.includes(option)}
+                        onChange={() => handleAvailabilityChange(option)}
+                        disabled={submitting}
+                      />
+                      {option}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-spiritual-maroon">Tell Us About Yourself</label>
+                <textarea
+                  rows={5}
+                  placeholder="Share your motivation to serve and any relevant experience..."
+                  value={formData.message}
+                  onChange={(event) => setFormData({ ...formData, message: event.target.value })}
+                  className="w-full rounded-[20px] border border-[rgba(122,86,26,0.16)] bg-[rgba(248,243,232,0.92)] px-4 py-3.5 text-spiritual-maroon outline-none transition focus:border-[rgba(122,86,26,0.32)] focus:bg-white"
+                  disabled={submitting}
+                />
+              </div>
+
+              <button type="submit" disabled={submitting} className="btn-primary w-full py-4 text-base disabled:opacity-70">
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    {t('register.submitting')}
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-5 w-5" />
+                    {t('register.submitApplication')}
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
         </div>
       </section>
     </div>

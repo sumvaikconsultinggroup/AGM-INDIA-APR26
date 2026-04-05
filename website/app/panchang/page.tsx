@@ -155,6 +155,7 @@ export default function EnhancedPanchangPage() {
 
   const [panchang, setPanchang] = useState<PanchangData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [cities, setCities] = useState<City[]>([]);
   const [selectedCity, setSelectedCity] = useState<City>({ name: 'Haridwar', state: 'Uttarakhand', lat: 29.9457, lng: 78.1642 });
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -173,9 +174,17 @@ export default function EnhancedPanchangPage() {
     try {
       const res = await api.get(`/panchang/today?lat=${selectedCity.lat}&lng=${selectedCity.lng}&city=${encodeURIComponent(selectedCity.name)}&date=${selectedDate}`);
       setPanchang(res.data?.data || res.data);
-    } catch { setPanchang(null); }
+      setErrorMessage(null);
+    } catch {
+      setPanchang(null);
+      setErrorMessage(
+        process.env.NODE_ENV === 'development'
+          ? 'Unable to connect to Panchang service. Start the dashboard API on port 3000 or configure NEXT_PUBLIC_API_URL.'
+          : t('retry')
+      );
+    }
     finally { setLoading(false); }
-  }, [selectedCity, selectedDate]);
+  }, [selectedCity, selectedDate, t]);
 
   useEffect(() => { fetchPanchang(); }, [fetchPanchang]);
 
@@ -246,12 +255,12 @@ export default function EnhancedPanchangPage() {
             />
           </div>
 
-          {/* Share & Print Buttons */}
+          {/* Share & Print */}
           <div className="flex gap-2">
             <button
               onClick={() => {
                 if (!panchang) return;
-                const text = `Today's Panchang (${selectedCity.name})\nTithi: ${panchang.tithi?.name || '--'} (${panchang.tithi?.paksha || ''})\nNakshatra: ${panchang.nakshatra?.name || '--'}\nSunrise: ${panchang.sunrise || '--'}\n${panchang.festivals?.length ? `Festival: ${panchang.festivals[0]}` : ''}`;
+                const text = `Today's Panchang (${selectedCity.name})\nTithi: ${panchang.tithi?.name || '--'} (${panchang.tithi?.paksha || ''})\nNakshatra: ${panchang.nakshatra?.name || '--'}\nSunrise: ${panchang.sunrise || '--'}`;
                 if (navigator.share) {
                   navigator.share({ title: "Today's Panchang", text });
                 } else {
@@ -288,7 +297,7 @@ export default function EnhancedPanchangPage() {
       {!loading && !panchang && (
         <div className="max-w-4xl mx-auto px-4 text-center py-12">
           <p className="text-spiritual-warmGray text-lg">{t('error')}</p>
-          <p className="text-sm text-spiritual-warmGray mt-1">{t('retry')}</p>
+          <p className="text-sm text-spiritual-warmGray mt-1">{errorMessage || t('retry')}</p>
         </div>
       )}
 

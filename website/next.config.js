@@ -1,5 +1,8 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  outputFileTracingRoot: path.join(__dirname, '..'),
   images: {
     remotePatterns: [
       {
@@ -15,6 +18,20 @@ const nextConfig = {
         hostname: 'lh3.googleusercontent.com',
       },
     ],
+  },
+  async rewrites() {
+    if (process.env.NODE_ENV !== 'development') {
+      return [];
+    }
+
+    const target = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000').replace(/\/+$/, '');
+
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${target}/api/:path*`,
+      },
+    ];
   },
   async headers() {
     return [

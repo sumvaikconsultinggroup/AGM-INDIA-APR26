@@ -2,12 +2,13 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { BookOpen, ShoppingCart, Star, Heart, Loader2 } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
-import api from '../../lib/api';
+import { BookOpen, Loader2, Mail, ShoppingCart, Star } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import api from '../../lib/api';
+import { PageHero } from '@/components/ui/PageHero';
+import { SectionHeading } from '@/components/ui/SectionHeading';
 
-// Fallback data in case API fails
 const fallbackBooks = [
   {
     title: 'Eternal Wisdom',
@@ -19,7 +20,7 @@ const fallbackBooks = [
   },
   {
     title: 'The Path to Ananda',
-    description: 'A Mystic\'s Guide to Unlimited Happiness',
+    description: "A Mystic's Guide to Unlimited Happiness",
     cover: '/assets/videoseries/Book2.jpg',
     price: '₹399',
     rating: 4.8,
@@ -63,9 +64,10 @@ export default function BooksPage() {
   const [visibleCount, setVisibleCount] = useState(8);
 
   useEffect(() => {
-    api.get('/allbooks')
-      .then(r => {
-        const data = r.data?.data || r.data || [];
+    api
+      .get('/allbooks')
+      .then((response) => {
+        const data = response.data?.data || response.data || [];
         setBooks(data.length > 0 ? data : fallbackBooks);
       })
       .catch(() => {
@@ -105,211 +107,140 @@ export default function BooksPage() {
   };
 
   return (
-    <div className="pt-20">
-      {/* Hero Section */}
-      <section className="relative bg-maroon-gradient py-24 overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-1/4 w-72 h-72 rounded-full bg-gold-400 blur-3xl animate-pulse-soft" />
-          <div className="absolute bottom-0 right-1/4 w-56 h-56 rounded-full bg-gold-300 blur-3xl animate-pulse-soft animation-delay-500" />
-        </div>
-        
-        {/* Gold borders */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold-400 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold-400 to-transparent" />
-        
-        <div className="container-custom relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center max-w-3xl mx-auto"
-          >
-            {/* Icon */}
-            <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-glow animate-breathe">
-              <BookOpen className="w-10 h-10 text-white" />
-            </div>
-            
-            <span className="text-gold-300/80 font-sanskrit text-lg tracking-wider">{t('hero.sanskritTitle')}</span>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-gold-200 mt-2 mb-6">
-              {t('hero.title')} <span className="text-gradient-gold">{t('hero.titleHighlight')}</span>
-            </h1>
-            <p className="text-gold-100/80 text-lg md:text-xl leading-relaxed font-body">
-              {t('hero.subtitle')}
-            </p>
-            
-            {/* Decorative divider */}
-            <div className="mt-8 flex items-center justify-center gap-4">
-              <span className="w-16 h-px bg-gradient-to-r from-transparent to-gold-400" />
-              <Star className="w-5 h-5 text-gold-400" fill="currentColor" />
-              <span className="w-16 h-px bg-gradient-to-l from-transparent to-gold-400" />
-            </div>
-          </motion.div>
-        </div>
-      </section>
+    <div className="bg-parchment pt-20">
+      <PageHero
+        tone="dark"
+        eyebrow={t('hero.sanskritTitle')}
+        title={t('hero.title')}
+        highlight={t('hero.titleHighlight')}
+        subtitle={t('hero.subtitle')}
+        icon={<BookOpen className="h-8 w-8" />}
+      />
 
-      <div className="divider-rangoli" />
-
-      {/* Books Grid */}
       <section className="section-padding bg-parchment">
         <div className="container-custom">
-          {/* Category filters */}
-          <div className="flex flex-wrap justify-center gap-3 mb-12">
-            {categories.map((cat) => (
+          <SectionHeading
+            eyebrow="Publications"
+            title="A bookstore experience that feels curated, not crowded"
+            subtitle="The books page now leans into cover-led storytelling, cleaner filtering, and a calmer reading rhythm across the catalog."
+          />
+
+          <div className="mb-10 flex flex-wrap justify-center gap-3">
+            {categories.map((category) => (
               <button
-                key={cat}
+                key={category}
+                type="button"
                 onClick={() => {
-                  setSelectedCategory(cat);
+                  setSelectedCategory(category);
                   setVisibleCount(8);
                 }}
-                className={`px-5 py-2 rounded-full font-medium transition-all duration-300 ${
-                  selectedCategory === cat
-                    ? 'bg-gradient-to-r from-gold-400 to-gold-500 text-white shadow-warm'
-                    : 'bg-white border-2 border-gold-300 text-spiritual-maroon hover:border-gold-400 hover:bg-gold-50'
+                className={`rounded-full border px-5 py-2.5 text-sm font-medium transition-all ${
+                  selectedCategory === category
+                    ? 'border-transparent bg-spiritual-maroon text-white shadow-[0_12px_28px_rgba(70,18,30,0.18)]'
+                    : 'border-[rgba(122,86,26,0.16)] bg-white/88 text-spiritual-maroon hover:border-[rgba(122,86,26,0.28)] hover:bg-white'
                 }`}
               >
-                {cat}
+                {category}
               </button>
             ))}
           </div>
 
-          {/* Loading State */}
           {loading && (
             <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="w-12 h-12 text-spiritual-saffron animate-spin mb-4" />
-              <p className="text-spiritual-warmGray font-body">Loading books...</p>
+              <Loader2 className="mb-4 h-12 w-12 animate-spin text-spiritual-saffron" />
+              <p className="text-spiritual-warmGray">Loading books...</p>
             </div>
           )}
 
-          {/* Empty State */}
           {!loading && books.length === 0 && (
-            <div className="text-center py-20">
-              <BookOpen className="w-16 h-16 text-gold-400 mx-auto mb-4" />
-              <h3 className="font-display text-2xl text-spiritual-maroon mb-2">{t('noBooks')}</h3>
-              <p className="text-spiritual-warmGray"></p>
+            <div className="rounded-[30px] border border-[rgba(122,86,26,0.12)] bg-white/90 py-20 text-center shadow-[0_20px_48px_rgba(60,34,12,0.08)]">
+              <BookOpen className="mx-auto mb-4 h-16 w-16 text-gold-500" />
+              <h3 className="font-display text-2xl text-spiritual-maroon">{t('noBooks')}</h3>
             </div>
           )}
 
-          {/* Books Grid */}
           {!loading && books.length > 0 && (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
               {visibleBooks.map((book, index) => (
-                <motion.div
+                <motion.article
                   key={book._id || book.title}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="card-temple overflow-hidden group"
+                  transition={{ delay: index * 0.05 }}
+                  className="overflow-hidden rounded-[28px] border border-[rgba(122,86,26,0.12)] bg-white/92 shadow-[0_18px_42px_rgba(60,34,12,0.08)]"
                 >
-                  {/* Book Cover with ornamental frame */}
-                  <div className="relative aspect-[3/4] bg-spiritual-sandstone overflow-hidden">
-                    {/* Ornamental frame overlay */}
-                    <div className="absolute inset-2 border-2 border-gold-400/30 rounded-lg z-10 pointer-events-none" />
-                    <div className="absolute inset-3 border border-gold-400/20 rounded-lg z-10 pointer-events-none" />
-                    
+                  <div className="relative aspect-[4/5] overflow-hidden bg-[#ece0c8]">
                     <Image
                       src={book.cover || book.image || book.coverImage || '/assets/videoseries/Book1.jpg'}
                       alt={book.title}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="object-cover transition-transform duration-500 hover:scale-[1.03]"
                     />
-                    
-                    {/* Wishlist button */}
-                    <button className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-warm hover:bg-gold-50">
-                      <Heart className="w-5 h-5 text-spiritual-maroon" />
-                    </button>
-                    
-                    {/* Category badge */}
-                    <div className="absolute top-4 left-4 z-20 px-3 py-1 rounded-full bg-gradient-to-r from-spiritual-saffron to-primary-600 text-white text-xs font-semibold">
+                    <div className="absolute left-4 top-4 rounded-full bg-spiritual-maroon/88 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white">
                       {book.category || 'Book'}
                     </div>
                   </div>
-                  
-                  {/* Content */}
+
                   <div className="p-5">
-                    {/* Rating */}
-                    <div className="flex items-center gap-1 mb-2">
-                      {[...Array(5)].map((_, i) => (
+                    <div className="mb-3 flex items-center gap-1 text-gold-500">
+                      {Array.from({ length: 5 }).map((_, starIndex) => (
                         <Star
-                          key={i}
-                          className={`w-4 h-4 ${
-                            i < Math.floor(book.rating || 5)
-                              ? 'text-gold-400'
-                              : 'text-gold-200'
+                          key={starIndex}
+                          className={`h-4 w-4 ${
+                            starIndex < Math.floor(book.rating || 5) ? 'opacity-100' : 'opacity-30'
                           }`}
                           fill="currentColor"
                         />
                       ))}
-                      <span className="text-sm text-gold-600 ml-1">{book.rating || 5.0}</span>
+                      <span className="ml-1 text-sm font-medium text-spiritual-warmGray">
+                        {book.rating || 5.0}
+                      </span>
                     </div>
-                    
-                    <h3 className="font-display text-lg text-spiritual-maroon mb-2 group-hover:text-spiritual-saffron transition-colors">
-                      {book.title}
-                    </h3>
-                    <p className="text-spiritual-warmGray text-sm mb-4 line-clamp-2">
+
+                    <h3 className="font-display text-2xl leading-tight text-spiritual-maroon">{book.title}</h3>
+                    <p className="mt-3 min-h-[52px] text-sm leading-relaxed text-spiritual-warmGray">
                       {book.description || ''}
                     </p>
-                    
-                    {/* Price and Cart */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-display text-gradient-gold">
-                        {formatPrice(book.price)}
-                      </span>
-                      <a
-                        href={buildBookInquiryMailto(book.title)}
-                        className="btn-gold py-2 px-4 text-sm group/btn"
-                      >
-                        <ShoppingCart className="w-4 h-4 mr-1 group-hover/btn:scale-110 transition-transform" />
+
+                    <div className="mt-6 flex items-center justify-between gap-3">
+                      <span className="font-display text-2xl text-gradient-gold">{formatPrice(book.price)}</span>
+                      <a href={buildBookInquiryMailto(book.title)} className="btn-primary px-4 py-2.5 text-sm">
+                        <ShoppingCart className="mr-2 h-4 w-4" />
                         Enquire
                       </a>
                     </div>
                   </div>
-                </motion.div>
+                </motion.article>
               ))}
             </div>
           )}
 
-          {/* Browse All Button */}
           {!loading && filteredBooks.length > 0 && canLoadMore && (
             <div className="mt-12 text-center">
               <button
-                onClick={() => setVisibleCount((prev) => prev + 8)}
-                className="btn-secondary group"
+                type="button"
+                onClick={() => setVisibleCount((current) => current + 8)}
+                className="btn-secondary"
               >
                 Load More Books
-                <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
               </button>
             </div>
           )}
         </div>
       </section>
 
-      <div className="divider-rangoli" />
-
-      {/* Featured Quote Section */}
       <section className="section-padding bg-temple-warm">
-        <div className="container-custom">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-3xl mx-auto text-center"
-          >
-            <div className="card-temple p-8 md:p-12">
-              <span className="text-6xl text-gold-400 font-serif leading-none">&ldquo;</span>
-              <blockquote className="font-spiritual text-2xl md:text-3xl text-spiritual-maroon leading-relaxed mt-2 mb-6">
-                The true purpose of reading sacred texts is not to gather information, 
-                but to transform the reader.
-              </blockquote>
-              <div className="flex items-center justify-center gap-3">
-                <span className="w-12 h-px bg-gold-400" />
-                <span className="font-display text-gold-600">Swami Avdheshanand Giri Ji</span>
-                <span className="w-12 h-px bg-gold-400" />
-              </div>
+        <div className="container-custom max-w-3xl">
+          <div className="rounded-[30px] border border-[rgba(122,86,26,0.12)] bg-white/90 p-8 text-center shadow-[0_20px_48px_rgba(60,34,12,0.08)] md:p-10">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#f3d894,#b57b1d)] text-white shadow-[0_14px_34px_rgba(181,123,29,0.26)]">
+              <Mail className="h-8 w-8" />
             </div>
-          </motion.div>
+            <h3 className="font-display text-3xl text-spiritual-maroon">Reading as inner transformation</h3>
+            <p className="mt-4 font-spiritual text-2xl leading-relaxed text-spiritual-maroon">
+              “The true purpose of reading sacred texts is not to gather information, but to transform the reader.”
+            </p>
+          </div>
         </div>
       </section>
     </div>

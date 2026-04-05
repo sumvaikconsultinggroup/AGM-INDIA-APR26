@@ -8,15 +8,9 @@ export const metadata = {
 
 export default function GalleryPage() {
   return (
-    <div className="pt-20">
-      {/* Spiritual Hero Banner */}
+    <div className="bg-parchment pt-20">
       <GalleryHero />
-      
-      <div className="divider-rangoli" />
-      
-      <div className="bg-temple-warm">
-        <Gallery />
-      </div>
+      <Gallery />
     </div>
   );
 }

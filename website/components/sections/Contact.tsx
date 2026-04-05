@@ -1,10 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { SectionHeading } from '../ui/SectionHeading';
-import { MapPin, Phone, Mail, Clock, Heart, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { Mail, MapPin, Phone, Clock, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import api from '../../lib/api';
+import { SectionHeading } from '../ui/SectionHeading';
 
 const CONTACT_ADDRESS =
   process.env.NEXT_PUBLIC_CONTACT_ADDRESS ||
@@ -27,186 +27,146 @@ export function Contact() {
     try {
       await api.post('/connect', formState);
       setSubmitStatus('success');
-      setStatusMessage('Your message has been sent successfully! We will get back to you soon.');
+      setStatusMessage('Your message has been sent successfully. We will be in touch soon.');
       setFormState({ name: '', email: '', message: '' });
-      
-      // Auto-hide success message after 5 seconds
-      setTimeout(() => {
-        setSubmitStatus('idle');
-        setStatusMessage('');
-      }, 5000);
     } catch (error) {
       setSubmitStatus('error');
       setStatusMessage('Failed to send message. Please try again later.');
       console.error('Contact form error:', error);
-      
-      // Auto-hide error message after 5 seconds
-      setTimeout(() => {
-        setSubmitStatus('idle');
-        setStatusMessage('');
-      }, 5000);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <section id="contact" className="section-padding bg-maroon-gradient text-white relative overflow-hidden">
-      {/* Decorative Om/Lotus Background Elements */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none">
-        <div className="absolute top-20 left-20 w-48 h-48 rounded-full border-4 border-gold-400" />
-        <div className="absolute bottom-20 right-20 w-64 h-64 rounded-full border-2 border-gold-400" />
-        {/* Om symbol using text */}
-        <div className="absolute top-1/4 right-1/4 text-9xl font-sanskrit text-gold-400/20">ॐ</div>
-        <div className="absolute bottom-1/4 left-1/4 text-7xl font-sanskrit text-gold-400/15">ॐ</div>
-      </div>
-
-      <div className="container-custom relative">
+    <section id="contact" className="section-padding bg-temple-warm">
+      <div className="container-custom">
         <SectionHeading
-          title="Connect with Us"
-          subtitle="Reach out for spiritual guidance, ashram visits, or any inquiries"
-          className="text-white [&_h2]:text-gold-200 [&_p]:text-gold-100/80 [&_div]:border-gold-400/50"
+          eyebrow="Contact"
+          title="Connect with the mission"
+          subtitle="Reach out for spiritual guidance, ashram visits, events, or any general enquiry."
         />
 
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20">
-          {/* Contact Info */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="space-y-8"
-          >
-            <div className="space-y-6">
+        <div className="grid gap-8 lg:grid-cols-[0.92fr,1.08fr]">
+          <div className="card-warm p-6 md:p-8">
+            <div className="grid gap-5">
               {[
                 { icon: MapPin, title: 'Address', content: CONTACT_ADDRESS },
                 { icon: Phone, title: 'Phone', content: CONTACT_PHONE },
                 { icon: Mail, title: 'Email', content: CONTACT_EMAIL },
                 { icon: Clock, title: 'Darshan Timings', content: 'Daily 6:00 AM - 8:00 PM' },
-              ].map((item, index) => (
-                <motion.div
-                  key={item.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-start gap-4"
-                >
-                  <div className="w-12 h-12 rounded-full bg-gold-400/20 border border-gold-400/40 flex items-center justify-center flex-shrink-0">
-                    <item.icon className="w-5 h-5 text-gold-400" />
+              ].map((item) => (
+                <div key={item.title} className="rounded-[22px] border border-[rgba(122,86,26,0.12)] bg-white/70 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(200,107,36,0.12)] text-spiritual-saffron">
+                      <item.icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-spiritual-saffron">
+                        {item.title}
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-spiritual-warmGray">
+                        {item.content}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-display text-gold-200 mb-1">{item.title}</p>
-                    <p className="text-gold-100/70 font-body">{item.content}</p>
-                  </div>
-                </motion.div>
+                </div>
               ))}
             </div>
 
-            {/* Map */}
-            <div className="aspect-video rounded-xl overflow-hidden border-2 border-gold-400/30 shadow-glow">
+            <div className="mt-6 overflow-hidden rounded-[24px] border border-[rgba(122,86,26,0.12)] shadow-[0_16px_30px_rgba(41,22,11,0.06)]">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3456.789!2d78.123!3d29.945!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjnCsDU2JzQyLjAiTiA3OMKwMDcnMjIuOCJF!5e0!3m2!1sen!2sin!4v1234567890"
                 width="100%"
-                height="100%"
+                height="320"
                 style={{ border: 0 }}
                 allowFullScreen
                 loading="lazy"
-                className="opacity-80"
                 title="Map showing Kankhal Ashram, Haridwar"
               />
             </div>
-          </motion.div>
+          </div>
 
-          {/* Contact Form with Temple Card Styling */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+          <motion.form
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            onSubmit={handleSubmit}
+            className="card-temple p-6 md:p-8"
           >
-            <form onSubmit={handleSubmit} className="card-temple bg-spiritual-cream/95 backdrop-blur-sm p-8 space-y-6 border-ornamental">
-              <h3 className="font-display text-2xl text-spiritual-maroon mb-6">Send us a Message</h3>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-spiritual-saffron">
+              Send a message
+            </p>
+            <h3 className="mt-3 font-display text-3xl text-spiritual-maroon">
+              We’ll help you find the right next step
+            </h3>
 
-              {/* Status Messages */}
+            <div className="mt-6 space-y-4">
               {submitStatus === 'success' && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-3 p-4 rounded-lg bg-green-50 border border-green-200"
-                >
-                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  <p className="text-green-700 text-sm">{statusMessage}</p>
-                </motion.div>
+                <div className="flex items-start gap-3 rounded-[20px] border border-green-200 bg-green-50 px-4 py-3">
+                  <CheckCircle className="mt-0.5 h-5 w-5 text-green-600" />
+                  <p className="text-sm text-green-700">{statusMessage}</p>
+                </div>
               )}
 
               {submitStatus === 'error' && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-3 p-4 rounded-lg bg-red-50 border border-red-200"
-                >
-                  <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                  <p className="text-red-700 text-sm">{statusMessage}</p>
-                </motion.div>
+                <div className="flex items-start gap-3 rounded-[20px] border border-red-200 bg-red-50 px-4 py-3">
+                  <XCircle className="mt-0.5 h-5 w-5 text-red-600" />
+                  <p className="text-sm text-red-700">{statusMessage}</p>
+                </div>
               )}
 
-              <div>
-                <label className="block text-spiritual-warmGray text-sm mb-2 font-body">Your Name</label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-spiritual-maroon">Your name</span>
                 <input
                   type="text"
                   value={formState.name}
                   onChange={(e) => setFormState({ ...formState, name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg bg-spiritual-warmWhite border border-gold-400/30 text-spiritual-maroon placeholder-spiritual-warmGray/50 focus:outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all font-body"
+                  className="w-full rounded-2xl border border-[rgba(122,86,26,0.16)] bg-white/85 px-4 py-3 text-spiritual-maroon placeholder:text-spiritual-warmGray focus:border-[rgba(200,107,36,0.35)]"
                   placeholder="Enter your name"
                   required
                   disabled={submitting}
                 />
-              </div>
+              </label>
 
-              <div>
-                <label className="block text-spiritual-warmGray text-sm mb-2 font-body">Email Address</label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-spiritual-maroon">Email address</span>
                 <input
                   type="email"
                   value={formState.email}
                   onChange={(e) => setFormState({ ...formState, email: e.target.value })}
-                  className="w-full px-4 py-3 rounded-lg bg-spiritual-warmWhite border border-gold-400/30 text-spiritual-maroon placeholder-spiritual-warmGray/50 focus:outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all font-body"
+                  className="w-full rounded-2xl border border-[rgba(122,86,26,0.16)] bg-white/85 px-4 py-3 text-spiritual-maroon placeholder:text-spiritual-warmGray focus:border-[rgba(200,107,36,0.35)]"
                   placeholder="Enter your email"
                   required
                   disabled={submitting}
                 />
-              </div>
+              </label>
 
-              <div>
-                <label className="block text-spiritual-warmGray text-sm mb-2 font-body">Your Message</label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-spiritual-maroon">Your message</span>
                 <textarea
                   value={formState.message}
                   onChange={(e) => setFormState({ ...formState, message: e.target.value })}
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-lg bg-spiritual-warmWhite border border-gold-400/30 text-spiritual-maroon placeholder-spiritual-warmGray/50 focus:outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all resize-none font-body"
+                  rows={5}
+                  className="w-full rounded-2xl border border-[rgba(122,86,26,0.16)] bg-white/85 px-4 py-3 text-spiritual-maroon placeholder:text-spiritual-warmGray focus:border-[rgba(200,107,36,0.35)]"
                   placeholder="Write your message here..."
                   required
                   disabled={submitting}
                 />
-              </div>
+              </label>
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="btn-primary w-full justify-center group disabled:opacity-70 disabled:cursor-not-allowed"
-              >
+              <button type="submit" disabled={submitting} className="btn-primary w-full justify-center">
                 {submitting ? (
                   <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    <span>Sending...</span>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Sending...
                   </>
                 ) : (
-                  <>
-                    <span>Send with Love</span>
-                    <Heart className="w-5 h-5 ml-2 group-hover:scale-110 transition-transform" />
-                  </>
+                  'Send message'
                 )}
               </button>
-            </form>
-          </motion.div>
+            </div>
+          </motion.form>
         </div>
       </div>
     </section>

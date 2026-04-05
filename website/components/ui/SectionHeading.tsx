@@ -7,10 +7,21 @@ interface SectionHeadingProps {
   title: string;
   subtitle?: string;
   centered?: boolean;
+  align?: 'left' | 'center';
   className?: string;
+  eyebrow?: string;
 }
 
-export function SectionHeading({ title, subtitle, centered = true, className }: SectionHeadingProps) {
+export function SectionHeading({
+  title,
+  subtitle,
+  centered = true,
+  align,
+  className,
+  eyebrow,
+}: SectionHeadingProps) {
+  const isCentered = align ? align === 'center' : centered;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -18,27 +29,32 @@ export function SectionHeading({ title, subtitle, centered = true, className }: 
       viewport={{ once: true, margin: '-100px' }}
       transition={{ duration: 0.6 }}
       className={cn(
-        'mb-12 md:mb-16',
-        centered && 'text-center',
+        'mb-10 md:mb-14',
+        isCentered && 'text-center',
         className
       )}
     >
+      {eyebrow && (
+        <p className={cn('mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-spiritual-saffron', isCentered && 'justify-center')}>
+          {eyebrow}
+        </p>
+      )}
       <h2 className="font-display fluid-text-3xl text-spiritual-maroon mb-4">
         {title}
       </h2>
-      {/* Gold ornamental divider */}
       <div className={cn(
-        'flex items-center gap-3 mb-6',
-        centered && 'justify-center'
+        'flex items-center gap-3 mb-5',
+        isCentered && 'justify-center'
       )}>
-        <div className="w-12 h-px bg-gradient-to-r from-transparent to-gold-400" />
-        <div className="w-2 h-2 rotate-45 bg-gold-400" />
-        <div className="w-8 h-1 bg-gradient-to-r from-gold-400 via-gold-300 to-gold-400 rounded-full" />
-        <div className="w-2 h-2 rotate-45 bg-gold-400" />
-        <div className="w-12 h-px bg-gradient-to-l from-transparent to-gold-400" />
+        <div className="h-px w-12 bg-gradient-to-r from-transparent to-gold-400/90" />
+        <div className="h-2 w-2 rounded-full bg-gold-400/90" />
+        <div className="h-px w-12 bg-gradient-to-l from-transparent to-gold-400/90" />
       </div>
       {subtitle && (
-        <p className="font-body fluid-text-lg text-spiritual-warmGray max-w-2xl mx-auto text-balance">
+        <p className={cn(
+          'font-body fluid-text-lg text-spiritual-warmGray max-w-2xl text-balance leading-relaxed',
+          isCentered && 'mx-auto'
+        )}>
           {subtitle}
         </p>
       )}

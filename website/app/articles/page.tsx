@@ -1,30 +1,34 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FileText, ArrowRight, Calendar, Clock, BookOpen, Loader2 } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
-import api from '../../lib/api';
+import { ArrowRight, BookOpen, Calendar, Clock, FileText, Loader2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import api from '../../lib/api';
+import { PageHero } from '@/components/ui/PageHero';
+import { SectionHeading } from '@/components/ui/SectionHeading';
 
-// Fallback data in case API fails
 const fallbackArticles = [
   {
     title: 'The Essence of Advaita: Understanding Non-Duality',
-    excerpt: 'A profound exploration of the Advaita philosophy and how it reveals the ultimate unity of all existence.',
+    excerpt:
+      'A profound exploration of Advaita philosophy and how it reveals the ultimate unity of all existence.',
     date: 'December 10, 2024',
     readTime: '12 min read',
     category: 'Vedanta',
   },
   {
     title: 'Karma and Its Fruits: A Vedantic Perspective',
-    excerpt: 'Understanding the law of karma, its subtle workings, and the path to liberation from karmic bondage.',
+    excerpt:
+      'Understanding the law of karma, its subtle workings, and the path to liberation from karmic bondage.',
     date: 'December 5, 2024',
     readTime: '10 min read',
     category: 'Philosophy',
   },
   {
     title: 'The Power of Satsang in Spiritual Growth',
-    excerpt: 'Why gathering in the company of truth transforms consciousness and accelerates spiritual evolution.',
+    excerpt:
+      'Why gathering in the company of truth transforms consciousness and accelerates spiritual evolution.',
     date: 'November 28, 2024',
     readTime: '8 min read',
     category: 'Satsang',
@@ -38,14 +42,16 @@ const fallbackArticles = [
   },
   {
     title: 'The Guru Principle: Dispeller of Darkness',
-    excerpt: 'Understanding the sacred role of the Guru in illuminating the path from ignorance to wisdom.',
+    excerpt:
+      'Understanding the sacred role of the Guru in illuminating the path from ignorance to wisdom.',
     date: 'November 15, 2024',
     readTime: '12 min read',
     category: 'Philosophy',
   },
   {
     title: 'Sanatan Dharma in the Modern World',
-    excerpt: 'How the eternal principles of Sanatan Dharma remain relevant and vital in contemporary times.',
+    excerpt:
+      'How the eternal principles of Sanatan Dharma remain relevant and vital in contemporary times.',
     date: 'November 8, 2024',
     readTime: '9 min read',
     category: 'Vedanta',
@@ -72,9 +78,10 @@ export default function ArticlesPage() {
   const [visibleCount, setVisibleCount] = useState(6);
 
   useEffect(() => {
-    api.get('/articles')
-      .then(r => {
-        const data = r.data?.data || r.data || [];
+    api
+      .get('/articles')
+      .then((response) => {
+        const data = response.data?.data || response.data || [];
         setArticles(data.length > 0 ? data : fallbackArticles);
       })
       .catch(() => {
@@ -105,10 +112,10 @@ export default function ArticlesPage() {
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     try {
-      return new Date(dateStr).toLocaleDateString('en-US', { 
-        month: 'long', 
-        day: 'numeric', 
-        year: 'numeric' 
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
       });
     } catch {
       return dateStr;
@@ -116,149 +123,107 @@ export default function ArticlesPage() {
   };
 
   return (
-    <div className="pt-20">
-      {/* Hero Section */}
-      <section className="relative bg-parchment py-24 overflow-hidden">
-        {/* Decorative book pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-10 left-10 text-8xl text-gold-600 font-sanskrit">ॐ</div>
-          <div className="absolute bottom-10 right-10 text-8xl text-gold-600 font-sanskrit rotate-180">ॐ</div>
-        </div>
-        
-        {/* Gold borders */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold-400 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gold-400 to-transparent" />
-        
-        <div className="container-custom relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center max-w-3xl mx-auto"
-          >
-            {/* Icon */}
-            <div className="w-20 h-20 mx-auto mb-8 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-glow animate-breathe">
-              <FileText className="w-10 h-10 text-white" />
-            </div>
-            
-            <span className="text-gold-500 font-sanskrit text-lg tracking-wider">{t('hero.sanskritTitle')}</span>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl text-spiritual-maroon mt-2 mb-6">
-              {t('hero.title')} <span className="text-gradient-gold">{t('hero.titleHighlight')}</span>
-            </h1>
-            <p className="text-spiritual-warmGray text-lg md:text-xl leading-relaxed font-body">
-              {t('hero.subtitle')}
-            </p>
-            
-            {/* Decorative divider */}
-            <div className="mt-8 flex items-center justify-center gap-4">
-              <span className="w-16 h-px bg-gradient-to-r from-transparent to-gold-400" />
-              <BookOpen className="w-5 h-5 text-gold-400" />
-              <span className="w-16 h-px bg-gradient-to-l from-transparent to-gold-400" />
-            </div>
-          </motion.div>
-        </div>
-      </section>
+    <div className="bg-parchment pt-20">
+      <PageHero
+        eyebrow={t('hero.sanskritTitle')}
+        title={t('hero.title')}
+        highlight={t('hero.titleHighlight')}
+        subtitle={t('hero.subtitle')}
+        icon={<FileText className="h-8 w-8" />}
+      />
 
-      <div className="divider-rangoli" />
-
-      {/* Articles Grid */}
-      <section className="section-padding bg-temple-warm">
+      <section className="section-padding bg-parchment">
         <div className="container-custom">
-          {/* Category filters */}
-          <div className="flex flex-wrap justify-center gap-3 mb-12">
-            {categories.map((cat) => (
+          <SectionHeading
+            eyebrow="Library"
+            title="Teachings, reflections, and spiritual writing"
+            subtitle="A cleaner reading experience with stronger structure, clearer filtering, and less visual noise around the content itself."
+          />
+
+          <div className="mb-10 flex flex-wrap justify-center gap-3">
+            {categories.map((category) => (
               <button
-                key={cat}
+                key={category}
+                type="button"
                 onClick={() => {
-                  setSelectedCategory(cat);
+                  setSelectedCategory(category);
                   setVisibleCount(6);
                 }}
-                className={`px-5 py-2 rounded-full font-medium transition-all duration-300 ${
-                  selectedCategory === cat
-                    ? 'bg-gradient-to-r from-gold-400 to-gold-500 text-white shadow-warm'
-                    : 'bg-white border-2 border-gold-300 text-spiritual-maroon hover:border-gold-400 hover:bg-gold-50'
+                className={`rounded-full border px-5 py-2.5 text-sm font-medium transition-all ${
+                  selectedCategory === category
+                    ? 'border-transparent bg-spiritual-maroon text-white shadow-[0_12px_28px_rgba(70,18,30,0.18)]'
+                    : 'border-[rgba(122,86,26,0.16)] bg-white/88 text-spiritual-maroon hover:border-[rgba(122,86,26,0.28)] hover:bg-white'
                 }`}
               >
-                {cat}
+                {category}
               </button>
             ))}
           </div>
 
-          {/* Loading State */}
           {loading && (
             <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="w-12 h-12 text-spiritual-saffron animate-spin mb-4" />
-              <p className="text-spiritual-warmGray font-body">Loading articles...</p>
+              <Loader2 className="mb-4 h-12 w-12 animate-spin text-spiritual-saffron" />
+              <p className="text-spiritual-warmGray">Loading articles...</p>
             </div>
           )}
 
-          {/* Empty State */}
           {!loading && articles.length === 0 && (
-            <div className="text-center py-20">
-              <FileText className="w-16 h-16 text-gold-400 mx-auto mb-4" />
-              <h3 className="font-display text-2xl text-spiritual-maroon mb-2">{t('noArticles')}</h3>
-              <p className="text-spiritual-warmGray"></p>
+            <div className="rounded-[30px] border border-[rgba(122,86,26,0.12)] bg-white/90 py-20 text-center shadow-[0_20px_48px_rgba(60,34,12,0.08)]">
+              <FileText className="mx-auto mb-4 h-16 w-16 text-gold-500" />
+              <h3 className="font-display text-2xl text-spiritual-maroon">{t('noArticles')}</h3>
             </div>
           )}
 
-          {/* Articles Grid */}
           {!loading && articles.length > 0 && (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {visibleArticles.map((article, index) => (
                 <motion.article
                   key={article._id || article.title}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="card-temple p-6 flex flex-col group hover:shadow-temple transition-shadow duration-300"
+                  transition={{ delay: index * 0.05 }}
+                  className="flex h-full flex-col rounded-[28px] border border-[rgba(122,86,26,0.12)] bg-white/90 p-7 shadow-[0_18px_42px_rgba(60,34,12,0.08)]"
                 >
-                  {/* Category Tag */}
-                  <div className="mb-4">
-                    <span className="inline-block px-3 py-1 rounded-full bg-gradient-to-r from-spiritual-saffron/20 to-gold-200/50 text-spiritual-saffron text-xs font-semibold">
+                  <div className="mb-4 flex items-center justify-between gap-4">
+                    <span className="inline-flex rounded-full bg-[rgba(128,0,32,0.06)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-spiritual-saffron">
                       {article.category || 'Article'}
                     </span>
+                    <BookOpen className="h-5 w-5 text-gold-500" />
                   </div>
-                  
-                  {/* Date & Read Time */}
-                  <div className="flex items-center gap-4 text-sm text-gold-600 mb-4">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
+
+                  <div className="mb-5 flex flex-wrap items-center gap-4 text-sm text-spiritual-warmGray">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Calendar className="h-4 w-4 text-gold-500" />
                       {formatDate(article.date || article.createdAt)}
                     </span>
                     {article.readTime && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
+                      <span className="inline-flex items-center gap-1.5">
+                        <Clock className="h-4 w-4 text-gold-500" />
                         {article.readTime}
                       </span>
                     )}
                   </div>
-                  
-                  {/* Title */}
-                  <h3 className="font-display text-xl text-spiritual-maroon mb-3 group-hover:text-spiritual-saffron transition-colors">
+
+                  <h3 className="font-display text-2xl leading-tight text-spiritual-maroon">
                     {article.title}
                   </h3>
-                  
-                  {/* Excerpt */}
-                  <p className="text-spiritual-warmGray text-sm mb-6 flex-grow leading-relaxed">
+                  <p className="mt-4 flex-grow text-base leading-relaxed text-spiritual-warmGray">
                     {article.excerpt || article.description || ''}
                   </p>
-                  
-                  {/* Read More Link */}
+
                   {article.link ? (
                     <a
                       href={article.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center text-gold-600 font-medium hover:text-spiritual-saffron group/link"
+                      className="mt-6 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-spiritual-saffron"
                     >
-                      <span className="relative">
-                        {t('readArticle')}
-                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gold-400 group-hover/link:w-full transition-all duration-300" />
-                      </span>
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover/link:translate-x-1 transition-transform" />
+                      {t('readArticle')}
+                      <ArrowRight className="h-4 w-4" />
                     </a>
                   ) : (
-                    <span className="inline-flex items-center text-gold-400/70 font-medium cursor-not-allowed">
+                    <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-spiritual-warmGray/70">
                       {t('readArticle')} Unavailable
                     </span>
                   )}
@@ -267,58 +232,41 @@ export default function ArticlesPage() {
             </div>
           )}
 
-          {/* Load More */}
           {!loading && filteredArticles.length > 0 && canLoadMore && (
             <div className="mt-12 text-center">
               <button
-                onClick={() => setVisibleCount((prev) => prev + 6)}
-                className="btn-gold group"
+                type="button"
+                onClick={() => setVisibleCount((current) => current + 6)}
+                className="btn-primary"
               >
                 Load More Articles
-                <svg className="w-4 h-4 ml-2 group-hover:translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
               </button>
             </div>
           )}
         </div>
       </section>
 
-      <div className="divider-rangoli" />
-
-      {/* Newsletter Section */}
-      <section className="section-padding bg-parchment">
-        <div className="container-custom">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-2xl mx-auto text-center"
-          >
-            <div className="card-temple p-8 md:p-10">
-              <div className="w-14 h-14 mx-auto mb-6 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center">
-                <FileText className="w-7 h-7 text-white" />
-              </div>
-              
-              <h3 className="font-display text-2xl md:text-3xl text-spiritual-maroon mb-3">
-                Subscribe for Wisdom
-              </h3>
-              <p className="text-spiritual-warmGray mb-6">
-                Receive new articles and spiritual insights directly in your inbox
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex-1 px-4 py-3 rounded-xl bg-spiritual-warmWhite border-2 border-gold-300 focus:border-gold-500 focus:ring-4 focus:ring-gold-200/50 focus:outline-none text-spiritual-maroon placeholder:text-spiritual-warmGray/50 transition-all duration-300"
-                />
-                <button className="btn-primary whitespace-nowrap">
-                  Subscribe
-                </button>
-              </div>
+      <section className="section-padding bg-temple-warm">
+        <div className="container-custom max-w-3xl">
+          <div className="rounded-[30px] border border-[rgba(122,86,26,0.12)] bg-white/90 p-8 text-center shadow-[0_20px_48px_rgba(60,34,12,0.08)] md:p-10">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#f3d894,#b57b1d)] text-white shadow-[0_14px_34px_rgba(181,123,29,0.26)]">
+              <FileText className="h-8 w-8" />
             </div>
-          </motion.div>
+            <h3 className="font-display text-3xl text-spiritual-maroon">Subscribe for Wisdom</h3>
+            <p className="mt-3 text-base leading-relaxed text-spiritual-warmGray">
+              Receive fresh articles, reflection notes, and spiritual insights directly in your inbox.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="flex-1 rounded-2xl border border-[rgba(122,86,26,0.16)] bg-[rgba(248,243,232,0.92)] px-4 py-3.5 text-spiritual-maroon outline-none transition focus:border-[rgba(122,86,26,0.35)] focus:bg-white"
+              />
+              <button type="button" className="btn-primary whitespace-nowrap">
+                Subscribe
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </div>

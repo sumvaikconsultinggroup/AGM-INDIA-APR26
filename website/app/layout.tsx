@@ -6,7 +6,6 @@ import { Footer } from '@/components/layout/Footer';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton';
 import { ChatWidget } from '@/components/chat/ChatWidget';
-import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { ScrollProgress } from '@/components/ui/ScrollProgress';
 import { I18nProvider } from '@/components/providers/I18nProvider';
 
@@ -54,10 +53,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`scroll-smooth ${inter.variable} ${playfair.variable} ${cormorant.variable} ${notoSerif.variable}`}>
-      <body className="min-h-screen bg-spiritual-warmWhite overflow-x-hidden font-body">
+      <body className="min-h-screen bg-spiritual-warmWhite overflow-x-hidden font-body text-spiritual-warmGray">
         <I18nProvider>
           <ScrollProgress />
-          <LoadingScreen />
           <Navbar />
           <PageTransition>
             <main className="flex-1">

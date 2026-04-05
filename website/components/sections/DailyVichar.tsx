@@ -1,9 +1,10 @@
-// website/components/sections/DailyVichar.tsx
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import axios from "axios";
+import { useEffect, useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Quote } from 'lucide-react';
+import api from '@/lib/api';
+import { useTranslation } from 'react-i18next';
 
 interface Vichar {
   titleHindi: string;
@@ -11,94 +12,78 @@ interface Vichar {
   contentHindi: string;
   contentEnglish: string;
   source?: string;
-  category: string;
   date: string;
 }
 
 export default function DailyVichar() {
+  const { i18n } = useTranslation();
   const [vichar, setVichar] = useState<Vichar | null>(null);
-  const [lang, setLang] = useState<"hindi" | "english">("hindi");
 
   useEffect(() => {
     const fetchVichar = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
-        const res = await axios.get(`${apiUrl}/api/daily-vichar/today`);
-        if (res.data.success) setVichar(res.data.data);
+        const res = await api.get('/daily-vichar/today');
+        const payload = (res.data as any)?.data || res.data;
+        if (payload) setVichar(payload);
       } catch {
-        // Silently fail — section just won't show
+        setVichar(null);
       }
     };
+
     fetchVichar();
   }, []);
 
-  if (!vichar) return null;
+  const content = useMemo(() => {
+    if (!vichar) return null;
+    const isHindi = i18n.language?.startsWith('hi');
+    return {
+      title: isHindi ? vichar.titleHindi : vichar.titleEnglish,
+      body: isHindi ? vichar.contentHindi : vichar.contentEnglish,
+    };
+  }, [i18n.language, vichar]);
+
+  if (!vichar || !content) return null;
 
   return (
-    <section className="py-16 bg-gradient-to-b from-spiritual-cream to-spiritual-parchment relative overflow-hidden">
-      {/* Decorative Om symbol */}
-      <div className="absolute top-4 right-8 text-6xl text-spiritual-saffron/10 font-noto-serif select-none">
-        ॐ
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 text-center">
+    <section className="bg-parchment py-10">
+      <div className="container-custom">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.45 }}
+          className="card-temple mx-auto max-w-4xl p-7 md:p-10"
         >
-          <p className="text-spiritual-saffron font-cormorant text-sm uppercase tracking-widest mb-2">
-            आज का विचार · Thought of the Day
-          </p>
+          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-spiritual-saffron">
+                Daily reflection
+              </p>
+              <h2 className="mt-3 font-display text-2xl text-spiritual-maroon md:text-3xl">
+                {content.title}
+              </h2>
+              <blockquote className="mt-5 text-lg leading-relaxed text-spiritual-warmGray md:text-xl">
+                “{content.body}”
+              </blockquote>
+              {vichar.source && (
+                <p className="mt-4 text-sm text-spiritual-warmGray">— {vichar.source}</p>
+              )}
+            </div>
 
-          {/* Language toggle */}
-          <div className="flex justify-center gap-2 mb-6">
-            <button
-              onClick={() => setLang("hindi")}
-              className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                lang === "hindi"
-                  ? "bg-spiritual-saffron text-white"
-                  : "bg-white/50 text-gray-600 hover:bg-white"
-              }`}
-            >
-              हिंदी
-            </button>
-            <button
-              onClick={() => setLang("english")}
-              className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                lang === "english"
-                  ? "bg-spiritual-saffron text-white"
-                  : "bg-white/50 text-gray-600 hover:bg-white"
-              }`}
-            >
-              English
-            </button>
+            <div className="rounded-[24px] border border-[rgba(122,86,26,0.12)] bg-white/70 p-4 md:w-56">
+              <Quote className="h-8 w-8 text-spiritual-saffron" />
+              <p className="mt-4 text-xs uppercase tracking-[0.24em] text-spiritual-saffron">
+                Today
+              </p>
+              <p className="mt-2 text-sm text-spiritual-warmGray">
+                {new Date(vichar.date).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </p>
+            </div>
           </div>
-
-          <h2 className="text-2xl md:text-3xl font-playfair text-spiritual-maroon mb-4">
-            {lang === "hindi" ? vichar.titleHindi : vichar.titleEnglish}
-          </h2>
-
-          <blockquote className="text-lg md:text-xl text-gray-700 leading-relaxed font-cormorant italic max-w-2xl mx-auto">
-            &ldquo;
-            {lang === "hindi" ? vichar.contentHindi : vichar.contentEnglish}
-            &rdquo;
-          </blockquote>
-
-          {vichar.source && (
-            <p className="mt-4 text-sm text-spiritual-warmGray">
-              — {vichar.source}
-            </p>
-          )}
-
-          <p className="mt-6 text-xs text-gray-400">
-            {new Date(vichar.date).toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          </p>
         </motion.div>
       </div>
     </section>
