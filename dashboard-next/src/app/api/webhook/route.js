@@ -1,45 +1,9 @@
 import DonationSchema from '../../../models/Donations';
 import Donate from '@/models/Donate';
 import { connectDB } from '@/lib/mongodb';
-import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import { NextResponse } from 'next/server';
-import { sendWhatsAppMessage, sendWhatsAppTemplateMessage } from '@/lib/whatsapp';
-
-async function sendEmail(to, subject, text, html) {
-  try {
-    const transporter = nodemailer.createTransport({
-      service: process.env.EMAIL_SERVICE,
-      host: process.env.EMAIL_HOST,
-      port: parseInt(process.env.EMAIL_PORT || '587'),
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-      debug: process.env.NODE_ENV === 'development',
-    });
-
-    const mailOptions = {
-      from: {
-        name: process.env.EMAIL_FROM_NAME || 'SwamiG Dashboard',
-        address: process.env.EMAIL_USER || '',
-      },
-      to,
-      subject,
-      text,
-      ...(html && { html }),
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email sent:', info.messageId);
-
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error('❌ Email sending failed:', error);
-    throw error;
-  }
-}
+import { deliverDonationReceipt } from '@/lib/donations/receiptDelivery';
 
 const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
@@ -56,55 +20,6 @@ function buildReceiptNumber(paymentId) {
 
 function buildReceiptAccessToken() {
   return crypto.randomBytes(24).toString('hex');
-}
-
-function getPublicReceiptUrl(req, receiptAccessToken) {
-  const configuredBaseUrl =
-    process.env.PUBLIC_APP_BASE_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.APP_BASE_URL;
-
-  const origin = configuredBaseUrl || req.nextUrl.origin;
-  return `${String(origin).replace(/\/+$/, '')}/api/donation-receipt/${receiptAccessToken}`;
-}
-
-function buildDonationReceiptEmail({ name, amount, donatedAt, receiptNumber, campaignTitle, panNumber }) {
-  const formattedAmount = `Rs. ${Number(amount || 0).toFixed(2)}`;
-  const formattedDate = new Date(donatedAt).toLocaleString('en-IN', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-
-  const subject = 'Donation Receipt - AvdheshanandG Mission';
-  const text = `Hari Om.
-
-This is to acknowledge with thanks the donation of ${formattedAmount} received from ${name || 'the donor'} towards ${campaignTitle || 'General Donation'}.
-
-Your donation receipt dated ${formattedDate} is attached herewith.
-
-Receipt number is ${receiptNumber} and PAN provided is ${panNumber || 'Not provided'}.
-
-With regards,
-AvdheshanandG Mission Team`;
-
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px;">
-      <h1 style="color: #7b1e1e;">Donation Receipt</h1>
-      <p>Hari Om.</p>
-      <p>This is to acknowledge with thanks the donation of <strong>${formattedAmount}</strong> received from <strong>${name || 'the donor'}</strong> towards <strong>${campaignTitle || 'General Donation'}</strong>.</p>
-      <div style="background: #fff6ea; border: 1px solid #f0d2a4; border-radius: 16px; padding: 18px; margin-top: 16px;">
-        <p><strong>Receipt Number:</strong> ${receiptNumber}</p>
-        <p><strong>Donation Date:</strong> ${formattedDate}</p>
-        <p><strong>PAN:</strong> ${panNumber || 'Not provided'}</p>
-      </div>
-      <p style="margin-top: 16px; color: #555;">With regards,<br/>AvdheshanandG Mission Team</p>
-    </div>
-  `;
-
-  return { subject, text, html };
 }
 
 export async function POST(req) {
@@ -206,59 +121,38 @@ export async function POST(req) {
         if (donationConfirmation && isNewDonation) {
           try {
             const campaign = campaignId ? await Donate.findById(campaignId).lean() : null;
-            const receiptPayload = buildDonationReceiptEmail({
-              name,
-              amount: amount / 100,
-              donatedAt: donationConfirmation.donatedAt || new Date(),
-              receiptNumber: donationConfirmation.receiptNumber,
+            const delivery = await deliverDonationReceipt({
+              donation: {
+                _id: donationConfirmation._id?.toString?.() || donationConfirmation._id,
+                name,
+                email,
+                phone,
+                amount: amount / 100,
+                donatedAt: donationConfirmation.donatedAt || new Date(),
+                receiptNumber: donationConfirmation.receiptNumber,
+                receiptAccessToken: donationConfirmation.receiptAccessToken,
+                paymentId: payment.id,
+                orderId: payment.order_id,
+                panNumber,
+              },
               campaignTitle: campaign?.title,
-              panNumber,
+              requestOrigin: req.nextUrl.origin,
             });
 
-            await sendEmail(email, receiptPayload.subject, receiptPayload.text, receiptPayload.html);
-            await DonationSchema.findByIdAndUpdate(donationConfirmation._id, {
-              receiptEmailSentAt: new Date(),
-            }).catch(() => {});
+            if (delivery.emailResult?.success) {
+              await DonationSchema.findByIdAndUpdate(donationConfirmation._id, {
+                receiptEmailSentAt: new Date(),
+              }).catch(() => {});
+            } else if (!delivery.emailResult?.skipped) {
+              console.error('❌ Donation receipt email failed:', delivery.emailResult?.error);
+            }
 
-            if (phone) {
-              const receiptUrl = getPublicReceiptUrl(req, donationConfirmation.receiptAccessToken);
-              const templateName =
-                process.env.WHATSAPP_DONATION_RECEIPT_TEMPLATE ||
-                'donation_80g_receipt_v1';
-
-              const whatsappResult = await sendWhatsAppTemplateMessage({
-                to: phone,
-                templateName,
-                languageCode: 'en',
-                callbackData: 'donation_80g_receipt',
-                headerValues: [receiptUrl],
-                fileName: `Donation-Receipt-${donationConfirmation.receiptNumber}.pdf`,
-                bodyValues: [
-                  name || 'Donor',
-                  (amount / 100).toFixed(2),
-                  campaign?.title || 'General Donation',
-                  payment.id,
-                  new Date(donationConfirmation.donatedAt || new Date()).toLocaleDateString('en-IN', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  }),
-                  donationConfirmation.receiptNumber || 'Receipt Pending',
-                  panNumber || 'Not provided',
-                ],
-              });
-
-              if (whatsappResult.success) {
-                await DonationSchema.findByIdAndUpdate(donationConfirmation._id, {
-                  receiptWhatsappSentAt: new Date(),
-                }).catch(() => {});
-              } else {
-                console.error('❌ WhatsApp template send failed, falling back to text:', whatsappResult.error);
-                await sendWhatsAppMessage(
-                  phone,
-                  `Hari Om. This is to acknowledge with thanks the donation of Rs. ${(amount / 100).toFixed(2)} received from ${name || 'the donor'} towards ${campaign?.title || 'General Donation'}. Receipt number is ${donationConfirmation.receiptNumber}. With regards, AvdheshanandG Mission Team.`
-                ).catch(() => {});
-              }
+            if (delivery.whatsappResult?.success) {
+              await DonationSchema.findByIdAndUpdate(donationConfirmation._id, {
+                receiptWhatsappSentAt: new Date(),
+              }).catch(() => {});
+            } else if (!delivery.whatsappResult?.skipped) {
+              console.error('❌ Donation receipt WhatsApp failed:', delivery.whatsappResult?.error);
             }
           } catch (mailErr) {
             console.error('❌ Error sending donation receipt:', mailErr);

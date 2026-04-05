@@ -53,6 +53,11 @@ export interface DonationCampaign {
 }
 
 export interface DonationRecord {
+  donationId?: string | null;
+  hasReceipt?: boolean;
+  receiptNumber?: string | null;
+  receiptEmailSentAt?: string | null;
+  receiptWhatsappSentAt?: string | null;
   id: string;
   amount: number;
   currency: string;

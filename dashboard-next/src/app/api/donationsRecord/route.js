@@ -1,6 +1,8 @@
 // pages/api/payments.js
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
+import { connectDB } from '@/lib/mongodb';
+import Donation from '@/models/Donations';
 
 function getRazorpay() {
   return new Razorpay({
@@ -18,8 +20,26 @@ export async function GET(req) {
 
     const razorpay = getRazorpay();
     const payments = await razorpay.payments.all({ count });
+    const paymentIds = payments.items.map((payment) => payment.id).filter(Boolean);
+
+    let storedDonationsByPaymentId = new Map();
+    if (paymentIds.length > 0) {
+      await connectDB();
+      const storedDonations = await (Donation)
+        .find({ paymentId: { $in: paymentIds } })
+        .select('_id paymentId receiptNumber receiptEmailSentAt receiptWhatsappSentAt')
+        .lean();
+      storedDonationsByPaymentId = new Map(
+        storedDonations.map((donation) => [donation.paymentId, donation])
+      );
+    }
 
     const allPayments = payments.items.map(payment => ({
+      donationId: storedDonationsByPaymentId.get(payment.id)?._id?.toString?.() || null,
+      hasReceipt: Boolean(storedDonationsByPaymentId.get(payment.id)?.receiptNumber),
+      receiptNumber: storedDonationsByPaymentId.get(payment.id)?.receiptNumber || null,
+      receiptEmailSentAt: storedDonationsByPaymentId.get(payment.id)?.receiptEmailSentAt || null,
+      receiptWhatsappSentAt: storedDonationsByPaymentId.get(payment.id)?.receiptWhatsappSentAt || null,
       id: payment.id,
       amount: payment.amount / 100, // convert paise to INR
       currency: payment.currency,

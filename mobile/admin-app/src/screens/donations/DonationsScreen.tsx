@@ -67,6 +67,7 @@ export function DonationsScreen() {
   const [analyticsRange, setAnalyticsRange] = useState<AnalyticsRange>('7d');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [resendingReceiptId, setResendingReceiptId] = useState<string | null>(null);
 
   // ── Fetch campaigns ──
   const fetchCampaigns = useCallback(async () => {
@@ -218,6 +219,31 @@ export function DonationsScreen() {
         },
       ],
     );
+  };
+
+  const handleResendReceipt = async (record: DonationRecord) => {
+    try {
+      setResendingReceiptId(record.id);
+      const response = await api.post('/donations/resend-receipt', {
+        paymentId: record.id,
+      });
+      const responseData = response.data;
+
+      if (responseData?.success === false) {
+        throw new Error(responseData?.message || 'Failed to resend donation receipt');
+      }
+
+      Alert.alert('Success', 'Donation receipt resend has been triggered.');
+      fetchRecords();
+    } catch (err: any) {
+      console.error('Error resending donation receipt:', err);
+      Alert.alert(
+        'Receipt resend failed',
+        err?.response?.data?.message || err?.message || 'Please try again.'
+      );
+    } finally {
+      setResendingReceiptId(null);
+    }
   };
 
   // ── Formatting helpers ──
@@ -463,6 +489,17 @@ export function DonationsScreen() {
               {item.description}
             </Text>
           ) : null}
+          <View style={styles.receiptMetaBlock}>
+            <Text style={styles.receiptMetaTitle}>
+              {item.receiptNumber || 'Receipt pending'}
+            </Text>
+            <Text style={styles.receiptMetaText}>
+              Email: {item.receiptEmailSentAt ? new Date(item.receiptEmailSentAt).toLocaleDateString('en-IN') : 'Pending'}
+            </Text>
+            <Text style={styles.receiptMetaText}>
+              WhatsApp: {item.receiptWhatsappSentAt ? new Date(item.receiptWhatsappSentAt).toLocaleDateString('en-IN') : 'Pending'}
+            </Text>
+          </View>
         </View>
         <View style={styles.recordRight}>
           <Chip
@@ -473,6 +510,20 @@ export function DonationsScreen() {
             {item.status}
           </Chip>
           <Text style={styles.recordDate}>{formatUnixDate(item.created)}</Text>
+          <TouchableOpacity
+            style={[
+              styles.resendButton,
+              resendingReceiptId === item.id && styles.resendButtonDisabled,
+            ]}
+            onPress={() => handleResendReceipt(item)}
+            disabled={resendingReceiptId === item.id}
+          >
+            {resendingReceiptId === item.id ? (
+              <ActivityIndicator size="small" color={colors.text.white} />
+            ) : (
+              <Text style={styles.resendButtonText}>Resend Receipt</Text>
+            )}
+          </TouchableOpacity>
         </View>
       </Card.Content>
     </Card>
@@ -1036,6 +1087,19 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 2,
   },
+  receiptMetaBlock: {
+    marginTop: spacing.sm,
+  },
+  receiptMetaTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary.maroon,
+    marginBottom: 2,
+  },
+  receiptMetaText: {
+    fontSize: 11,
+    color: colors.text.secondary,
+  },
   recordRight: {
     alignItems: 'flex-end',
   },
@@ -1052,6 +1116,24 @@ const styles = StyleSheet.create({
   recordDate: {
     fontSize: 11,
     color: colors.text.secondary,
+  },
+  resendButton: {
+    marginTop: spacing.sm,
+    backgroundColor: colors.primary.maroon,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    minWidth: 124,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resendButtonDisabled: {
+    opacity: 0.7,
+  },
+  resendButtonText: {
+    color: colors.text.white,
+    fontSize: 12,
+    fontWeight: '700',
   },
 
   // ── FAB ──

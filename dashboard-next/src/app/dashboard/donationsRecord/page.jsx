@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Download, Loader2, RefreshCw } from 'lucide-react';
+import { Download, Loader2, RefreshCw, Send } from 'lucide-react';
 
 const RANGE_OPTIONS = [
   { key: 'today', label: 'Today' },
@@ -36,6 +36,7 @@ export default function DonationsRecordPage() {
   const [range, setRange] = useState('7d');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [resendingId, setResendingId] = useState(null);
 
   const analyticsUrl = useMemo(() => {
     if (range === 'custom' && customStartDate && customEndDate) {
@@ -111,6 +112,34 @@ export default function DonationsRecordPage() {
       console.error('Error exporting donations CSV:', error);
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleResendReceipt = async (donation) => {
+    try {
+      setResendingId(donation.id);
+      const response = await fetch('/api/donations/resend-receipt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentId: donation.id,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.message || 'Failed to resend donation receipt');
+      }
+
+      window.alert('Donation receipt resend queued successfully.');
+      fetchDonationsDashboard();
+    } catch (error) {
+      console.error('Error resending donation receipt:', error);
+      window.alert(error instanceof Error ? error.message : 'Failed to resend donation receipt');
+    } finally {
+      setResendingId(null);
     }
   };
 
@@ -279,6 +308,7 @@ export default function DonationsRecordPage() {
                   <th className="px-3 py-3">Method</th>
                   <th className="px-3 py-3">Customer</th>
                   <th className="px-3 py-3">Date</th>
+                  <th className="px-3 py-3">Receipt</th>
                 </tr>
               </thead>
               <tbody>
@@ -290,6 +320,36 @@ export default function DonationsRecordPage() {
                     <td className="px-3 py-3 capitalize">{donation.paymentMethod || donation.method || 'N/A'}</td>
                     <td className="px-3 py-3">{donation.customer || donation.email || donation.contact || 'N/A'}</td>
                     <td className="px-3 py-3">{formatDate(new Date(donation.created * 1000))}</td>
+                    <td className="px-3 py-3">
+                      <div className="flex flex-col gap-2">
+                        <div className="text-xs text-muted-foreground">
+                          {donation.receiptNumber ? (
+                            <>
+                              <span className="font-medium text-foreground">{donation.receiptNumber}</span>
+                              <br />
+                              Email: {donation.receiptEmailSentAt ? formatDate(donation.receiptEmailSentAt) : 'Pending'}
+                              <br />
+                              WhatsApp: {donation.receiptWhatsappSentAt ? formatDate(donation.receiptWhatsappSentAt) : 'Pending'}
+                            </>
+                          ) : (
+                            'Receipt not generated yet'
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          className="inline-flex w-fit items-center rounded-md border px-3 py-1.5 text-xs font-medium disabled:opacity-60"
+                          onClick={() => handleResendReceipt(donation)}
+                          disabled={resendingId === donation.id}
+                        >
+                          {resendingId === donation.id ? (
+                            <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Send className="mr-2 h-3.5 w-3.5" />
+                          )}
+                          Resend Receipt
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
