@@ -38,6 +38,7 @@ import { ProfileLoginPrompt, ProfileScreen } from '../screens/profile';
 import LiveStreamScreen from '../screens/live/LiveStreamScreen';
 import PanchangScreen from '../screens/panchang/PanchangScreen';
 import PanchangCalendarScreen from '../screens/panchang/PanchangCalendarScreen';
+import NotificationPreferencesScreen from '../screens/panchang/NotificationPreferencesScreen';
 
 export type RootStackParamList = {
   Main: undefined;
@@ -57,6 +58,7 @@ export type RootStackParamList = {
   LiveStream: undefined;
   Panchang: undefined;
   PanchangCalendar: { lat?: number; lng?: number; cityName?: string; timezone?: string };
+  NotificationPreferences: undefined;
 };
 
 export type MainTabParamList = {
@@ -98,6 +100,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       LiveStream: 'live',
       Panchang: 'panchang',
       PanchangCalendar: 'panchang/calendar',
+      NotificationPreferences: 'panchang/notifications',
     },
   },
 };
@@ -348,6 +351,14 @@ export function AppNavigator() {
         <Stack.Screen
           name="PanchangCalendar"
           component={PanchangCalendarScreen}
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="NotificationPreferences"
+          component={NotificationPreferencesScreen}
           options={{
             headerShown: false,
             animation: 'slide_from_right',

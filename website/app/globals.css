@@ -218,6 +218,22 @@
 ::-webkit-scrollbar {
   width: 8px;
 }
+
+/* Print styles for Panchang */
+@media print {
+  nav, footer, .scroll-progress, .whatsapp-button, .chat-widget,
+  button[title="Share Panchang"], button[title="Print Panchang"],
+  .section-divider-temple, .section-divider-lotus {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: #1a0808 !important;
+  }
+  main {
+    padding-top: 0 !important;
+  }
+}
 ::-webkit-scrollbar-track {
   background: #FFF8E7;
 }

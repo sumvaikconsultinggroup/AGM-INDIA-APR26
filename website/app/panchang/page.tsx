@@ -245,6 +245,35 @@ export default function EnhancedPanchangPage() {
               className="text-sm font-medium text-spiritual-maroon bg-transparent focus:outline-none"
             />
           </div>
+
+          {/* Share & Print Buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                if (!panchang) return;
+                const text = `Today's Panchang (${selectedCity.name})\nTithi: ${panchang.tithi?.name || '--'} (${panchang.tithi?.paksha || ''})\nNakshatra: ${panchang.nakshatra?.name || '--'}\nSunrise: ${panchang.sunrise || '--'}\n${panchang.festivals?.length ? `Festival: ${panchang.festivals[0]}` : ''}`;
+                if (navigator.share) {
+                  navigator.share({ title: "Today's Panchang", text });
+                } else {
+                  navigator.clipboard.writeText(text);
+                  alert('Panchang copied to clipboard!');
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-2.5 bg-white/80 border border-gold-200 rounded-xl text-sm font-medium text-spiritual-maroon hover:bg-gold-50 transition-colors"
+              title="Share Panchang"
+            >
+              <Share2 className="w-4 h-4 text-spiritual-saffron" />
+              <span className="hidden sm:inline">Share</span>
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-1.5 px-3 py-2.5 bg-white/80 border border-gold-200 rounded-xl text-sm font-medium text-spiritual-maroon hover:bg-gold-50 transition-colors"
+              title="Print Panchang"
+            >
+              <Printer className="w-4 h-4 text-spiritual-saffron" />
+              <span className="hidden sm:inline">Print</span>
+            </button>
+          </div>
         </div>
       </section>
 
