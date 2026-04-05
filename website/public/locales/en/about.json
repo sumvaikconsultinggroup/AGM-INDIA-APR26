@@ -1,0 +1,27 @@
+{
+  "hero": {
+    "title": "About Swami Ji",
+    "subtitle": "The journey of a spiritual luminary",
+    "badge": "Acharya Mahamandaleshwar · Juna Akhara"
+  },
+  "introduction": {
+    "title": "A Beacon of Spiritual Light",
+    "paragraph1": "His Holiness Swami Avdheshanand Giri Ji Maharaj is the Acharya Mahamandaleshwar of Juna Akhara — one of the oldest and most revered Hindu monastic orders.",
+    "paragraph2": "Born in 1962 in Khurja, Uttar Pradesh, Swami Ji renounced worldly life at the age of 18 and embarked on a solitary journey to the Himalayas.",
+    "paragraph3": "Today, as President of the Hindu Dharma Acharya Sabha, he bridges ancient wisdom with contemporary challenges, guiding millions toward inner awakening."
+  },
+  "roles": {
+    "title": "Roles & Responsibilities",
+    "acharyaMahamandaleshwar": "Acharya Mahamandaleshwar, Juna Akhara",
+    "presidentSabha": "President, Hindu Dharma Acharya Sabha",
+    "founderMission": "Founder, Avdheshanand Mission",
+    "vedantaScholar": "Vedanta Scholar & Author",
+    "globalSpeaker": "Global Spiritual Speaker"
+  },
+  "philosophy": {
+    "title": "Philosophy & Vision",
+    "description": "Swami Ji's philosophy rests on the foundation of Advaita Vedanta — the non-dual understanding that the individual self and the universal consciousness are one.",
+    "quote": "True knowledge is not merely information; it is transformation. When wisdom enters the heart, it changes not only how we think but how we live.",
+    "quoteAuthor": "— Swami Avdheshanand Giri Ji"
+  }
+}

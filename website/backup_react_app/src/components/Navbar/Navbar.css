@@ -1,0 +1,61 @@
+/* Pill button with running red gradient border and transparent background */
+.btn-gradient-outline {
+  position: relative;
+  display: inline-block;
+  padding: 0.6rem 1.8rem;
+  border-radius: 9999px;
+  background: transparent;
+  color: #B82A1E;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: visible; /* Changed from hidden to visible */
+  z-index: 1;
+  transition: color 0.3s ease;
+}
+
+/* Gradient border using pseudo-element */
+.btn-gradient-outline::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 9999px;
+  z-index: -1;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #B82A1E,
+    #FF4C4C,
+    #B82A1E,
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: gradient-run 3s linear infinite;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  padding: 2px;
+}
+
+/* Running gradient animation */
+@keyframes gradient-run {
+  0% { 
+    background-position: 0% 50%; 
+  }
+  100% { 
+    background-position: 200% 50%; 
+  }
+}
+
+/* Optional hover: change text color */
+.btn-gradient-outline:hover {
+  color: #FF4C4C;
+}
+
+/* Optional: pause animation on hover */
+.btn-gradient-outline:hover::before {
+  animation-play-state: paused;
+}

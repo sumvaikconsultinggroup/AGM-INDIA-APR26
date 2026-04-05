@@ -1,0 +1,491 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-spiritual-warmWhite text-spiritual-warmGray antialiased font-body;
+    font-feature-settings: 'kern' 1, 'liga' 1;
+  }
+
+  ::selection {
+    background: rgba(255, 107, 0, 0.2);
+    color: #4A0010;
+  }
+}
+
+@layer components {
+  /* ===== Spiritual Design System Utilities ===== */
+
+  /* Temple-styled card with ornamental gold border */
+  .card-temple {
+    @apply relative bg-spiritual-warmWhite rounded-lg overflow-hidden;
+    border: 1px solid rgba(212, 160, 23, 0.3);
+    box-shadow: 0 4px 24px rgba(128, 0, 32, 0.08), 0 0 0 1px rgba(212, 160, 23, 0.1);
+  }
+  .card-temple::before {
+    content: '';
+    @apply absolute top-0 left-0 right-0 h-1;
+    background: linear-gradient(90deg, transparent, #D4A017, #FF6B00, #D4A017, transparent);
+  }
+
+  /* Ornamental border pattern */
+  .border-ornamental {
+    border: 2px solid rgba(212, 160, 23, 0.4);
+    border-image: linear-gradient(135deg, #D4A017, #FF6B00, #D4A017) 1;
+  }
+
+  /* Mandala watermark background */
+  .bg-mandala {
+    position: relative;
+  }
+  .bg-mandala::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(212, 160, 23, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Rangoli-style section divider */
+  .divider-rangoli {
+    @apply relative w-full h-8 flex items-center justify-center;
+  }
+  .divider-rangoli::before {
+    content: '◆';
+    @apply text-accent-gold text-sm;
+    text-shadow: 0 0 10px rgba(212, 160, 23, 0.5);
+  }
+  .divider-rangoli::after {
+    content: '';
+    @apply absolute top-1/2 left-0 right-0 h-px;
+    background: linear-gradient(90deg, transparent, rgba(212, 160, 23, 0.4), rgba(212, 160, 23, 0.6), rgba(212, 160, 23, 0.4), transparent);
+  }
+
+  /* Sanskrit/Devanagari optimized text */
+  .text-sanskrit {
+    @apply font-sanskrit;
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+  }
+
+  /* Golden text gradient */
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #D4A017, #FFD54F, #D4A017);
+  }
+
+  /* Saffron text gradient */
+  .text-gradient-saffron {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #FF6B00, #FFB300, #FF6B00);
+  }
+
+  /* Legacy text gradient (for compatibility) */
+  .text-gradient {
+    @apply bg-gradient-to-r from-spiritual-deepRed to-primary-600 bg-clip-text text-transparent;
+  }
+
+  /* Spiritual section backgrounds */
+  .bg-parchment {
+    background: linear-gradient(180deg, #FFF8E7, #F5E6CC);
+  }
+  .bg-temple-warm {
+    background: linear-gradient(180deg, #FFFDF5, #FFF8E7);
+  }
+  .bg-maroon-gradient {
+    background: linear-gradient(135deg, #800020, #4A0010);
+  }
+  .bg-saffron-gradient {
+    background: linear-gradient(135deg, #FF6B00, #FFB300);
+  }
+
+  /* Button variants */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium text-white transition-all duration-300;
+    background: linear-gradient(135deg, #FF6B00, #E65100);
+    box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 6px 25px rgba(255, 107, 0, 0.5);
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium transition-all duration-300;
+    color: #800020;
+    border: 2px solid #800020;
+  }
+  .btn-secondary:hover {
+    background: #800020;
+    color: white;
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium text-white transition-all duration-300;
+    background: linear-gradient(135deg, #D4A017, #B8860B);
+    box-shadow: 0 4px 15px rgba(212, 160, 23, 0.3);
+  }
+  .btn-gold:hover {
+    box-shadow: 0 6px 25px rgba(212, 160, 23, 0.5);
+    transform: translateY(-2px);
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-6 py-2 text-spiritual-warmGray hover:text-spiritual-deepRed transition-colors duration-300;
+  }
+
+  /* Glass card with warm tint */
+  .glass-card {
+    @apply backdrop-blur-md rounded-xl;
+    background: rgba(255, 248, 231, 0.85);
+    border: 1px solid rgba(212, 160, 23, 0.2);
+  }
+
+  /* Warm card */
+  .card-warm {
+    @apply bg-white rounded-xl;
+    box-shadow: 0 4px 20px rgba(139, 126, 116, 0.1);
+  }
+  .card-warm:hover {
+    box-shadow: 0 8px 30px rgba(139, 126, 116, 0.15);
+  }
+
+  /* Section padding */
+  .section-padding {
+    @apply py-16 md:py-24 lg:py-32;
+  }
+
+  /* Container */
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Heading display */
+  .heading-display {
+    @apply font-display text-spiritual-deepRed;
+  }
+}
+
+@layer utilities {
+  /* Animation delays */
+  .animation-delay-150 {
+    animation-delay: 150ms;
+  }
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+  .animation-delay-500 {
+    animation-delay: 500ms;
+  }
+  .animation-delay-700 {
+    animation-delay: 700ms;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Fluid typography */
+  .fluid-text-sm {
+    font-size: clamp(0.875rem, 0.8rem + 0.25vw, 1rem);
+  }
+  .fluid-text-base {
+    font-size: clamp(1rem, 0.9rem + 0.35vw, 1.125rem);
+  }
+  .fluid-text-lg {
+    font-size: clamp(1.125rem, 1rem + 0.5vw, 1.5rem);
+  }
+  .fluid-text-xl {
+    font-size: clamp(1.25rem, 1rem + 0.75vw, 2rem);
+  }
+  .fluid-text-2xl {
+    font-size: clamp(1.5rem, 1.25rem + 1vw, 2.5rem);
+  }
+  .fluid-text-3xl {
+    font-size: clamp(1.875rem, 1.5rem + 1.5vw, 3rem);
+  }
+  .fluid-text-4xl {
+    font-size: clamp(2.25rem, 1.75rem + 2vw, 4rem);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FFF8E7;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4A017;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B8860B;
+}
+
+/* Focus ring for accessibility */
+.focus-ornate:focus-visible {
+  outline: 2px solid #D4A017;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(212, 160, 23, 0.2);
+}
+
+/* Peaceful focus states */
+*:focus-visible {
+  @apply outline-none ring-2 ring-accent-gold ring-offset-2 ring-offset-spiritual-warmWhite;
+}
+
+/* Smooth link underlines */
+.nav-link {
+  @apply relative;
+}
+.nav-link::after {
+  content: '';
+  @apply absolute bottom-0 left-1/2 w-0 h-0.5 bg-accent-gold rounded-full transition-all duration-300 -translate-x-1/2;
+}
+.nav-link:hover::after {
+  @apply w-full;
+}
+
+/* Breathing animation for spiritual elements */
+@keyframes gentle-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.03); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+.breathe {
+  animation: gentle-breathe 4s ease-in-out infinite;
+}
+
+/* Soft glow for important elements */
+.soft-glow {
+  box-shadow: 0 0 30px rgba(212, 160, 23, 0.15), 0 0 60px rgba(212, 160, 23, 0.08);
+}
+
+/* Love heart pulse */
+@keyframes heart-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+.heart-pulse:hover svg {
+  animation: heart-pulse 0.6s ease-in-out;
+}
+
+/* Smooth image loading */
+img {
+  @apply transition-opacity duration-500;
+}
+img[data-loaded='false'] {
+  @apply opacity-0;
+}
+img[data-loaded='true'] {
+  @apply opacity-100;
+}
+
+/* ===== Enhanced UX System Utilities ===== */
+
+/* Scroll Progress Bar */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #FF6B00, #D4A017, #FFD54F);
+  z-index: 9999;
+  transition: width 0.1s ease-out;
+}
+
+/* Flip Card System */
+.flip-card {
+  perspective: 1000px;
+}
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card:hover .flip-card-inner {
+  transform: rotateY(180deg);
+}
+.flip-card-front, .flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+
+/* Masonry Grid */
+.masonry-grid {
+  columns: 3;
+  column-gap: 1rem;
+}
+.masonry-grid > * {
+  break-inside: avoid;
+  margin-bottom: 1rem;
+}
+@media (max-width: 1024px) {
+  .masonry-grid { columns: 2; }
+}
+@media (max-width: 640px) {
+  .masonry-grid { columns: 1; }
+}
+
+/* Horizontal Scroll Timeline */
+.timeline-scroll {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.timeline-scroll::-webkit-scrollbar { display: none; }
+.timeline-scroll > * {
+  scroll-snap-align: center;
+  flex-shrink: 0;
+}
+
+/* Parallax Layers */
+.parallax-container {
+  position: relative;
+  overflow: hidden;
+}
+.parallax-layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.parallax-slow { transform: translateY(var(--parallax-offset, 0)); transition: transform 0.1s linear; }
+.parallax-fast { transform: translateY(calc(var(--parallax-offset, 0) * 2)); transition: transform 0.1s linear; }
+
+/* Section Dividers (Temple Arch) */
+.section-divider-temple {
+  width: 100%;
+  height: 60px;
+  background: transparent;
+  position: relative;
+}
+.section-divider-temple::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #D4A017, #FF6B00, #D4A017, transparent);
+}
+.section-divider-temple::after {
+  content: '॥';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #D4A017;
+  font-size: 1.5rem;
+  font-family: var(--font-sanskrit, serif);
+}
+
+.section-divider-lotus {
+  width: 100%;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+.section-divider-lotus::before,
+.section-divider-lotus::after {
+  content: '';
+  flex: 1;
+  max-width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #D4A017);
+}
+.section-divider-lotus::after {
+  background: linear-gradient(270deg, transparent, #D4A017);
+}
+
+/* Sticky Scroll Section */
+.sticky-scroll-container {
+  position: relative;
+}
+.sticky-scroll-content {
+  position: sticky;
+  top: 80px;
+}
+
+/* Enhanced Card Hover with 3D Effect */
+.card-3d-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.card-3d-hover:hover {
+  transform: translateY(-12px) rotateX(2deg);
+  box-shadow: 0 25px 50px -12px rgba(128, 0, 32, 0.25), 0 0 30px rgba(212, 160, 23, 0.15);
+}
+
+/* Text Reveal Animation */
+.text-reveal {
+  clip-path: inset(0 100% 0 0);
+  animation: textReveal 0.8s ease-out forwards;
+}
+@keyframes textReveal {
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* Stagger Children Animations */
+.stagger-children > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.6s; }
+
+/* Book Carousel */
+.book-carousel {
+  display: flex;
+  gap: 2rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 2rem 1rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.book-carousel::-webkit-scrollbar { display: none; }
+.book-carousel > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+.book-card {
+  width: 220px;
+  transition: all 0.4s ease;
+}
+.book-card:hover {
+  transform: translateY(-10px) scale(1.05);
+}

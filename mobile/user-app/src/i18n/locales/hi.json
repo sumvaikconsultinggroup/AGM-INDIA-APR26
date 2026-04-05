@@ -1,0 +1,259 @@
+{
+  "tabs": {
+    "home": "होम",
+    "explore": "खोजें",
+    "schedule": "कार्यक्रम",
+    "donate": "दान",
+    "profile": "प्रोफ़ाइल"
+  },
+  "home": {
+    "welcome": "हरि ॐ",
+    "heroQuote": "\"मन ही सब कुछ है। जैसा आप सोचते हैं, वैसे ही बनते हैं।\"",
+    "dailyQuote": "दैनिक प्रेरणा",
+    "upcomingEvents": "आगामी कार्यक्रम",
+    "latestArticles": "नवीनतम लेख",
+    "donationSpotlight": "एक कारण का समर्थन करें",
+    "quickLinks": "त्वरित लिंक",
+    "viewAll": "सभी देखें",
+    "seeAll": "सभी देखें",
+    "seeAllUpcomingEvents": "सभी आगामी कार्यक्रम देखें",
+    "seeAllArticles": "सभी लेख देखें",
+    "noUpcomingEvents": "कोई आगामी कार्यक्रम नहीं",
+    "noArticlesAvailable": "कोई लेख उपलब्ध नहीं",
+    "quickLinksItems": {
+      "panchang": "पंचांग",
+      "schedule": "कार्यक्रम",
+      "books": "पुस्तकें",
+      "videos": "वीडियो",
+      "podcasts": "पॉडकास्ट",
+      "gallery": "गैलरी",
+      "volunteer": "सेवा"
+    }
+  },
+  "explore": {
+    "title": "खोजें",
+    "search": "लेख, वीडियो, पुस्तकें खोजें...",
+    "articles": "लेख",
+    "videos": "वीडियो",
+    "books": "पुस्तकें",
+    "podcasts": "पॉडकास्ट",
+    "gallery": "गैलरी",
+    "events": "कार्यक्रम",
+    "noResults": "कोई परिणाम नहीं मिला"
+  },
+  "schedule": {
+    "title": "कार्यक्रम",
+    "upcoming": "आगामी",
+    "past": "पिछले",
+    "noEvents": "कोई निर्धारित कार्यक्रम नहीं",
+    "registerNow": "अभी पंजीकरण करें",
+    "registered": "पंजीकृत",
+    "location": "स्थान",
+    "date": "तिथि"
+  },
+  "donate": {
+    "title": "दान",
+    "supportMission": "स्वामी जी के मिशन का समर्थन करें",
+    "supportMissionSubtitle": "आपका उदार दान आध्यात्मिक ज्ञान के प्रसार और सामुदायिक कार्यक्रमों में सहायता करता है।",
+    "activeCampaigns": "सक्रिय अभियान",
+    "donateNow": "अभी दान करें",
+    "noCampaigns": "कोई सक्रिय अभियान नहीं",
+    "noCampaignsSubtitle": "नए दान अवसरों के लिए बाद में देखें",
+    "customAmountPlaceholder": "कस्टम राशि दर्ज करें",
+    "selectAmountLabel": "दान राशि चुनें {{amount}}",
+    "secureCheckoutTitle": "सुरक्षित वेब चेकआउट",
+    "secureCheckoutSubtitle": "दान वर्तमान में हमारी सुरक्षित वेबसाइट चेकआउट के माध्यम से पूरा होता है।",
+    "taxBenefitsTitle": "कर लाभ",
+    "taxBenefitsSubtitle": "दान धारा 80G के तहत कर छूट के लिए पात्र है।",
+    "raised": "प्राप्त",
+    "goal": "लक्ष्य",
+    "donors": "दानदाता",
+    "alerts": {
+      "signInRequiredTitle": "साइन इन आवश्यक",
+      "signInRequiredMessage": "दान करने के लिए कृपया साइन इन करें।",
+      "ok": "ठीक है",
+      "continueCheckoutTitle": "सुरक्षित चेकआउट जारी रखें",
+      "continueCheckoutMessage": "सुरक्षित भुगतान फिलहाल वेब चेकआउट पर उपलब्ध है",
+      "forCampaign": "अभियान",
+      "openWebCheckout": "वेब चेकआउट खोलें",
+      "unableToOpenTitle": "खोला नहीं जा सका",
+      "unableToOpenMessage": "दान पेज अभी नहीं खुल सका। कृपया फिर प्रयास करें।"
+    }
+  },
+  "profile": {
+    "title": "प्रोफ़ाइल",
+    "editProfile": "प्रोफ़ाइल संपादित करें",
+    "myEvents": "मेरे कार्यक्रम",
+    "settings": "सेटिंग्स",
+    "language": "भाषा",
+    "notifications": "सूचनाएं",
+    "about": "परिचय",
+    "logout": "लॉगआउट",
+    "logoutConfirm": "क्या आप वाकई लॉगआउट करना चाहते हैं?",
+    "loginPrompt": "अपनी प्रोफ़ाइल तक पहुंचने के लिए साइन इन करें",
+    "login": "लॉगिन",
+    "register": "पंजीकरण करें",
+    "devoteeFallback": "भक्त",
+    "featureComingSoon": "{{item}} जल्द उपलब्ध होगा।",
+    "appTagline": "हरि ॐ",
+    "stats": {
+      "registrations": "पंजीकरण",
+      "donations": "दान",
+      "bookings": "बुकिंग"
+    },
+    "menu": {
+      "registrations": {
+        "title": "मेरे पंजीकरण",
+        "subtitle": "जिन कार्यक्रमों और समय-सारिणी में आपने पंजीकरण किया"
+      },
+      "donations": {
+        "title": "दान इतिहास",
+        "subtitle": "अपने पिछले दान देखें"
+      },
+      "bookings": {
+        "title": "मेरी बुकिंग",
+        "subtitle": "कमरे और आवास बुकिंग"
+      },
+      "settings": {
+        "subtitle": "ऐप प्राथमिकताएँ और सूचनाएँ"
+      }
+    }
+  },
+  "auth": {
+    "welcomeBack": "पुनः स्वागत है",
+    "spiritualGreeting": "हरि ॐ तत्सत",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "forgotPassword": "पासवर्ड भूल गए?",
+    "signIn": "साइन इन करें",
+    "noAccount": "खाता नहीं है?",
+    "register": "पंजीकरण करें",
+    "createAccount": "खाता बनाएं",
+    "fullName": "पूरा नाम",
+    "confirmPassword": "पासवर्ड की पुष्टि करें",
+    "alreadyHaveAccount": "पहले से खाता है?",
+    "login": "लॉगिन",
+    "otpTitle": "अपना ईमेल सत्यापित करें",
+    "otpSubtitle": "आपके ईमेल पर भेजा गया OTP दर्ज करें",
+    "verifyOtp": "OTP सत्यापित करें",
+    "resendOtp": "OTP पुनः भेजें",
+    "resetPassword": "पासवर्ड रीसेट करें",
+    "sendResetLink": "रीसेट लिंक भेजें",
+    "backToLogin": "लॉगिन पर वापस जाएं",
+    "googleSignInComingSoon": "Google साइन-इन (जल्द आ रहा है)",
+    "browseWithoutSignIn": "साइन इन किए बिना देखें",
+    "registerFlow": {
+      "subtitle": "हमारे आध्यात्मिक समुदाय से जुड़ें",
+      "fullNameRequired": "पूरा नाम *",
+      "emailRequired": "ईमेल *",
+      "phoneOptional": "फ़ोन (वैकल्पिक)",
+      "passwordRequired": "पासवर्ड *",
+      "confirmPasswordRequired": "पासवर्ड की पुष्टि करें *",
+      "googleSignUpComingSoon": "Google साइन-अप (जल्द आ रहा है)",
+      "errors": {
+        "fillRequired": "कृपया सभी आवश्यक फ़ील्ड भरें",
+        "passwordMismatch": "पासवर्ड मेल नहीं खाते",
+        "passwordMin": "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए",
+        "failedTitle": "पंजीकरण विफल",
+        "failedMessage": "खाता नहीं बन सका"
+      }
+    },
+    "otp": {
+      "sentCodeTo": "हमने सत्यापन कोड भेजा है",
+      "yourEmail": "आपका ईमेल",
+      "enterCode": "6-अंकों का OTP दर्ज करें",
+      "didNotReceiveCode": "कोड नहीं मिला?",
+      "resendIn": "{{seconds}}s में पुनः भेजें",
+      "successTitle": "सफल",
+      "successMessage": "सत्यापन सफल!",
+      "newOtpSent": "नया OTP आपके ईमेल पर भेज दिया गया है",
+      "failedTitle": "सत्यापन विफल",
+      "errors": {
+        "enterCompleteCode": "कृपया पूरा 6-अंकों का OTP दर्ज करें",
+        "invalidOtp": "अमान्य OTP। कृपया पुनः प्रयास करें।",
+        "resendFailed": "OTP पुनः भेजने में विफल"
+      }
+    },
+    "forgot": {
+      "title": "पासवर्ड भूल गए?",
+      "subtitle": "अपना ईमेल दर्ज करें, हम पासवर्ड रीसेट करने के निर्देश भेजेंगे।",
+      "emailAddress": "ईमेल पता",
+      "checkEmailTitle": "अपना ईमेल देखें",
+      "sentInstructions": "हमने पासवर्ड रीसेट निर्देश भेजे हैं:",
+      "checkInboxInstruction": "कृपया अपना इनबॉक्स देखें और पासवर्ड रीसेट लिंक का पालन करें। स्पैम फ़ोल्डर भी देखें।",
+      "didNotReceiveTryAgain": "ईमेल नहीं मिला? फिर कोशिश करें",
+      "errors": {
+        "enterEmail": "कृपया अपना ईमेल पता दर्ज करें",
+        "invalidEmail": "कृपया वैध ईमेल पता दर्ज करें",
+        "sendFailed": "रीसेट लिंक भेजने में विफल। कृपया पुनः प्रयास करें।"
+      }
+    },
+    "reset": {
+      "title": "नया पासवर्ड सेट करें",
+      "forAccount": "{{account}} के लिए",
+      "yourAccount": "आपका खाता",
+      "newPassword": "नया पासवर्ड",
+      "confirmNewPassword": "नए पासवर्ड की पुष्टि करें",
+      "updatePassword": "पासवर्ड अपडेट करें",
+      "successTitle": "सफल",
+      "successMessage": "पासवर्ड सफलतापूर्वक रीसेट हो गया",
+      "failedTitle": "रीसेट विफल",
+      "failedMessage": "पासवर्ड रीसेट नहीं हो सका",
+      "errors": {
+        "passwordMin": "पासवर्ड कम से कम 8 अक्षरों का होना चाहिए"
+      }
+    },
+    "errors": {
+      "fillAllFields": "कृपया सभी फ़ील्ड भरें",
+      "loginFailedTitle": "लॉगिन विफल",
+      "invalidCredentials": "अमान्य क्रेडेंशियल्स"
+    }
+  },
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "comingSoon": "जल्द आ रहा है",
+    "retry": "पुनः प्रयास करें",
+    "cancel": "रद्द करें",
+    "or": "या",
+    "changeLanguageTo": "{{language}} में भाषा बदलें",
+    "save": "सहेजें",
+    "readMore": "और पढ़ें",
+    "viewAll": "सभी देखें",
+    "buyOnAmazon": "Amazon पर खरीदें",
+    "somethingWentWrong": "कुछ गलत हो गया",
+    "tryAgain": "फिर कोशिश करें"
+  },
+  "chat": {
+    "headerTitle": "स्वामी जी से पूछें",
+    "headerSubtitle": "आध्यात्मिक मार्गदर्शक",
+    "typing": "विचार कर रहे हैं...",
+    "inputPlaceholder": "शिक्षाओं, कार्यक्रमों के बारे में पूछें...",
+    "initialMessage": "नमस्ते! मैं स्वामी अवधेशानंद गिरी जी महाराज की शिक्षाओं, कार्यक्रमों और पुस्तकों के बारे में आपकी सहायता के लिए यहाँ हूँ। मैं आपकी कैसे मदद कर सकता हूँ?",
+    "errorMessage": "क्षमा करें, अभी मैं आपका अनुरोध संसाधित नहीं कर पा रहा हूँ। कृपया पुनः प्रयास करें।",
+    "suggestions": {
+      "aboutSwami": "स्वामी जी के बारे में बताएं",
+      "upcomingEvents": "आगामी कार्यक्रम",
+      "booksTeachings": "पुस्तकें और शिक्षाएँ",
+      "visitAshram": "आश्रम कैसे जाएँ"
+    }
+  },
+  "live": {
+    "liveBadge": "लाइव",
+    "noStreamTitle": "अभी कोई लाइव स्ट्रीम नहीं है",
+    "noStreamSubtitle": "निर्धारित सत्संग समय में फिर देखें",
+    "upcomingStreams": "आगामी स्ट्रीम"
+  },
+  "profileLogin": {
+    "title": "स्वागत है, साधक",
+    "subtitle": "अपनी आध्यात्मिक यात्रा तक पहुंचने, पसंद सहेजने और समुदाय से जुड़ने के लिए साइन इन करें।",
+    "benefits": {
+      "savedTeachings": "अपनी पसंदीदा शिक्षाएँ सहेजें",
+      "registerEvents": "आगामी कार्यक्रमों में पंजीकरण करें",
+      "trackContributions": "अपने सेवा योगदान को ट्रैक करें",
+      "personalizedNotifications": "व्यक्तिगत सूचनाएँ प्राप्त करें"
+    },
+    "quote": "\"हज़ार मील की यात्रा एक कदम से शुरू होती है\"",
+    "quoteAuthor": "— लाओ त्ज़ु"
+  }
+}

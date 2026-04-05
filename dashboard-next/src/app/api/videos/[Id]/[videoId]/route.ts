@@ -1,0 +1,198 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import getCloudinary from '@/utils/cloudinary';
+import { IVideo } from '@/models/VideoSeries';
+import VideoSeries from '@/models/VideoSeries';
+
+// Function to upload file to Cloudinary
+const uploadToCloudinary = async (file: File, folderPath: string): Promise<string> => {
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const base64Data = buffer.toString('base64');
+  const dataURI = `data:${file.type};base64,${base64Data}`;
+
+  const cloudinary = getCloudinary();
+  const result = await cloudinary.uploader.upload(dataURI, {
+    folder: folderPath,
+    resource_type: 'auto',
+  });
+
+  return result.secure_url;
+};
+
+type ApiResponse = {
+  success: boolean;
+  message: string;
+  data?: IVideo | IVideo[] | null;
+  error?: string;
+  validationErrors?: Record<string, string>;
+  statusCode?: number;
+};
+
+const errorResponse = (message: string, error?: string, status = 500) => {
+  return NextResponse.json<ApiResponse>(
+    {
+      success: false,
+      message,
+      error,
+    },
+    {
+      status,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      },
+    }
+  );
+};
+
+const successResponse = (message: string, data?: IVideo | IVideo[] | null, status = 200) => {
+  return NextResponse.json<ApiResponse>(
+    {
+      success: true,
+      message,
+      data,
+    },
+    {
+      status,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      },
+    }
+  );
+};
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ Id: string; videoId: string }> }
+) {
+  try {
+    await connectDB();
+
+    const { Id, videoId } = await params;
+
+    if (!Id || !videoId) {
+      return errorResponse('Series ID and Video ID are required', undefined, 400);
+    }
+
+    // Get the existing series
+    const videoSeries = await VideoSeries.findById(Id);
+    if (!videoSeries) {
+      return errorResponse('Video series not found', undefined, 404);
+    }
+
+    // Find the video in the array
+    const videoIndex = videoSeries.videos?.findIndex(v => v.videoId === videoId);
+    if (videoIndex === undefined || videoIndex === -1) {
+      return errorResponse('Video not found in this series', undefined, 404);
+    }
+
+    // Parse form data
+    const formData = await req.formData();
+
+    // Extract basic video fields
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
+    const thumbnail = formData.get('thumbnail') as string;
+    const youtubeUrl = formData.get('youtubeUrl') as string;
+    const duration = formData.get('duration') as string;
+    const publishedAt = formData.get('publishedAt') as string;
+
+    // Get file upload for cover image
+    const coverImageFile = formData.get('coverImage') as File | null;
+
+    // Get existing coverImage URL if any
+    const coverImageUrl = formData.get('coverImageUrl') as string;
+
+    // Validate required fields
+    if (!title || !youtubeUrl) {
+      return errorResponse('Title and YouTube URL are required', undefined, 400);
+    }
+
+    // Get existing video data to preserve fields we aren't updating
+    const existingVideo = videoSeries.videos[videoIndex];
+
+    // Create updated video object
+    const updatedVideo: IVideo = {
+      ...existingVideo, // Keep existing fields
+      videoId, // Keep the original ID
+      title,
+      thumbnail,
+      youtubeUrl,
+      description,
+      duration,
+      publishedAt: publishedAt ? new Date(publishedAt) : existingVideo.publishedAt || new Date(),
+      // Preserve existing views and likes
+      views: existingVideo.views,
+      likes: existingVideo.likes,
+    };
+
+    // Handle cover image - only if we have a new file or explicit URL change
+    if (coverImageFile && coverImageFile.size > 0) {
+      try {
+        // Upload to Cloudinary
+        const uploadedImageUrl = await uploadToCloudinary(
+          coverImageFile,
+          `videoseries/videos/${videoId}`
+        );
+        updatedVideo.coverImage = uploadedImageUrl;
+        console.log('Video cover image uploaded:', uploadedImageUrl);
+
+        // Delete old cover image if it exists and isn't a placeholder
+        if (existingVideo.coverImage && 
+            !existingVideo.coverImage.includes('placeholder') && 
+            !existingVideo.coverImage.includes('default')) {
+          try {
+            const cloudinary = getCloudinary();
+            await cloudinary.uploader.destroy(
+              `videoseries/videos/${videoId}/${existingVideo.coverImage.split('/').pop()?.split('.')[0]}`
+            );
+            console.log('Old cover image deleted');
+          } catch (deleteError) {
+            console.error('Error deleting old cover image:', deleteError);
+            // Continue even if old image deletion fails
+          }
+        }
+      } catch (uploadError: unknown) {
+        console.error('Error uploading cover image:', (uploadError as Error).message);
+        // Continue even if image upload fails
+      }
+    } else if (coverImageUrl && coverImageUrl !== existingVideo.coverImage) {
+      // Only update if the URL has actually changed
+      updatedVideo.coverImage = coverImageUrl;
+      
+      // Delete old cover image if needed
+      if (existingVideo.coverImage && 
+          !existingVideo.coverImage.includes('placeholder') && 
+          !existingVideo.coverImage.includes('default')) {
+        try {
+          const cloudinary = getCloudinary();
+          await cloudinary.uploader.destroy(
+            `videoseries/videos/${videoId}/${existingVideo.coverImage.split('/').pop()?.split('.')[0]}`
+          );
+          console.log('Old cover image deleted');
+        } catch (deleteError) {
+          console.error('Error deleting old cover image:', deleteError);
+          // Continue even if old image deletion fails
+        }
+      }
+    } else {
+      // No change to cover image, preserve existing one
+      updatedVideo.coverImage = existingVideo.coverImage;
+    }
+
+    // Update the video in the array
+    videoSeries.videos[videoIndex] = updatedVideo;
+    await videoSeries.save();
+
+    return successResponse('Video updated successfully', updatedVideo);
+  }catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Error updating video:', errorMessage);
+    return errorResponse('Failed to update video', errorMessage);
+}
+}

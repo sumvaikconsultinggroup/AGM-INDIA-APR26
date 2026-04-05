@@ -1,0 +1,51 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+out/
+coverage/
+
+# Logs and temp files
+*.log
+*.tmp
+*.cache
+.yarn/cache/
+.pnp.*
+
+# Environment files
+.env
+.env.*  # .env.local, .env.production, etc.
+
+# Compiled files / bundler output
+*.min.js
+*.bundle.js
+
+# Static assets
+public/
+static/
+assets/
+
+# Git-related
+.git
+.gitignore
+
+# VSCode settings
+.vscode/
+.idea/
+
+# Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+
+# Next.js specific
+.next/
+
+# Nuxt.js specific
+.nuxt/
+
+vite.config.js
+.env.local

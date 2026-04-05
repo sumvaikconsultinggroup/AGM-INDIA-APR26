@@ -1,0 +1,41 @@
+{
+  "hero": {
+    "title": "Donate with",
+    "titleHighlight": "Love",
+    "subtitle": "Your generous contribution helps sustain Swami Ji's mission of spreading spiritual wisdom and serving humanity."
+  },
+  "causes": {
+    "sanskritTitle": "सेवा",
+    "title": "Support Our",
+    "titleHighlight": "Causes",
+    "subtitle": "Choose a cause close to your heart and make a meaningful contribution"
+  },
+  "noCauses": {
+    "title": "No Causes Found",
+    "subtitle": "Check back later for donation opportunities."
+  },
+  "labels": {
+    "raised": "raised",
+    "goal": "Goal"
+  },
+  "custom": {
+    "title": "Custom Donation Amount",
+    "subtitle": "Every contribution, no matter the size, brings blessings",
+    "placeholder": "Enter amount"
+  },
+  "handoff": {
+    "message": "You opened donation checkout from the mobile app.",
+    "returnToApp": "Return to App"
+  },
+  "impact": {
+    "title": "Your Impact",
+    "subtitle": "See how your donations have helped spread light and love",
+    "stats": {
+      "mealsServed": "Meals Served",
+      "studentsEducated": "Students Educated",
+      "healthcareCamps": "Healthcare Camps"
+    }
+  },
+  "donateNow": "Donate Now",
+  "donateWithLove": "Donate with Love"
+}

@@ -1,0 +1,102 @@
+{
+  "hero": {
+    "blessing": "॥ श्री गुरवे नमः ॥",
+    "badge": "Acharya Mahamandaleshwar · Juna Akhara",
+    "titleLine1": "Swami Avdheshanand",
+    "titleLine2": "Giri Ji Maharaj",
+    "subtitle": "Illuminating the Path of Vedanta for Millions Worldwide",
+    "shloka": "सत्यं शिवं सुन्दरम्",
+    "ctaExplore": "Explore His Journey",
+    "ctaWatch": "Watch Discourse",
+    "scrollDiscover": "Discover"
+  },
+  "lifeStory": {
+    "title": "A Life Devoted to Truth",
+    "subtitle": "The sacred journey from seeking to illumination",
+    "milestones": {
+      "divineBirth": {
+        "year": "1962",
+        "title": "Divine Birth",
+        "description": "Born in Khurja, Bulandsher, Uttar Pradesh into a devout Brahmin family. From infancy, he displayed extraordinary spiritual inclinations, often sharing memories of previous births with family members."
+      },
+      "callOfHimalayas": {
+        "year": "1980",
+        "title": "Call of the Himalayas",
+        "description": "At age 18, driven by an intense craving for Truth, he renounced worldly life and departed for the Himalayas."
+      },
+      "gurusGrace": {
+        "year": "1980-85",
+        "title": "The Guru's Grace",
+        "description": "After months of wandering in the Himalayan ranges, he found his guru — Swami Avdhoot Prakash Maharaj, a self-realized yogi and Vedic master. Under his guidance, he immersed in the study of Vedas, scriptures, and rigorous yogic sadhana."
+      },
+      "sacredRenunciation": {
+        "year": "1985",
+        "title": "The Sacred Renunciation",
+        "description": "After years of intense sadhana in Himalayan caves, a matured yogi emerged. He received Sannyas Diksha from Swami Satyamittranand Giri and formally entered the ancient Juna Akhara."
+      },
+      "ascendingSeat": {
+        "year": "1998",
+        "title": "Ascending the Sacred Seat",
+        "description": "In a historic Pattabhishekam ceremony, he was formally consecrated as Acharya Mahamandaleshwar of Juna Akhara — becoming the supreme spiritual leader of one of the oldest Hindu monastic orders with over 500,000 monks."
+      },
+      "worldInService": {
+        "year": "Present",
+        "title": "A World in Service",
+        "description": "Today, as President of the Hindu Dharma Acharya Sabha, he guides millions through his teachings of Vedanta. From Times Square to the Kumbh Mela, his message of universal consciousness reaches every corner of the globe."
+      }
+    },
+    "swipeToExplore": "Swipe to explore"
+  },
+  "coreTeachings": {
+    "title": "Core Teachings",
+    "subtitle": "Timeless wisdom for the modern seeker",
+    "meditation": {
+      "title": "Meditation & Dhyana",
+      "tagline": "The path within",
+      "description": "Swami Ji teaches that through the ancient practice of dhyana — deep meditation — we transcend the restless mind and discover the infinite peace that resides within."
+    },
+    "advaita": {
+      "title": "Advaita Vedanta",
+      "tagline": "Non-dual wisdom",
+      "description": "Rooted in the teachings of Adi Shankaracharya, Swami Ji illuminates the profound truth of Advaita — that the individual soul and the Supreme Reality are one."
+    },
+    "consciousLiving": {
+      "title": "Conscious Living",
+      "tagline": "Dharma in daily life",
+      "description": "Swami Ji emphasizes transforming daily life into spiritual practice. Through discipline, self-restraint, and mindful awareness, every moment becomes an opportunity for growth."
+    },
+    "seva": {
+      "title": "Seva — Selfless Service",
+      "tagline": "Love in action",
+      "description": "Through selfless seva, we dissolve the boundaries of ego and experience the divine in all beings. Compassionate service to humanity is the highest spiritual practice."
+    }
+  },
+  "initiatives": {
+    "title": "Seva in Action",
+    "subtitle": "Transforming lives through compassion and commitment",
+    "shivganga": {
+      "title": "Shivganga Project",
+      "location": "Jhabua, Madhya Pradesh",
+      "description": "Transforming lives in one of India's most arid regions through water conservation, sustainable agriculture, skill development, and community empowerment.",
+      "impactLabel": "Lives Transformed"
+    },
+    "greenKumbh": {
+      "title": "Green Kumbh Initiative",
+      "location": "Prayagraj & Beyond",
+      "description": "A pioneering initiative to make the world's largest spiritual gathering environmentally sustainable.",
+      "impactLabel": "Millions of Devotees Served"
+    },
+    "futureSkilling": {
+      "title": "Institute of Future Skilling",
+      "location": "New Delhi",
+      "description": "Empowering 2,000+ youth — including 100+ transgender trainees — in digital technologies and AI.",
+      "impactLabel": "Youth Empowered"
+    },
+    "bhopalVidyaPeeth": {
+      "title": "Bhopal Vidya Peeth",
+      "location": "Bhopal, Madhya Pradesh",
+      "description": "Nurturing dharma ambassadors through training in Sanskrit, Vedas, Ayurveda, organic farming, and modern languages.",
+      "impactLabel": "Next Generation Leaders"
+    }
+  }
+}

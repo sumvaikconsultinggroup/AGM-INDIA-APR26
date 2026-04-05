@@ -1,0 +1,1028 @@
+{
+  "lang": "English",
+  "welcome": "Welcome to our site!",
+  "navLinks": {
+    "home": "Home",
+    "about": "About",
+    "books": "Books",
+    "podcasts": "Podcasts",
+    "articles": "Articles",
+    "videoSeries": "Video Series",
+    "donate": "Donate",
+    "schedule": "Schedule",
+    "volunteer": "Volunteer",
+    "mantraDiksha": "Mantra Diksha",
+    "privacyPolicy": "Privacy Policy",
+    "blogs":"Blogs",
+    "imageLibrary":"Image Library",
+    "termsAndConditions": "Terms and Conditions"
+
+  },
+  "rightSection": {
+    "logout": "Logout",
+    "login": "Login",
+    "language": "Language"
+  },
+  "topBanner": {
+    "message": "Book your accommodation for Kumbh Mela 2025.",
+    "linkText": "Click Here"
+  },
+  "hero": {
+    "title": "Swami Avdheshanand Giri",
+    "subtitle": "Spiritual Guide, Visionary & Author",
+    "discoverMore": "Discover More",
+    "connect": "Connect with Swamiji"
+  },
+  "about": {
+    "sectionTitle": "About Swami Ji",
+    "quote": "True knowledge is not merely information; it is transformation. When wisdom enters the heart, it changes not only how we think but how we live. The path to enlightenment begins with understanding our true divine nature.",
+    "quoteAuthor": "— Swami Avdheshanand Giri Ji",
+    "swamiImageAlt": "Swami Avdheshanand Giri",
+    "hero": {
+      "title": "Swami Ji Journey",
+      "subtitle": "Guiding souls toward enlightenment and inner peace"
+    },
+    "temple": {
+      "title": "About Our Temple",
+      "paragraph1": "Located in the sacred city of Haridwar, Harihar Ashram is a spiritual sanctuary established under the divine guidance of Swami Avdheshanand Giri Ji Maharaj. Surrounded by the serene banks of the Ganga, the ashram is a center for peace, meditation, and spiritual upliftment. It serves as a beacon of the timeless values of Sanatan Dharma, rooted in India’s ancient Vedic traditions.",
+      "paragraph2": "The ashram is dedicated to imparting the eternal wisdom of the Vedas, Upanishads, and Gita through satsangs, discourses, and yoga practices. Swami Ji’s powerful teachings combine spiritual depth with practical life guidance, helping seekers attain inner harmony, strength, and clarity in their journey of self-realization.",
+      "paragraph3": "Harihar Ashram welcomes all individuals regardless of background, belief, or nationality. It is a place where seekers gather to reflect, grow, and connect with the divine. The ashram continues to inspire thousands to live with compassion, discipline, and a deeper connection to the spiritual essence of life.",
+      "imageAlt": "Temple sanctuary"
+    },
+    "mission": {
+      "sectionTitle": "Our Mission & Values",
+      "title": "Our Mission",
+      "paragraph1": "Under the divine guidance of Param Pujya Swami Avdheshanand Giri Ji Maharaj, our mission is to provide a sacred space for spiritual evolution — where the eternal wisdom of the Vedas and Sanatan Dharma is harmonized with the realities of modern life. We aim to guide seekers on the path of self-realization, inner peace, and righteous living.",
+      "paragraph2": "We are dedicated to building a spiritually uplifting community that embraces compassion, understanding, and selfless service, while honoring each individual's unique spiritual journey as envisioned by Swami Ji's teachings and life example."
+    },
+    "values": {
+      "title": "Our Core Values",
+      "compassion": "Compassion in action and thought",
+      "enlightenment": "Enlightenment through self-discovery",
+      "wisdom": "Wisdom from ancient teachings",
+      "community": "Community support and belonging"
+    },
+    "journey": {
+      "title": "Our Spiritual Journey",
+      "events": {
+        "foundation": {
+          "title": "Foundation",
+          "description": "Our temple was established by Swami Avdeshanand Giri with just 12 disciples."
+        },
+        "ashram": {
+          "title": "First Ashram",
+          "description": "Opened our first residential ashram for intensive spiritual practice."
+        },
+        "global": {
+          "title": "Global Outreach",
+          "description": "Began international programs and retreats across five continents."
+        },
+        "revival": {
+          "title": "Modern Revival",
+          "description": "Launched digital initiatives to bring ancient wisdom to new generations."
+        },
+        "present": {
+          "year": "Present",
+          "title": "Continuing the Legacy",
+          "description": "Expanding our community while preserving sacred traditions."
+        }
+      }
+    },
+    "quotee": {
+      "text": "\"True knowledge is not merely information; it is transformation. When wisdom enters the heart, it changes not only how we think but how we live. The path to enlightenment begins with understanding our true divine nature.\"",
+      "author": "Swami Avdheshanand Giri",
+      "role": "Founder"
+    }
+  },
+  "teachings": {
+    "sectionTitle": "Core Teachings",
+    "sectionDescription": "Swamiji's teachings blend ancient wisdom with contemporary relevance...",
+    "meditation": {
+      "title": "Meditation",
+      "description": "Discover the transformative power of meditation..."
+    },
+    "vedanta": {
+      "title": "Vedanta Philosophy",
+      "description": "Explore the profound teachings of Advaita Vedanta..."
+    },
+    "consciousLiving": {
+      "title": "Conscious Living",
+      "description": "Learn how to integrate spiritual principles into daily life..."
+    },
+    "compassionateService": {
+      "title": "Compassionate Service",
+      "description": "Understand the importance of selfless service..."
+    }
+  },
+  "events": {
+    "sectionTitle": "Upcoming Events",
+    "sectionDescription": "Join Swamiji for spiritual discourses, retreats, and ceremonies.",
+    "register": "Register Now",
+    "registerNow": "Register Now",
+    "registering": "Registering...",
+    "alreadyRegistered": "Already Registered",
+    "noEvents": "No upcoming events at the moment.",
+    "atTime": "at",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "loginPrompt": "Please login to register for events",
+    "errors": {
+      "fetchFailed": "Failed to load events. Please try again later."
+    },
+    "registration": {
+      "success": "Successfully registered for the event!",
+      "invalidRequest": "Invalid registration request",
+      "notFound": "User or event not found",
+      "serverError": "Server error. Please try again later.",
+      "genericError": "Failed to register for event. Please try again.",
+      "networkError": "Network error. Please check your connection.",
+      "unexpectedError": "An unexpected error occurred."
+    }
+  },
+  "podcasts": {
+    "sectionTitle":"Podcasts & Interviews",
+    "hero": {
+      "title": "Divine Insights Podcast",
+      "subtitle": "Spiritual wisdom for your daily journey"
+    },
+    "untitledEpisode": "Untitled Episode",
+    "noTitleAvailable": "No Title Available",
+    "noDescription": "No description available",
+    "categories": {
+      "general": "General"
+    },
+    "minutes": "min",
+    "listeners": "listeners",
+    "views": "views",
+    "likes": "likes",
+    "new": "NEW",
+    "watchNow": "Watch Now",
+    "featuredEpisode": "Featured Episode",
+    "latestEpisodes": "Latest Episodes",
+    "noEpisodesFound": "No Episodes Found",
+    "tryDifferentCategory": "We couldn't find any episodes in this category. Try selecting a different category.",
+    "viewAllEpisodes": "View All Episodes",
+    "loading": {
+      "title": "Loading Podcasts",
+      "message": "Please wait while we gather spiritual podcasts for you..."
+    },
+    "error": {
+      "title": "Unable to Load Podcasts",
+      "message": "We encountered an issue while loading the podcasts."
+    },
+    "errors": {
+      "fetchFailed": "Failed to fetch podcasts:",
+      "loadFailed": "Failed to load podcasts"
+    },
+    "showingFallbackData": "Showing fallback data.",
+    "subscribe": {
+      "title": "Subscribe to Divine Insights",
+      "description": "Listen to our podcast on your favorite platforms and never miss a new episode. Get notified as soon as new spiritual wisdom drops.",
+      "emailPlaceholder": "Your email address",
+      "button": "Get Updates",
+      "privacyNote": "We'll send you notifications about new episodes. No spam, ever."
+    },
+    "host": {
+      "sectionTitle": "Meet Your Host",
+      "name": "Swami Avdheshanand Giri",
+      "title": "Podcast Host & Spiritual Guide",
+      "bio1": "Swami Avdheshanand Giri is a renowned spiritual leader whose teachings blend ancient wisdom with practical modern guidance. With over 30 years of spiritual practice, he offers profound insights into meditation, mindfulness, and the path to self-realization.",
+      "bio2": "Through this podcast, he shares transformative spiritual knowledge accessible to seekers at all stages of their journey, helping listeners find peace amidst the challenges of contemporary life.",
+      "learnMore": "Learn more about Swamiji"
+    },
+    "testimonial": {
+      "quote": "Divine words don’t just fill the ears — they awaken the soul. Every episode is a step closer to inner peace",
+      "name": "Swami Avdheshanand Giri",
+      "title": "Spiritual Guide & Podcast Host"
+    }
+  },
+  "common": {
+    "seeAll": "See all videos",
+    "viewAll": "VIEW ALL",
+    "loading": "Loading {{content}}...",
+    "tryAgain": "Try Again",
+    "readMore": "Read More",
+    "share": "Share",
+    "subscribe": "Subscribe",
+    "untitledPodcast": "Untitled Podcast",
+    "poweredBy": "Powered by",
+    "followUs": "Follow us",
+    "contactUs": "Contact us",
+    "menu": "Menu",
+    "of": "of",
+    "close": "Close",
+    "fetchCompleted": "Fetch operation completed.",
+    "unknown": "Unknown",
+    "previous": "Previous",
+    "next": "Next",
+    "all": "All",
+    "off": "Off",
+    "viewMore": "View More",
+    "locale": "en-US",
+        "continue": "Continue",
+        "back":"Back"
+  },
+  "errors": {
+    "invalidData": "Invalid data structure received from API",
+    "failedToFetchPodcasts": "Failed to fetch podcasts",
+    "failedToLoadPodcasts": "Failed to load podcasts",
+    "failedToFetchPrintMedia": "Failed to fetch print media",
+    "somethingWentWrong": "Something went wrong",
+    "pageNotFound": "Page not found",
+    "invalidResponseFormat": "Invalid response format",
+    "failedToLoadBooks": "Failed to load books",
+    "failedToLoadBooksMessage": "Failed to load books. Please try again later."
+  },
+  "validation": {
+    "age_type_error": "Please enter a valid number for age",
+    "age_required": "Age is required",
+    "age_min": "Age must be at least 1",
+    "age_max": "Age must be less than or equal to 120"
+  },
+  "journey": {
+    "sectionTitle": "Our Reach",
+    "sectionDescription": "Today, the mission of Swami Avdheshanand Giri has touched the lives of millions of individuals. Through his direct contact with people and through various channels, he continues to bring clarity to all.",
+    "youtubeSubscribers": "Subscribers",
+    "instagramFollowers": "Instagram Followers",
+    "facebookFollowers": "Facebook Followers",
+    "twitterFollowers": "Twitter Followers",
+    "repository": {
+      "title": "Repository of Wisdom Content",
+      "languageNote": "Available in Hindi and English",
+      "books": {
+        "count": "200+",
+        "description": "Books on life topics and scriptures"
+      },
+      "articles": {
+        "count": "10,000+",
+        "description": "Articles Available for free"
+      },
+      "videos": {
+        "count": "16,500+",
+        "description": "Videos Available for free"
+      },
+      "commentaries": {
+        "count": "65+",
+        "description": "Commentaries on scriptures"
+      }
+    }
+  },
+  "glimpses": {
+    "sectionTitle": "Glimpses from Swami Avdheshanand Giri ji Sessions and Interactions",
+    "paragraph1": {
+      "beforeHighlight": "Delve into the profound moments captured from  Swami Avdheshanand Giri ji Live",
+      "highlight": "Bhagavad Gita Sessions",
+      "afterHighlight": ", which draw over 40,000 participants worldwide."
+    },
+    "paragraph2": "Additionally, explore a vibrant collection of images from  Swami Avdheshanand Giri ji insightful interviews and podcasts with renowned personalities and top media houses. The gallery also showcases moments from his engaging talks and lectures delivered at prestigious institutions like IITs, IIMs, IISC, and many more."
+  },
+  "institutionalTalks": {
+    "sectionTitle": "Institutional Talks",
+    "paragraph1": " Swami Avdheshanand Giri ji loves interacting with the dynamic and vibrant youth, and has a profound faith in their ability to effectuate significant changes.",
+    "paragraph2": "He delivers regular talks at illustrious educational institutes, including prestigious organizations such as IITs and IIMs.",
+    "paragraph3": "With over 200+ college appearances and interactions with thousands of enthusiastic students,  Swami Avdheshanand Giri ji has left an indelible impression.",
+    "inviteButton": "Invite",
+    "topicLabel": "Topic"
+  },
+  "printMedia": {
+    "title": "Print Media",
+    "description": "The mission and teachings of Swami Avdheshanand Giri are regularly and widely covered by national and international media.",
+    "content": "media content",
+    "error": "Failed to load media content",
+    "noContent": "No media content available",
+    "checkBackSoon": "Check back soon for coverage updates",
+    "readArticle": "Read article",
+    "defaultTitle": "Print Media Article"
+  },
+  "books": {
+    "impactStatement": "Millions have found light through them.",
+    "callToAction": "Truth beckons, respond to its call.",
+    "startReadingButton": "Start Reading",
+    "orderNow": "Order Now",
+    "author": "Author",
+    "genre": "Genre",
+    "language": "Language",
+    "published": "Published",
+    "pages": "Pages",
+    "price": "Price",
+    "status": "Status",
+    "description": "Description",
+    "hero": {
+      "title": "Sacred Literature",
+      "subtitle": "Ancient wisdom for modern seekers"
+    },
+    "sectionTitle": "Sacred Wisdom Books",
+    "sectionDescription": "Explore our collection of spiritual books that offer timeless wisdom and practical guidance for your spiritual journey. Each book is carefully selected to provide insights that can transform your understanding and deepen your practice.",
+    "loadingTitle": "Loading Books",
+    "loadingMessage": "Please wait while we gather spiritual wisdom books for you...",
+    "errorTitle": "Unable to Load Books",
+    "errorMessage": "We encountered an issue while loading the books.",
+    "showingFallbackData": "Showing fallback data.",
+    "noBooksFound": "No Books Found",
+    "tryDifferentSearch": "Try a different search term or browse all categories",
+    "searchPlaceholder": "Search for spiritual wisdom books",
+    "untitledBook": "Untitled Book",
+    "defaultAuthor": "Swami Avdheshanand Giri ji",
+    "defaultGenre": "Spiritual",
+    "defaultLanguage": "Hindi/English",
+    "noDescription": "No description available for this book.",
+    "inStock": "In Stock",
+    "outOfStock": "Out of Stock",
+    "addToCart": "Add to cart",
+    "reviews": "reviews",
+    "quote": "\"Books are the mirrors of the soul. Sacred texts are the windows to the divine.\"",
+    "quoteAuthor": "Swami Avdheshanand Giri",
+    "features": {
+      "support": {
+        "title": "24/7 Support",
+        "description": "Round the clock assistance"
+      },
+      "securePay": {
+        "title": "Secure Payments",
+        "description": "100% secure transactions"
+      }
+    },
+    "cart": {
+      "title": "Your Shopping Cart",
+      "empty": "Your cart is empty",
+      "quantity": "Qty:",
+      "remove": "Remove",
+      "subtotal": "Subtotal",
+      "checkout": "Checkout",
+      "close": "Close cart",
+      "openCart": "Open shopping cart"
+    }
+  },
+  "videoSeries": {
+    "sectionTitle": "Swami Avdheshanand Giri ji Video Series",
+    "introText": "To a roaring spirit yearning for freedom and joy,  Swami Avdheshanand Giri ji discourses come as a solace.",
+    "paragraph1": {
+      "beforeHighlight": "Thousands of hours of sessions on various scriptures and life topics (in the light of Vedanta) have been compiled and structured in the form of",
+      "highlight": "300+ video series",
+      "afterHighlight": "."
+    },
+    "paragraph2": "These video series are aimed at liberating the troubled mind from the shackles of ignorance and suffering.",
+    "exploreButton": "Explore Video Series",
+    "quote": "\"Begin from where you are, and what you are.\"",
+    "videoPlayerTitle": "Video Series Player",
+    "episodes": "episodes",
+    "languages": {
+      "hindi": "Hindi",
+      "english": "English",
+      "bothLanguages": "Hindi & English"
+    },
+    "featuredVideos": {
+      "bhagavadGita": {
+        "title": "Bhagavad Gita - Complete Series",
+        "description": "A comprehensive discourse on the Bhagavad Gita, unraveling the profound wisdom of this sacred text and its practical applications in daily life."
+      },
+      "patanjaliYogaSutras": {
+        "title": "Patanjali Yoga Sutras",
+        "description": "In-depth exploration of Patanjali's Yoga Sutras, providing insights into the science of yoga and the path to self-realization."
+      },
+      "ramayana": {
+        "title": "Ramayana - The Journey Within",
+        "description": "A series delving into the spiritual essence of the Ramayana, revealing its timeless lessons on dharma, devotion, and righteous living."
+      },
+      "bhagavatam": {
+        "title": "Srimad Bhagavatam",
+        "description": "Discourses on the Srimad Bhagavatam, illuminating the path of bhakti (devotion) and the glories of the Supreme Being."
+      },
+      "upanishads": {
+        "title": "Upanishads - The Essence of Vedanta",
+        "description": "Exploring the philosophical foundations of Vedanta through the principal Upanishads, unveiling the nature of reality and consciousness."
+      }
+    }
+  },
+  "contact": {
+    "sectionTitle": "Connect With Us",
+    "sectionDescription": "Reach out for teachings, spiritual guidance, events, or discourse requests. We welcome your questions and connection with open hearts.",
+    "infoTitle": "Our Sacred Space",
+    "addressTitle": "Spiritual Center",
+    "addressText": "Juna Akhara, Haridwar, Uttarakhand, India",
+    "emailTitle": "Email Us",
+    "emailAddress": "info@swamiavdheshanand.org",
+    "phoneTitle": "Call Us",
+    "phoneNumber": "+91 XXXXX XXXXX",
+    "socialTitle": "Follow Our Journey",
+    "socialText": "Connect with Swamiji on social platforms",
+    "social": {
+      "facebook": "Facebook",
+      "twitter": "Twitter",
+      "instagram": "Instagram",
+      "youtube": "YouTube"
+    },
+    "formTitle": "Send a Message",
+    "form": {
+      "nameLabel": "Full Name",
+      "namePlaceholder": "Your name",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "Your email",
+      "subjectLabel": "Subject",
+      "subjectPlaceholder": "Message subject",
+      "messageLabel": "Your Message",
+      "messagePlaceholder": "Share your thoughts or questions...",
+      "sendButton": "Send Message",
+      "sending": "Sending..."
+    },
+    "validation": {
+      "nameRequired": "Full name is required",
+      "nameMinLength": "Name must be at least 3 characters",
+      "emailRequired": "Email is required",
+      "emailValid": "Please enter a valid email address",
+      "subjectRequired": "Subject is required",
+      "messageRequired": "Message is required",
+      "messageMinLength": "Message must be at least 10 characters",
+      "messageMaxLength": "Message must not exceed 1000 characters"
+    },
+    "errors": {
+      "submitFailed": "Error submitting form:",
+      "defaultError": "There was a problem sending your message. Please try again."
+    },
+    "success": {
+      "title": "Message Sent",
+      "message": "Thank you for reaching out. We will respond to your inquiry soon."
+    }
+  },
+  "footer": {
+    "legal": {
+      "privacyPolicy": "Privacy Policy",
+      "termsAndConditions": "Terms & Conditions"
+    },
+    "mission": {
+      "title": "OUR MISSION",
+      "description": "To illuminate the path of spiritual knowledge through the teachings of Swami Avdheshanand Giri Ji, bridging ancient wisdom with contemporary understanding to foster inner peace and global harmony."
+    },
+    "events": {
+      "title": "LATEST EVENTS",
+      "timeConnector": "at",
+      "viewAll": "VIEW ALL EVENTS",
+      "loadError": "Unable to load events. Please check back later.",
+      "noEvents": "No upcoming events at the moment."
+    },
+    "twitter": {
+      "title": "LATEST TWEET",
+      "tweetContent": "Join us for the upcoming spiritual discourse on the essence of Bhagavad Gita and its relevance in modern life",
+      "websiteLink": "swamiavdheshanand.org/events",
+      "timeAgo": "3 HOURS AGO",
+      "followButton": "FOLLOW SWAMI JI"
+    },
+    "instagram": {
+      "title": "INSTAGRAM",
+      "viewAll": "VIEW ALL PHOTOS",
+      "images": {
+        "meditation": "Meditation",
+        "discourse": "Discourse",
+        "temple": "Temple",
+        "yajna": "Yajna",
+        "devotees": "Devotees",
+        "ashram": "Ashram"
+      }
+    },
+    "social": {
+      "followUs": "Follow Us on Social Media",
+      "twitter": "Twitter",
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "youtube": "YouTube"
+    },
+    "navigation": {
+      "home": "Home",
+      "schedule": "Schedule",
+      "books": "Books",
+      "Podcasts": "Podcasts",
+      "articles": "Articles",
+      "videoSeries": "Video Series",
+      "contact": "Contact",
+      "volunteer":"Volunteer",
+      "mantraDiksha": "Mantra Diksha",
+      "donate":"Donate",
+      "about": "About"
+    },
+    "copyright": "© Swami Avdheshanand Giri Ji, {{year}}. All Rights Reserved.",
+    "errors": {
+      "eventsFetchFailed": "Failed to fetch events for footer:",
+      "eventsLoadFailed": "Failed to load events"
+    }
+  },
+  "volunteer": {
+    "hero": {
+      "title": "Join Our Volunteer Team",
+      "subtitle": "Serve, grow, and transform lives together"
+    },
+    "intro": {
+      "title": "Volunteer With Us",
+      "paragraph1": "Volunteering with Swami Avdheshanand Giri's mission is a unique opportunity to contribute to spiritual and humanitarian causes while growing personally. Our volunteers are the backbone of our initiatives, bringing love, dedication, and service to every project.",
+      "paragraph2": "Whether you can offer a few hours weekly or join us for special events, your time and talents can make a meaningful difference. Join our community of like-minded souls dedicated to spreading spiritual wisdom and serving humanity."
+    },
+    "benefits": {
+      "service": {
+        "title": "Service",
+        "description": "Contribute to meaningful spiritual and humanitarian projects"
+      },
+      "community": {
+        "title": "Community",
+        "description": "Join a supportive network of like-minded individuals"
+      },
+      "growth": {
+        "title": "Growth",
+        "description": "Develop new skills while deepening your spiritual practice"
+      }
+    },
+    "form": {
+      "title": "Volunteer Registration",
+      "subtitle": "Please fill out the form below to join our volunteer community",
+      "submitButton": "Submit Application",
+      "processing": "Processing...",
+      "success": "Thank you for your interest! Your volunteer application has been submitted.",
+      "fields": {
+        "fullName": "Full Name",
+        "email": "Email Address",
+        "phone": "Phone Number",
+        "location": "Location/City",
+        "age": "Age",
+        "occupationType": "Occupation Type",
+        "occupation": "Occupation",
+        "availability": "Availability",
+        "availableFrom": "Available From",
+        "availableUntil": "Available Until",
+        "optional": "(optional)",
+        "availableUntilNote": "Leave blank if your availability is open-ended",
+        "skills": "Skills & Interests",
+        "motivation": "Why do you want to volunteer with us?",
+        "experience": "Any previous volunteering experience?",
+        "consent": "I consent to having my information stored for the purpose of volunteer coordination. I understand I may be contacted regarding volunteer opportunities."
+      },
+      "placeholders": {
+        "fullName": "Your full name",
+        "email": "your.email@example.com",
+        "phone": "Your phone number",
+        "location": "Your city/location",
+        "age": "Your age",
+        "occupationType": "Select occupation type",
+        "occupation": "Your occupation details",
+        "business": "Your business details",
+        "motivation": "Share your motivation and what you hope to gain or contribute...",
+        "experience": "Briefly describe any relevant experience..."
+      },
+      "occupationTypes": {
+        "private": "Private Sector",
+        "government": "Government Sector",
+        "business": "Business",
+        "unemployed": "Unemployed",
+        "retired": "Retired"
+      },
+      "availability": {
+        "weekdayMornings": "Weekday Mornings",
+        "weekdayAfternoons": "Weekday Afternoons",
+        "weekdayEvenings": "Weekday Evenings",
+        "weekends": "Weekends",
+        "specialEvents": "Special Events Only"
+      },
+      "submitted": {
+        "title": "Application Submitted!",
+        "message": "Thank you for your interest in volunteering with us. We'll review your information and contact you soon.",
+        "registerAnother": "Register Another Volunteer"
+      }
+    },
+    "skills": {
+      "accounts": "Accounts",
+      "eventCoordination": "Event Coordination",
+      "contentWriting": "Content Writing",
+      "socialMedia": "Social Media Management",
+      "photography": "Photography/Videography",
+      "webDevelopment": "Web Development",
+      "translation": "Language Translation",
+      "music": "Music/Devotional Singing",
+      "organizationDevelopment": "Organization Development",
+      "medical": "Medical Services",
+      "filmMaking": "Film Making",
+      "administrative": "Administrative Support"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "nameMinLength": "Name must be at least 3 characters",
+      "emailRequired": "Email is required",
+      "emailValid": "Please enter a valid email address",
+      "phoneRequired": "Phone number is required",
+      "phoneValid": "Please enter a valid 10-digit phone number",
+      "locationRequired": "Location is required",
+      "locationValid": "Please enter a valid location",
+      "ageType": "Age must be a number",
+      "ageRequired": "Age is required",
+      "ageMin": "You must be at least 18 years old",
+      "ageMax": "Please enter a valid age",
+      "occupationTypeRequired": "Please select your occupation type",
+      "occupationRequired": "Please specify your occupation",
+      "availabilityMin": "Please select at least one availability option",
+      "availabilityRequired": "Please select at least one availability option",
+      "availableFromRequired": "Start date is required",
+      "availableFromPast": "Date cannot be in the past",
+      "availableUntilAfter": "End date must be after start date",
+      "skillsMin": "Please select at least one skill",
+      "skillsRequired": "Please select at least one skill",
+      "motivationRequired": "Please share your motivation for volunteering",
+      "motivationMinLength": "Please provide at least 50 characters",
+      "consentRequired": "You must agree to the terms"
+    },
+    "errors": {
+      "submission": "Error submitting volunteer form:",
+      "submissionFailed": "There was an issue submitting your application. Please try again."
+    },
+    "quote": {
+      "text": "\"The best way to find yourself is to lose yourself in the service of others.\"",
+      "author": "Mahatma Gandhi"
+    }
+  },
+  "articles": {
+    "hero": {
+      "title": "Spiritual Articles",
+      "subtitle": "Wisdom and insights from Swami Avdheshanand Giri Ji Maharaj"
+    },
+    "loadingTitle": "Loading Articles",
+    "loadingMessage": "Please wait while we gather spiritual wisdom for you...",
+    "errorTitle": "Unable to Load Articles",
+    "errorMessage": "We encountered an issue while loading the articles.",
+    "retry": "Retry",
+    "searchPlaceholder": "Search articles by keyword...",
+    "sectionTitle": "Spiritual Articles",
+    "noArticlesFound": "No articles found",
+    "tryDifferentSearch": "We couldn't find any articles matching your search criteria.",
+    "clearFilters": "Clear filters",
+    "readMoreLink": "Read more →",
+    "liveUpdates": {
+      "title": "Live Updates",
+      "empty": "No live updates available",
+      "error": "Could not load live updates",
+      "tryAgain": "Try again"
+    },
+    "mostRead": {
+      "title": "Most Read"
+    },
+    "categories": {
+      "all": "All",
+      "latest": "Latest",
+      "trending": "Trending",
+      "bhagwat": "Bhagwat",
+      "women": "Women",
+      "hinduDharma": "Hindu Dharma",
+      "general": "General"
+    },
+    "quote": {
+      "text": "\"Knowledge is the treasure, but practice is the key to it.\"",
+      "author": "Swami Avdheshanand Giri"
+    }
+  },
+  "donate": {
+    "hero": {
+      "title": "Support Our Mission",
+      "subtitle": "Join us in preserving and spreading ancient spiritual wisdom"
+    },
+    "whySupport": {
+      "title": "Why Support Our Mission",
+      "paragraph1": "Have you benefited from swami Avdheshanand Giri's teachings? Do you want swami Avdheshanand Giri's voice to reach millions and billions of individuals? Do you wish to see that the goal to which swami Avdheshanand Giri has dedicated his life is realized?",
+      "paragraph2": "He is fighting this battle for you, it is you who benefits from his hard work, only through your contribution will this mission move forward."
+    },
+    "impact": {
+      "title": "The Impact of Your Support",
+      "preserve": {
+        "title": "Preserve Wisdom",
+        "description": "Help us maintain and protect ancient spiritual knowledge for future generations."
+      },
+      "community": {
+        "title": "Grow Our Community",
+        "description": "Support programs that bring spiritual seekers together in learning and practice."
+      },
+      "outreach": {
+        "title": "Global Outreach",
+        "description": "Expand our reach to share spiritual teachings with audiences worldwide."
+      },
+      "transform": {
+        "title": "Transform Lives",
+        "description": "Enable life-changing spiritual experiences for seekers on their journey."
+      }
+    },
+    "saveDharma": {
+      "title": "Save Dharma",
+      "paragraph1": "Swami Avdeshanand Giri is fighting an intense battle to preserve and promote our ancient spiritual traditions. By supporting his mission, you become a crucial part of this effort to protect and spread dharmic knowledge.",
+      "paragraph2": "Your contribution is not merely financial support—it is your active participation in this sacred mission. It is through your generosity that these teachings can continue to illuminate the path for countless seekers."
+    },
+    "supportNowButton": "Support Now",
+    "acharyaTeachingAlt": "Swami Avdeshanand Giri teaching"
+  },
+  "fundraising": {
+    "sectionTitle": "Requirements of the Foundation",
+    "sectionDescription": "Your generous contribution helps us meet these critical needs that sustain and advance our spiritual mission. Each donation directly supports one of these essential areas of our work.",
+    "loading": "Loading initiatives...",
+    "errors": {
+      "fetchFailed": "Failed to load fundraising campaigns. Using sample data instead."
+    },
+    "noCampaigns": "No active fundraising campaigns at the moment.",
+    "supportButton": "Support Any Initiative",
+    "workspace": {
+      "title": "For Foundation's Workplace",
+      "description": "Today, there are more than 200 full-time members across all departments of the organization. Therefore, people are often surprised to learn that even after reaching millions of people in the country, the organization still does not own an inch of land! Yes! Not even an inch. So far, all the work has been carried out in rented offices at various locations.",
+      "additionalText": "From the beginning, the organization has always dedicated 80% of its resources to outreach work. As a result, we have reached every corner of the country at a rapid pace, but we have never been able to establish an office for the organization's work. The lack of such an office is a major obstacle to the pace of Acharya ji's mission. Without it, the journey ahead will be extremely difficult."
+    },
+    "mission": {
+      "title": "To spread the Mission",
+      "description": "Acharya Prashant's voice has reached a staggering 53 crore listeners on social media platforms combined! But let's face the harsh truth: 99.9% of you are content just to watch his videos and a mere 0.1% are actually stepping up to support this vital mission. We cannot continue to thrive on empty views while the real work goes unfunded.",
+      "additionalText": "This month, we're on a mission to raise Rs. 1 Crore, and your contribution can make it possible. Picture the impact—spreading profound teachings far and wide through online channels, touching lives, and fostering enlightenment."
+    },
+    "books": {
+      "title": "AP Books Publishing",
+      "description": "By donating to the Books Publishing Department, you help us bring these books to those who need them the most and contribute to the welfare of humanity.",
+      "bulletPoints": [
+        "Reducing the prices of books",
+        "IT Development - website, app",
+        "Digital Marketing - this is quite expensive but also significantly useful to make people aware about these books",
+        "Translating books - Gujarati, Tamil, Telugu, Marathi, Bengali, etc.",
+        "Hiring professionals to produce high quality books - professional proofreaders, translators, typesetters, graphic designers, digital marketing experts, etc.",
+        "Books Scholarships - paperbacks are sent for free at the homes of people who are unable to buy books because of financial constraints.",
+        "Team Expenses"
+      ]
+    }
+  },
+  "instagram": {
+    "followUs": "Follow Us on Instagram",
+    "viewMore": "View More on Instagram",
+    "loading": "Loading Instagram posts...",
+    "errorFetching": "Unable to load Instagram posts",
+    "post": "Instagram post",
+    "noCaption": "View on Instagram"
+  },
+  "donateForm": {
+    "loading": "Loading...",
+    "loadingCampaign": "Loading campaign details...",
+    "unnamedCampaign": "Unnamed Campaign",
+    "thankYou": "Thank You!",
+    "successMessage": "Thank you for your generous donation! We will contact you shortly with further details.",
+    "returnToDonation": "Return to Donation Page",
+    "supportOurMission": "Support Our Mission",
+    "requiredFundsFor": "Required Funds for the Month of {{month}} {{year}}",
+    "contributed": "Contributed",
+    "toBeRaised": "To be raised",
+    "donorsCount": "{{count}} Donors till now",
+    "daysLeft": "{{count}} day(s) left",
+    "keyInitiatives": "Key Initiatives",
+    "otherAmount": "Other Amount",
+    "fullName": "Your full name",
+    "mobileNumber": "Mobile Number",
+    "email": "Email",
+    "address": "Address",
+    "tax80GQuestion": "Do you want to avail 80G Tax Benefit?",
+    "yes": "Yes",
+    "no": "No",
+    "termsAgreement": "I have read and agree to the Terms & Conditions and Privacy Policy",
+    "donateNow": "Donate Now",
+    "nationality": {
+      "indian": "Indian",
+      "other": "Other",
+            "title": "Select Your Citizenship",
+      "subtitle": "Please select your citizenship to proceed with the donation.",
+      "indianC": "Indian Citizen",
+      "foreign": "Foreign Citizen"
+    },
+    
+    "error": {
+      "title": "Error",
+      "failedToLoad": "Failed to load campaign",
+      "failedToLoadDetails": "Failed to load campaign details",
+      "processingDonation": "There was an error processing your donation. Please try again."
+    },
+    "validation": {
+      "amountRequired": "Amount is required",
+      "minimumAmount": "Minimum donation amount is ₹{{amount}}",
+      "nationalityRequired": "Please select your nationality",
+      "nameRequired": "Name is required",
+      "nameMinLength": "Name should be at least {{length}} characters",
+      "mobileRequired": "Mobile number is required",
+      "mobilePattern": "Please enter a valid 10-digit mobile number",
+      "emailRequired": "Email is required",
+      "emailPattern": "Please enter a valid email address",
+      "addressRequired": "Address is required",
+      "termsRequired": "You must accept the terms and conditions"
+    },
+    "defaultCampaign": {
+      "title": "Support Our Mission",
+      "description": "Your contribution helps us meet critical needs that sustain and advance our spiritual mission. Each donation directly supports essential areas of our work."
+    },
+    "supportingSection": {
+      "title": "Supporting Our Spiritual Mission",
+      "paragraph1": "Your donation directly supports Swami Avdheshanand Giri Ji's mission to preserve and propagate India's spiritual heritage. In an age of distraction and material excess, this mission has become more critical than ever.",
+      "paragraph2": "With your support, we can continue to provide spiritual guidance, organize meaningful community events, and maintain sacred spaces that serve as beacons of wisdom and peace in today's chaotic world.",
+      "impactTitle": "The Impact of Your Contribution",
+      "impactParagraph1": "Every donation, regardless of size, helps strengthen our foundation and extends our reach. Your generosity enables us to conduct spiritual discourses, support educational initiatives for underprivileged children, and organize community service programs that benefit thousands.",
+      "impactParagraph2": "By supporting this mission, you become part of a larger movement dedicated to spiritual awakening and social harmony based on timeless wisdom and compassionate action.",
+      "quote": "\"When we give with pure intention, the act of giving itself becomes a spiritual practice.\""
+    },
+
+    "foreignDonation": {
+      "title": "For Foreign Donors",
+      "message": "Thank you for your interest in supporting our mission. To make a donation as a foreign citizen, please proceed to our dedicated international donation portal.",
+      "buttonText": "Proceed to Foreign Donations"
+    }
+
+  },
+  "goal":"goal",
+  "notFound": {
+    "pageNotFound": "Page Not Found",
+    "pathCannotBeFound": "The Path You Seek Cannot Be Found",
+    "enlightenmentMessage": "Like a traveler in search of enlightenment, sometimes we must find a new path when the one we seek is not available. Let us guide you back to your journey.",
+    "returnToHome": "Return to Home Page",
+    "quote": "\"When you find yourself lost, remember that every path, even those that lead to error, can be a teacher. The journey itself is the destination.\"",
+    "quoteAttribution": "Spiritual Wisdom"
+  },
+  "mantraDiksha": {
+    "title": "Mantra Diksha Registration",
+    "subtitle": "Sacred initiation into the spiritual path",
+    "hero": {
+      "join": "Join",
+      "for": "for",
+      "diksha": "Diksha",
+      "inPersonOnly": "Diksha offered only in person"
+    },
+    "sections": {
+      "personalDetails": "Personal Details",
+      "contactInfo": "Contact Information",
+      "spiritualIntent": "Spiritual Intent",
+      "optionalDocuments": "Optional Documents",
+      "termsConditions": "Terms & Conditions"
+    },
+    "fields": {
+      "fullName": "Full Name",
+      "dateOfBirth": "Date of Birth",
+      "gender": "Gender",
+      "nationality": "Nationality",
+      "mobileNumber": "Mobile Number",
+      "whatsappNumber": "WhatsApp Number",
+      "aadhaarNumber": "Aadhaar Number",
+      "aadhaarDocument": "Aadhaar Document",
+      "passportNumber": "Passport Number",
+      "passportDocument": "Passport Document",
+      "uploadPassport": "Upload Passport Copy",
+      "whyDiksha": "Why do you wish to receive Mantra Diksha?",
+      "spiritualPath": "Do you follow a spiritual path or Guru?",
+      "previousDiksha": "Have you received diksha before?",
+      "recentPhoto": "Recent Photo",
+      "email": "Email Address"
+    },
+    "placeholders": {
+      "fullName": "Enter your full name",
+      "gender": "Select your gender",
+      "nationality": "Select your nationality",
+      "passportNumber": "Enter your passport number",
+      "spiritualIntent": "Please share your spiritual intent and motivation for receiving Mantra Diksha...",
+      "spiritualPath": "Please describe your current spiritual practice or path...",
+      "previousDiksha": "Please share details about any previous diksha or initiation...",
+      "email": "Enter your email address"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female",
+      "other": "Other"
+    },
+    "upload": {
+      "uploading": "Uploading...",
+      "preview": "Preview",
+      "changeFile": "Change file",
+      "clickOrDrag": "Click to browse or drag and drop your file here",
+      "maxSize": "Max file size: 10MB"
+    },
+    "help": {
+      "passportCopy": "Please upload a clear copy of your passport (photo page)",
+      "indianNational": "As an Indian national, please provide your Aadhaar details for verification.",
+      "foreignNational": "As a foreign national, please provide your passport details for verification. WhatsApp number is optional for international communication."
+    },
+    "terms": {
+      "title": "Mantra Diksha Terms & Conditions",
+      "sacred": {
+        "title": "1. Sacred Commitment:",
+        "content": "Mantra Diksha is a sacred spiritual initiation that requires sincere devotion and commitment to the spiritual path."
+      },
+      "inPerson": {
+        "title": "2. In-Person Requirement:",
+        "content": "Diksha is only offered in person during designated ceremonies. Online or remote diksha is not available."
+      },
+      "preparation": {
+        "title": "3. Preparation:",
+        "content": "Candidates should maintain purity of body, mind, and spirit before receiving diksha. This includes following dharmic principles."
+      },
+      "confidentiality": {
+        "title": "4. Confidentiality:",
+        "content": "The mantra received during diksha is sacred and should not be shared with others without proper guidance."
+      },
+      "practice": {
+        "title": "5. Regular Practice:",
+        "content": "Recipients commit to regular chanting and following the spiritual guidelines provided by the Guru."
+      },
+      "respect": {
+        "title": "6. Respect & Devotion:",
+        "content": "Maintain respect towards the Guru, the tradition, and fellow devotees at all times."
+      },
+      "noGuarantee": {
+        "title": "7. No Guarantee:",
+        "content": "Registration does not guarantee diksha. Final approval is at the discretion of the spiritual authority."
+      },
+      "dataUsage": {
+        "title": "8. Data Usage:",
+        "content": "Personal information will be used only for spiritual guidance and communication purposes."
+      },
+      "acceptance": "I have read, understood, and agree to abide by the Terms & Conditions for Mantra Diksha. I understand this is a sacred commitment and will approach it with proper devotion and respect."
+    },
+    "buttons": {
+      "submitting": "Submitting Registration...",
+      "acceptTerms": "Please Accept Terms & Conditions",
+      "submit": "Submit Registration",
+      "mustAccept": "You must accept the terms and conditions before submitting your registration"
+    },
+    "messages": {
+      "success": "Registration submitted successfully!",
+      "whatsappSent": "WhatsApp confirmation sent!",
+      "uploadSuccess": "Registration complete - files uploaded successfully!",
+      "failed": "Registration failed: {{status}}",
+      "networkError": "Network error. Please check your connection and try again.",
+      "generalError": "Registration failed. Please try again."
+    },
+    "validation": {
+      "fullNameRequired": "Full name is required",
+      "fullNameMin": "Full name must be at least 2 characters",
+      "dobRequired": "Date of birth is required",
+      "dobMax": "Date of birth cannot be in the future",
+      "genderRequired": "Gender is required",
+      "genderValid": "Please select a valid gender",
+      "nationalityRequired": "Nationality is required",
+      "nationalityMin": "Nationality must be at least 2 characters",
+      "mobileRequired": "Mobile number is required",
+      "mobileValid": "Please enter a valid mobile number with country code",
+      "aadhaarValid": "Aadhaar number must be 12 digits",
+      "whatsappValid": "Please enter a valid WhatsApp number with country code",
+      "passportRequired": "Passport number is required for non-Indian nationals",
+      "passportMin": "Passport number must be at least 5 characters",
+      "spiritualIntentRequired": "Please explain your spiritual intent",
+      "spiritualIntentMin": "Please provide at least 50 characters explaining your intent",
+      "termsRequired": "You must accept the terms and conditions to proceed",
+      "emailRequired": "Email address is required",
+      "emailValid": "Please enter a valid email address"
+    }
+  },
+  "countries": {
+    "india": "India",
+    "unitedStates": "United States",
+    "unitedKingdom": "United Kingdom",
+    "canada": "Canada",
+    "australia": "Australia",
+    "germany": "Germany",
+    "france": "France",
+    "italy": "Italy",
+    "spain": "Spain",
+    "netherlands": "Netherlands",
+    "belgium": "Belgium",
+    "switzerland": "Switzerland",
+    "sweden": "Sweden",
+    "norway": "Norway",
+    "denmark": "Denmark",
+    "finland": "Finland",
+    "austria": "Austria",
+    "japan": "Japan",
+    "southKorea": "South Korea",
+    "singapore": "Singapore",
+    "malaysia": "Malaysia",
+    "thailand": "Thailand",
+    "indonesia": "Indonesia",
+    "philippines": "Philippines",
+    "vietnam": "Vietnam",
+    "china": "China",
+    "hongKong": "Hong Kong",
+    "taiwan": "Taiwan",
+    "brazil": "Brazil",
+    "argentina": "Argentina",
+    "chile": "Chile",
+    "mexico": "Mexico",
+    "southAfrica": "South Africa",
+    "egypt": "Egypt",
+    "uae": "United Arab Emirates",
+    "saudiArabia": "Saudi Arabia",
+    "israel": "Israel",
+    "turkey": "Turkey",
+    "russia": "Russia",
+    "poland": "Poland",
+    "czechRepublic": "Czech Republic",
+    "hungary": "Hungary",
+    "romania": "Romania",
+    "bulgaria": "Bulgaria",
+    "greece": "Greece",
+    "portugal": "Portugal",
+    "ireland": "Ireland",
+    "newZealand": "New Zealand",
+    "sriLanka": "Sri Lanka",
+    "bangladesh": "Bangladesh",
+    "pakistan": "Pakistan",
+    "nepal": "Nepal",
+    "bhutan": "Bhutan",
+    "myanmar": "Myanmar",
+    "other": "Other"
+  }
+  
+}
+

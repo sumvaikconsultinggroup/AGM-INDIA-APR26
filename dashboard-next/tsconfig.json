@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+  "allowJs": true,
+    "skipLibCheck": true,  
+    "strict": false,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noUnusedParameters": false,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/api/events/[eventId]/route.js", "src/app/api/roombooking/[Id]/route.js", "src/app/api/schedule/[id]/route.js", "src/app/api/allbooks/route.ts", "src/app/dashboard/books/[id]/page.jsx", "src/app/dashboard/events/[Id]/page.jsx", "src/app/dashboard/events/edit/[id]/page.jsx", "src/app/dashboard/rooms/[id]/page.jsx", "src/app/dashboard/schedule/[id]/page.jsx", "src/app/api/articles/[articleId]/route.js", "src/app/api/donate/[campaignId]/route.js", "src/app/api/podcasts/[id]/route.js", "src/app/api/printmedia/[id]/route.js", "src/app/api/creduser/login/route.js", "src/app/api/connect/[id]/route.js", "src/app/api/connect/route.js", "src/app/api/donate/route.js", "src/app/api/scheduleRegistration/route.js", "src/app/api/scheduleRegistration/[id]/route.js"],
+  "exclude": ["node_modules"]
+}

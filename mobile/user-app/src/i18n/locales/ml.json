@@ -1,0 +1,177 @@
+{
+  "tabs": {
+    "home": "ഹോം",
+    "explore": "പര്യവേക്ഷണം",
+    "schedule": "ഷെഡ്യൂൾ",
+    "donate": "ദാനം",
+    "profile": "പ്രൊഫൈൽ"
+  },
+  "home": {
+    "welcome": "ഹരി ഓം",
+    "heroQuote": "\"The mind is everything. What you think, you become.\"",
+    "dailyQuote": "Daily Inspiration",
+    "upcomingEvents": "വരാനിരിക്കുന്ന പരിപാടികൾ",
+    "latestArticles": "പുതിയ ലേഖനങ്ങൾ",
+    "donationSpotlight": "ഒരു നല്ല കാരണത്തിന് പിന്തുണ",
+    "quickLinks": "ദ്രുത ലിങ്കുകൾ",
+    "viewAll": "View All",
+    "seeAll": "എല്ലാം കാണുക",
+    "seeAllUpcomingEvents": "See all upcoming events",
+    "seeAllArticles": "See all articles",
+    "noUpcomingEvents": "No upcoming events",
+    "noArticlesAvailable": "No articles available",
+    "quickLinksItems": {
+      "panchang": "Panchang",
+      "schedule": "Schedule",
+      "books": "Books",
+      "videos": "Videos",
+      "podcasts": "Podcasts",
+      "gallery": "Gallery",
+      "volunteer": "Volunteer"
+    }
+  },
+  "explore": {
+    "title": "Explore",
+    "search": "Search articles, videos, books...",
+    "articles": "Articles",
+    "videos": "Videos",
+    "books": "Books",
+    "podcasts": "Podcasts",
+    "gallery": "Gallery",
+    "events": "Events",
+    "noResults": "No results found"
+  },
+  "schedule": {
+    "title": "Schedule",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "noEvents": "No scheduled events",
+    "registerNow": "Register Now",
+    "registered": "Registered",
+    "location": "Location",
+    "date": "Date"
+  },
+  "donate": {
+    "title": "Donate",
+    "supportMission": "Support Swami Ji's Mission",
+    "supportMissionSubtitle": "Your generous donation helps spread spiritual wisdom and supports community programs.",
+    "activeCampaigns": "Active Campaigns",
+    "donateNow": "Donate Now",
+    "noCampaigns": "No active campaigns",
+    "noCampaignsSubtitle": "Check back later for new donation opportunities",
+    "customAmountPlaceholder": "Enter custom amount",
+    "selectAmountLabel": "Select donation amount {{amount}}",
+    "secureCheckoutTitle": "Secure Web Checkout",
+    "secureCheckoutSubtitle": "Donations are currently completed through our secure website checkout.",
+    "taxBenefitsTitle": "Tax Benefits",
+    "taxBenefitsSubtitle": "Donations are eligible for tax exemption under Section 80G.",
+    "raised": "raised",
+    "goal": "Goal",
+    "donors": "donors",
+    "alerts": {
+      "signInRequiredTitle": "Sign In Required",
+      "signInRequiredMessage": "Please sign in to make a donation.",
+      "ok": "OK",
+      "continueCheckoutTitle": "Continue Secure Checkout",
+      "continueCheckoutMessage": "Secure payment is currently available on web checkout",
+      "forCampaign": "for",
+      "openWebCheckout": "Open Web Checkout",
+      "unableToOpenTitle": "Unable to Open",
+      "unableToOpenMessage": "Could not open the donation page right now. Please try again."
+    }
+  },
+  "profile": {
+    "title": "പ്രൊഫൈൽ",
+    "editProfile": "Edit Profile",
+    "myEvents": "My Events",
+    "settings": "Settings",
+    "language": "ഭാഷ",
+    "notifications": "Notifications",
+    "about": "About",
+    "logout": "ലോഗ്ഔട്ട്",
+    "logoutConfirm": "Are you sure you want to logout?",
+    "loginPrompt": "Sign in to access your profile",
+    "login": "ലോഗിൻ",
+    "register": "Register",
+    "devoteeFallback": "Devotee",
+    "featureComingSoon": "{{item}} will be available soon.",
+    "appTagline": "Hari Om",
+    "stats": {
+      "registrations": "Registrations",
+      "donations": "Donations",
+      "bookings": "Bookings"
+    },
+    "menu": {
+      "registrations": {
+        "title": "My Registrations",
+        "subtitle": "Events and schedules you registered for"
+      },
+      "donations": {
+        "title": "Donation History",
+        "subtitle": "View your past donations"
+      },
+      "bookings": {
+        "title": "My Bookings",
+        "subtitle": "Room and accommodation bookings"
+      },
+      "settings": {
+        "subtitle": "App preferences and notifications"
+      }
+    }
+  },
+  "auth": {
+    "welcomeBack": "Welcome Back",
+    "spiritualGreeting": "Hari Om Tat Sat",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "signIn": "Sign In",
+    "noAccount": "Don't have an account?",
+    "register": "Register",
+    "createAccount": "Create Account",
+    "fullName": "Full Name",
+    "confirmPassword": "Confirm Password",
+    "alreadyHaveAccount": "Already have an account?",
+    "login": "Login",
+    "otpTitle": "Verify Your Email",
+    "otpSubtitle": "Enter the OTP sent to your email",
+    "verifyOtp": "Verify OTP",
+    "resendOtp": "Resend OTP",
+    "resetPassword": "Reset Password",
+    "sendResetLink": "Send Reset Link",
+    "backToLogin": "Back to Login",
+    "googleSignInComingSoon": "Google Sign-In (Coming Soon)",
+    "browseWithoutSignIn": "Browse without signing in",
+    "errors": {
+      "fillAllFields": "Please fill in all fields",
+      "loginFailedTitle": "Login Failed",
+      "invalidCredentials": "Invalid credentials"
+    }
+  },
+  "common": {
+    "loading": "ലോഡ് ചെയ്യുന്നു...",
+    "error": "Error",
+    "retry": "വീണ്ടും ശ്രമിക്കുക",
+    "cancel": "റദ്ദാക്കുക",
+    "or": "or",
+    "changeLanguageTo": "{{language}} ഭാഷയിലേക്ക് മാറ്റുക",
+    "save": "സേവ് ചെയ്യുക",
+    "readMore": "Read More",
+    "viewAll": "View All",
+    "buyOnAmazon": "Buy on Amazon",
+    "somethingWentWrong": "ഏതോ പിശക് സംഭവിച്ചു",
+    "tryAgain": "വീണ്ടും ശ്രമിക്കുക"
+  },
+  "profileLogin": {
+    "title": "Welcome, Seeker",
+    "subtitle": "Sign in to access your spiritual journey, save your preferences, and connect with our community.",
+    "benefits": {
+      "savedTeachings": "Save your favorite teachings",
+      "registerEvents": "Register for upcoming events",
+      "trackContributions": "Track your seva contributions",
+      "personalizedNotifications": "Get personalized notifications"
+    },
+    "quote": "\"The journey of a thousand miles begins with a single step\"",
+    "quoteAuthor": "— Lao Tzu"
+  }
+}

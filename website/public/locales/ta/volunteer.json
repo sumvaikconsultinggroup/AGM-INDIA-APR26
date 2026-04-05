@@ -1,0 +1,19 @@
+{
+  "hero": {
+    "sanskritTitle": "सेवा भाव",
+    "title": "Serve with",
+    "titleHighlight": "Love",
+    "subtitle": "Join our community of dedicated volunteers and contribute to Swami Ji's mission.",
+    "ctaJoin": "Join as Volunteer",
+    "ctaLearn": "Learn More"
+  },
+  "register": {
+    "title": "Register as a Volunteer",
+    "subtitle": "Fill out the form below to join our seva family",
+    "fullName": "Full Name",
+    "emailAddress": "Email Address",
+    "phoneNumber": "Phone Number",
+    "submitApplication": "Submit Application",
+    "submitting": "Submitting..."
+  }
+}

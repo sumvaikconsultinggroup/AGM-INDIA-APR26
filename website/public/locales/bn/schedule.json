@@ -1,0 +1,16 @@
+{
+  "hero": {
+    "sanskritTitle": "आगामी कार्यक्रम",
+    "title": "Schedule &",
+    "titleHighlight": "Events",
+    "subtitle": "Join us in sacred gatherings that nourish the soul and awaken the spirit."
+  },
+  "upcomingEvents": "Upcoming Events",
+  "noEvents": "No upcoming events scheduled at this time.",
+  "registerNow": "Register Now",
+  "registered": "Registered",
+  "viewDetails": "View Details",
+  "location": "Location",
+  "date": "Date",
+  "time": "Time"
+}
