@@ -25,8 +25,10 @@ export async function GET(req) {
       currency: payment.currency,
       status: payment.status, // 'captured', 'failed', etc.
       method: payment.method, // card, upi, netbanking etc.
+      paymentMethod: payment.method,
       email: payment.email,
       contact: payment.contact,
+      customer: payment.email || payment.contact || '',
       created: payment.created_at,
       description: payment.description || '',
     }));

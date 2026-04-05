@@ -70,8 +70,8 @@ export async function GET(req: Request): Promise<NextResponse<ApiResponse>> {
 
     if (!articles?.length) {
       return NextResponse.json<ApiResponse>(
-        { success: false, message: 'No articles found' },
-        { status: 404 }
+        { success: true, message: 'No articles found', data: [] },
+        { status: 200 }
       );
     }
 

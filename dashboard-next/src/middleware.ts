@@ -42,6 +42,7 @@ const publicApiEndpoints: { path: string; methods?: string[] }[] = [
   { path: "/api/panchang/cities", methods: ["GET"] },
   { path: "/api/health", methods: ["GET"] },
   { path: "/api/dashboard/stats", methods: ["GET"] },
+  { path: "/api/donation-receipt", methods: ["GET"] },
 ];
 
 const adminOnlyApiPrefixes: string[] = [
@@ -52,6 +53,7 @@ const adminOnlyApiPrefixes: string[] = [
   "/api/userphotos",
   "/api/scheduleRegistration",
   "/api/donationsRecord",
+  "/api/donations",
 ];
 
 const adminOnlyMutationPrefixes: string[] = [

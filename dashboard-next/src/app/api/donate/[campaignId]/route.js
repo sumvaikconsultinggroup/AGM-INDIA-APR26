@@ -86,14 +86,10 @@ export async function GET(req, { params }) {
   }
 }
 
-// Uncomment and use these routes when needed
-
-// PUT route to update an existing campaign
-/*
 export async function PUT(req, { params }) {
   try {
     await connectDB();
-    const { campaignId } = params;
+    const { campaignId } = await params;
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(campaignId)) {
@@ -117,7 +113,6 @@ export async function PUT(req, { params }) {
       backgroundImage,
     } = body;
 
-    // Create update object with only defined fields
     const updateData = {};
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
@@ -173,14 +168,11 @@ export async function PUT(req, { params }) {
     );
   }
 }
-*/
 
-// DELETE route to soft delete a campaign
-/*
 export async function DELETE(req, { params }) {
   try {
     await connectDB();
-    const { campaignId } = params;
+    const { campaignId } = await params;
 
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(campaignId)) {
@@ -208,6 +200,7 @@ export async function DELETE(req, { params }) {
       {
         success: true,
         message: 'Campaign deleted successfully',
+        data: deletedCampaign,
       },
       { status: 200 }
     );
@@ -223,4 +216,3 @@ export async function DELETE(req, { params }) {
     );
   }
 }
-*/

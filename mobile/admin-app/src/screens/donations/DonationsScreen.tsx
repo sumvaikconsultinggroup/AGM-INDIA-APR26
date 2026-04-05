@@ -25,9 +25,10 @@ import {
 } from 'react-native-paper';
 import { colors, spacing, borderRadius } from '../../theme';
 import api from '../../services/api';
-import { DonationCampaign, DonationRecord } from '../../types';
+import { DonationAnalytics, DonationCampaign, DonationRecord } from '../../types';
 
 type TabKey = 'campaigns' | 'records';
+type AnalyticsRange = 'today' | '7d' | '30d' | 'custom';
 
 interface CampaignFormData {
   title: string;
@@ -61,6 +62,11 @@ export function DonationsScreen() {
   const [editingCampaign, setEditingCampaign] = useState<DonationCampaign | null>(null);
   const [formData, setFormData] = useState<CampaignFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [analytics, setAnalytics] = useState<DonationAnalytics | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsRange, setAnalyticsRange] = useState<AnalyticsRange>('7d');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
 
   // ── Fetch campaigns ──
   const fetchCampaigns = useCallback(async () => {
@@ -93,9 +99,29 @@ export function DonationsScreen() {
     }
   }, []);
 
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setAnalyticsLoading(true);
+      const params =
+        analyticsRange === 'custom' && customStartDate && customEndDate
+          ? `range=custom&startDate=${encodeURIComponent(customStartDate)}&endDate=${encodeURIComponent(customEndDate)}`
+          : `range=${analyticsRange}`;
+      const response = await api.get(`/donations/analytics?${params}`);
+      setAnalytics(response.data || null);
+    } catch (err) {
+      console.error('Error fetching donation analytics:', err);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, [analyticsRange, customEndDate, customStartDate]);
+
   useEffect(() => {
     fetchCampaigns();
   }, [fetchCampaigns]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   useEffect(() => {
     if (activeTab === 'records' && records.length === 0) {
@@ -110,7 +136,8 @@ export function DonationsScreen() {
     } else {
       fetchRecords().finally(() => setRefreshing(false));
     }
-  }, [activeTab, fetchCampaigns, fetchRecords]);
+    fetchAnalytics();
+  }, [activeTab, fetchAnalytics, fetchCampaigns, fetchRecords]);
 
   // ── CRUD helpers ──
   const openCreateModal = () => {
@@ -243,6 +270,75 @@ export function DonationsScreen() {
     return (
       <View style={styles.summaryCard}>
         <Text style={styles.summaryTitle}>Campaign Summary</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.analyticsRangeRow}>
+          {(['today', '7d', '30d', 'custom'] as AnalyticsRange[]).map((value) => (
+            <TouchableOpacity
+              key={value}
+              style={[
+                styles.rangeChip,
+                analyticsRange === value && styles.rangeChipActive,
+              ]}
+              onPress={() => setAnalyticsRange(value)}
+            >
+              <Text
+                style={[
+                  styles.rangeChipText,
+                  analyticsRange === value && styles.rangeChipTextActive,
+                ]}
+              >
+                {value === 'today' ? 'Today' : value === '7d' ? '7 Days' : value === '30d' ? '30 Days' : 'Custom'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {analyticsRange === 'custom' ? (
+          <View style={styles.customDateRow}>
+            <TextInput
+              style={[styles.textInput, styles.customDateInput]}
+              value={customStartDate}
+              onChangeText={setCustomStartDate}
+              placeholder="Start YYYY-MM-DD"
+              placeholderTextColor={colors.text.secondary}
+            />
+            <TextInput
+              style={[styles.textInput, styles.customDateInput]}
+              value={customEndDate}
+              onChangeText={setCustomEndDate}
+              placeholder="End YYYY-MM-DD"
+              placeholderTextColor={colors.text.secondary}
+            />
+          </View>
+        ) : null}
+
+        {analyticsLoading ? (
+          <View style={styles.analyticsLoader}>
+            <ActivityIndicator size="small" color={colors.gold.light} />
+          </View>
+        ) : analytics ? (
+          <View style={styles.analyticsCard}>
+            <Text style={styles.analyticsValue}>
+              {formatCurrency(analytics.totals.totalAmount)}
+            </Text>
+            <Text style={styles.analyticsLabel}>Collected in selected range</Text>
+            <View style={styles.analyticsStatsGrid}>
+              <Text style={styles.analyticsStatText}>Donations: {analytics.totals.donationsCount}</Text>
+              <Text style={styles.analyticsStatText}>Unique donors: {analytics.totals.uniqueDonors}</Text>
+              <Text style={styles.analyticsStatText}>Repeat donors: {analytics.totals.repeatDonors}</Text>
+              <Text style={styles.analyticsStatText}>Average gift: {formatCurrency(analytics.totals.averageDonation)}</Text>
+            </View>
+            {analytics.topDonor ? (
+              <View style={styles.topDonorCard}>
+                <Text style={styles.topDonorTitle}>Top donor</Text>
+                <Text style={styles.topDonorName}>{analytics.topDonor.name}</Text>
+                <Text style={styles.topDonorMeta}>
+                  {formatCurrency(analytics.topDonor.totalAmount)} across {analytics.topDonor.donationCount} donations
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryValue}>{totalCampaigns}</Text>
@@ -351,7 +447,7 @@ export function DonationsScreen() {
         <View style={styles.recordLeft}>
           <Text style={styles.recordAmount}>
             {item.currency === 'INR' ? '\u20B9' : item.currency}{' '}
-            {(item.amount / 100).toLocaleString('en-IN')}
+            {item.amount.toLocaleString('en-IN')}
           </Text>
           <Text style={styles.recordMethod}>{item.method || 'N/A'}</Text>
           {item.email ? (
@@ -690,6 +786,88 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: spacing.md,
+  },
+  analyticsRangeRow: {
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  rangeChip: {
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.35)',
+    borderRadius: borderRadius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  rangeChipActive: {
+    backgroundColor: colors.gold.main,
+    borderColor: colors.gold.main,
+  },
+  rangeChipText: {
+    color: colors.text.white,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  rangeChipTextActive: {
+    color: colors.primary.maroon,
+  },
+  customDateRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  customDateInput: {
+    flex: 1,
+    backgroundColor: colors.background.warmWhite,
+  },
+  analyticsLoader: {
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  analyticsCard: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  analyticsValue: {
+    color: colors.text.white,
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  analyticsLabel: {
+    color: colors.gold.light,
+    fontSize: 12,
+    marginTop: spacing.xs,
+  },
+  analyticsStatsGrid: {
+    gap: spacing.xs,
+    marginTop: spacing.md,
+  },
+  analyticsStatText: {
+    color: colors.text.white,
+    fontSize: 12,
+  },
+  topDonorCard: {
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.2)',
+  },
+  topDonorTitle: {
+    color: colors.gold.light,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  topDonorName: {
+    color: colors.text.white,
+    fontSize: 16,
+    fontWeight: '700',
+    marginTop: spacing.xs,
+  },
+  topDonorMeta: {
+    color: colors.text.white,
+    fontSize: 12,
+    marginTop: spacing.xs,
   },
   summaryRow: {
     flexDirection: 'row',

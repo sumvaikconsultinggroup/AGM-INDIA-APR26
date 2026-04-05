@@ -24,10 +24,11 @@ export async function GET(){
     if (!rooms?.length) {
       return NextResponse.json(
         {
-          success: false,
+          success: true,
           message: 'No room bookings found',
+          data: [],
         },
-        { status: 404 }
+        { status: 200 }
       );
     }
 

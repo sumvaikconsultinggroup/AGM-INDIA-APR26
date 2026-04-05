@@ -68,6 +68,7 @@ export default function DailySchedulePage() {
   const [isAddPopoverOpen, setIsAddPopoverOpen] = useState(false);
   const [selectedDateEvents, setSelectedDateEvents] = useState([]);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isImportingPoster, setIsImportingPoster] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -231,6 +232,25 @@ export default function DailySchedulePage() {
     doc.save(`all-schedules.pdf`);
   };
 
+  const handleImportLatestPoster = async () => {
+    try {
+      setIsImportingPoster(true);
+      const response = await fetch('/api/schedule/import-latest', { method: 'POST' });
+      const data = await response.json();
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.message || 'Import failed');
+      }
+
+      alert('Latest official poster schedule imported successfully.');
+    } catch (error) {
+      console.error('Failed to import latest poster schedule:', error);
+      alert('Unable to import the latest poster schedule right now.');
+    } finally {
+      setIsImportingPoster(false);
+    }
+  };
+
   if (!mounted || loading) return <div className="h-96 animate-pulse rounded-lg bg-muted" />;
 
   return (
@@ -252,6 +272,15 @@ export default function DailySchedulePage() {
             </p>
           </div>
           <div className="flex flex-col xs:flex-row gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={handleImportLatestPoster}
+              className="w-full sm:w-auto"
+              disabled={isImportingPoster}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              <span>{isImportingPoster ? 'Importing...' : 'Import Poster'}</span>
+            </Button>
             <Button variant="outline" onClick={handleExportPDF} className="w-full sm:w-auto">
               <Download className="mr-2 h-4 w-4" />
               <span className="hidden xs:inline">Export PDF</span>

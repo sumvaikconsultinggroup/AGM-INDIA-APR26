@@ -15,10 +15,11 @@ export async function GET() {
     if (!submissions || submissions.length === 0) {
       return NextResponse.json(
         {
-          success: false,
+          success: true,
           message: 'No contact submissions found',
+          data: [],
         },
-        { status: 404 }
+        { status: 200 }
       );
     }
 

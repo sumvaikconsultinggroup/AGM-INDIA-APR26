@@ -85,8 +85,8 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> 
 
     if (!volunteers?.length) {
       return NextResponse.json(
-        { success: false, message: 'No volunteers found' },
-        { status: 404 }
+        { success: true, message: 'No volunteers found', data: [] },
+        { status: 200 }
       );
     }
 

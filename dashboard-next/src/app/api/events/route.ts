@@ -101,8 +101,8 @@ export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> 
 
     if (!events?.length) {
       return NextResponse.json(
-        { success: false, message: 'No events found' },
-        { status: 404 }
+        { success: true, message: 'No events found', data: [] },
+        { status: 200 }
       );
     }
 

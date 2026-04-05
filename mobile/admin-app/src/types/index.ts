@@ -64,6 +64,36 @@ export interface DonationRecord {
   description?: string;
 }
 
+export interface DonationAnalytics {
+  range: string;
+  startDate: string;
+  endDate: string;
+  totals: {
+    totalAmount: number;
+    donationsCount: number;
+    uniqueDonors: number;
+    repeatDonors: number;
+    averageDonation: number;
+    maxDonation: number;
+    oneTimeAmount: number;
+    subscriptionAmount: number;
+  };
+  topDonor: {
+    name: string;
+    email?: string;
+    phone?: string;
+    totalAmount: number;
+    donationCount: number;
+    lastDonationAt?: string;
+  } | null;
+  campaigns: Array<{
+    campaignId?: string | null;
+    campaignTitle: string;
+    totalAmount: number;
+    donationsCount: number;
+  }>;
+}
+
 export interface Schedule {
   _id: string;
   month: string;

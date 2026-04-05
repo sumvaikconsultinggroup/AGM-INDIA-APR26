@@ -12,10 +12,11 @@ export async function GET() {
     if (!donations || donations.length === 0) {
       return NextResponse.json(
         {
-          success: false,
+          success: true,
           message: 'No active donations found',
+          data: [],
         },
-        { status: 404 }
+        { status: 200 }
       );
     }
 

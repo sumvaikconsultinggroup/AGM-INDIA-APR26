@@ -4,7 +4,19 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
-    const { amount, campaignId, fullName, email, mobile, address, nationality } = body;
+    const {
+      amount,
+      campaignId,
+      fullName,
+      email,
+      mobile,
+      address,
+      nationality,
+      donationType,
+      panNumber,
+      taxBenefitOptIn,
+      source,
+    } = body;
 
     if (!amount || !fullName || !email || !mobile || !nationality) {
       return new Response(JSON.stringify({ message: 'Missing required fields' }), {
@@ -32,6 +44,10 @@ export async function POST(req) {
         nationality: nationality,
         campaign_id: campaignId,
         selected_amount: amount,
+        donation_type: donationType || 'one_time',
+        pan_number: panNumber || '',
+        tax_benefit_opt_in: taxBenefitOptIn ? 'true' : 'false',
+        source: source || 'website',
       },
     };
 

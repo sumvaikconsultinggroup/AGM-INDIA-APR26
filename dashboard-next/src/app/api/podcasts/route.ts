@@ -95,7 +95,7 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
       .lean();
 
     if (!podcasts?.length) {
-      return errorResponse('No podcasts found', undefined, 404);
+      return successResponse('No podcasts found', [], 200);
     }
 
     return successResponse('Podcasts retrieved successfully', podcasts as unknown as IPodcast[], 200);

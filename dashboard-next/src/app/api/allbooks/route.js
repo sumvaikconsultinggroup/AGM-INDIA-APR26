@@ -38,10 +38,11 @@ export async function GET() {
     if (!articles?.length) {
       return NextResponse.json(
         {
-          success: false,
-          message: 'No articles found',
+          success: true,
+          message: 'No books found',
+          data: [],
         },
-        { status: 404 }
+        { status: 200 }
       );
     }
 
@@ -51,7 +52,7 @@ export async function GET() {
     return NextResponse.json(
       {
         success: true,
-        message: 'Articles fetched successfully',
+        message: 'Books fetched successfully',
         data: sanitizedArticles,
       },
       { status: 200 }
@@ -61,7 +62,7 @@ export async function GET() {
     return NextResponse.json(
       {
         success: false,
-        message: 'Failed to fetch articles',
+        message: 'Failed to fetch books',
         error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }

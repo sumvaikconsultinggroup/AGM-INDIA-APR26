@@ -1,13 +1,23 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 
 const KNOWN_NON_API_BASE_URLS = new Set([
   'https://swami-g-dashboard.vercel.app',
+  'https://www.avdheshanandg.org',
 ]);
 
-function normalizeBaseUrl(url?: string): string {
-  return (url || '').trim().replace(/\/+$/, '');
+const PRODUCTION_API_FALLBACKS = [
+  'https://admin.avdheshanandg.org',
+];
+
+let cachedWorkingBaseUrl: string | null = null;
+const invalidBaseUrls = new Set<string>();
+
+function normalizeBaseUrl(url?: string | null): string | null {
+  if (!url) return null;
+  const normalized = url.trim().replace(/\/+$/, '');
+  return normalized || null;
 }
 
 function getExpoDevHost(): string | null {
@@ -15,71 +25,145 @@ function getExpoDevHost(): string | null {
     Constants.expoConfig?.hostUri ||
     (Constants as any).manifest2?.extra?.expoGo?.debuggerHost ||
     (Constants as any).manifest?.debuggerHost;
+
   if (!hostUri) return null;
   return String(hostUri).split(':')[0] || null;
 }
 
-function resolveApiBaseUrl(): string {
-  const configured = normalizeBaseUrl(process.env.EXPO_PUBLIC_API_URL);
-  const shouldUseDevAutoHost =
-    __DEV__ && (!configured || KNOWN_NON_API_BASE_URLS.has(configured));
+function getCandidateBaseUrls(): string[] {
+  const fromEnv = normalizeBaseUrl(process.env.EXPO_PUBLIC_API_URL);
+  const expoHost = getExpoDevHost();
+  const shouldPreferLocalDev =
+    __DEV__ && (!fromEnv || KNOWN_NON_API_BASE_URLS.has(fromEnv));
 
-  if (shouldUseDevAutoHost) {
-    const expoHost = getExpoDevHost();
-    if (expoHost) {
-      return `http://${expoHost}:3000`;
-    }
-    return 'http://localhost:3000';
+  const candidates: string[] = [];
+  const push = (value?: string | null) => {
+    const normalized = normalizeBaseUrl(value);
+    if (!normalized || invalidBaseUrls.has(normalized) || candidates.includes(normalized)) return;
+    candidates.push(normalized);
+  };
+
+  push(cachedWorkingBaseUrl);
+
+  if (shouldPreferLocalDev) {
+    push(expoHost ? `http://${expoHost}:3001` : null);
+    push(expoHost ? `http://${expoHost}:3000` : null);
+    push('http://localhost:3001');
+    push('http://localhost:3000');
+    push('http://127.0.0.1:3001');
+    push('http://127.0.0.1:3000');
   }
 
-  return configured || 'http://localhost:3000';
+  if (fromEnv && !KNOWN_NON_API_BASE_URLS.has(fromEnv)) {
+    push(fromEnv);
+  }
+
+  PRODUCTION_API_FALLBACKS.forEach(push);
+
+  if (!shouldPreferLocalDev && __DEV__) {
+    push(expoHost ? `http://${expoHost}:3001` : null);
+    push(expoHost ? `http://${expoHost}:3000` : null);
+    push('http://localhost:3001');
+    push('http://localhost:3000');
+    push('http://127.0.0.1:3001');
+    push('http://127.0.0.1:3000');
+  }
+
+  return candidates;
 }
 
-const API_BASE_URL = resolveApiBaseUrl();
+function isHtmlPayload(data: unknown): boolean {
+  return typeof data === 'string' && /<!doctype html|<html/i.test(data);
+}
+
+async function probeBaseUrl(baseUrl: string): Promise<boolean> {
+  try {
+    const response = await axios.get(`${baseUrl}/api/health`, {
+      timeout: 5000,
+      headers: { Accept: 'application/json' },
+    });
+
+    if (isHtmlPayload(response.data)) {
+      invalidBaseUrls.add(baseUrl);
+      return false;
+    }
+
+    cachedWorkingBaseUrl = baseUrl;
+    return true;
+  } catch {
+    invalidBaseUrls.add(baseUrl);
+    return false;
+  }
+}
+
+async function resolveWorkingBaseUrl(): Promise<string> {
+  if (cachedWorkingBaseUrl) return cachedWorkingBaseUrl;
+
+  const candidates = getCandidateBaseUrls();
+  for (const candidate of candidates) {
+    const ok = await probeBaseUrl(candidate);
+    if (ok) return candidate;
+  }
+
+  throw new Error(
+    'Admin API unavailable. Start the dashboard backend or set EXPO_PUBLIC_API_URL to a working admin API.'
+  );
+}
 
 const api = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
+    Accept: 'application/json',
   },
 });
 
 api.interceptors.request.use(async (config) => {
+  const baseUrl = await resolveWorkingBaseUrl();
+  config.baseURL = `${baseUrl}/api`;
+
   const token = await SecureStore.getItemAsync('admin_auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
 
-// Response interceptor: unwrap API wrappers
 api.interceptors.response.use(
   (response) => {
-    if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html')) {
+    if (isHtmlPayload(response.data)) {
       return Promise.reject(
         new Error('API returned HTML instead of JSON. Check EXPO_PUBLIC_API_URL or local backend.')
       );
     }
 
     if (response.data && typeof response.data === 'object') {
-      // Standard wrapper: { success: true, data: [...] }
       if ('success' in response.data && 'data' in response.data) {
         response.data = response.data.data;
-      }
-      // DonationsRecord uses: { success: true, allPayments: [...] }
-      else if ('allPayments' in response.data) {
+      } else if ('allPayments' in response.data) {
         response.data = response.data.allPayments;
       }
     }
+
     return response;
   },
-  (error) => {
-    if (error.response?.status === 401) {
+  (error: AxiosError) => {
+    const requestUrl = String(error.config?.url || '');
+    const status = error.response?.status;
+    const isAuthVerificationRequest = requestUrl.includes('/auth/verify');
+
+    if ((status === 401 || status === 403) && isAuthVerificationRequest) {
       SecureStore.deleteItemAsync('admin_auth_token');
+      SecureStore.deleteItemAsync('admin_auth_profile');
     }
+
     return Promise.reject(error);
   }
 );
+
+export function getResolvedAdminApiBaseUrl() {
+  return cachedWorkingBaseUrl;
+}
 
 export default api;

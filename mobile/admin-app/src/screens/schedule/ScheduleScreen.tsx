@@ -91,11 +91,10 @@ export function ScheduleScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [monthPickerVisible, setMonthPickerVisible] = useState(false);
-  const [basePickerVisible, setBasePickerVisible] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [formData, setFormData] = useState<ScheduleFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const fetchSchedules = useCallback(async () => {
     try {
@@ -289,6 +288,35 @@ export function ScheduleScreen() {
     );
   };
 
+  const handleImportLatestSchedule = () => {
+    Alert.alert(
+      'Import Latest Schedule',
+      'This replaces current schedule rows with the latest official poster schedule for testing. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Import',
+          onPress: async () => {
+            try {
+              setImporting(true);
+              await api.post('/schedule/import-latest');
+              await fetchSchedules();
+              Alert.alert('Imported', 'Latest poster schedule has been imported successfully.');
+            } catch (err) {
+              console.error('Error importing schedule:', err);
+              Alert.alert(
+                'Import failed',
+                'Could not import the latest poster schedule. Please try again.'
+              );
+            } finally {
+              setImporting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const renderScheduleItem = ({ item }: { item: Schedule }) => {
     const firstSlot = item.timeSlots?.[0];
     const period = firstSlot?.period;
@@ -382,47 +410,6 @@ export function ScheduleScreen() {
     </View>
   );
 
-  const renderSimplePicker = (
-    visible: boolean,
-    title: string,
-    items: string[],
-    selectedValue: string,
-    onSelect: (value: string) => void,
-    onClose: () => void
-  ) => (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
-      <TouchableOpacity style={styles.pickerOverlay} activeOpacity={1} onPress={onClose}>
-        <View style={styles.pickerContent}>
-          <Text style={styles.pickerTitle}>{title}</Text>
-          <ScrollView style={styles.pickerScroll}>
-            {items.map((item) => (
-              <TouchableOpacity
-                key={item}
-                style={[
-                  styles.pickerItem,
-                  selectedValue === item && styles.pickerItemSelected,
-                ]}
-                onPress={() => {
-                  onSelect(item);
-                  onClose();
-                }}
-              >
-                <Text
-                  style={[
-                    styles.pickerItemText,
-                    selectedValue === item && styles.pickerItemTextSelected,
-                  ]}
-                >
-                  {item}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      </TouchableOpacity>
-    </Modal>
-  );
-
   const renderFormModal = () => (
     <Modal
       visible={modalVisible}
@@ -453,24 +440,50 @@ export function ScheduleScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <Text style={styles.inputLabel}>Month *</Text>
-            <TouchableOpacity
-              style={styles.pickerTrigger}
-              onPress={() => setMonthPickerVisible(true)}
-            >
-              <Text style={[styles.pickerTriggerText, !formData.month && styles.placeholderText]}>
-                {formData.month || 'Select a month'}
-              </Text>
-              <IconButton icon="chevron-down" size={20} iconColor={colors.text.secondary} />
-            </TouchableOpacity>
+            <View style={styles.choiceRow}>
+              {MONTHS.map((month) => (
+                <TouchableOpacity
+                  key={month}
+                  style={[
+                    styles.choiceChip,
+                    formData.month === month && styles.choiceChipActive,
+                  ]}
+                  onPress={() => setFormData((prev) => ({ ...prev, month }))}
+                >
+                  <Text
+                    style={[
+                      styles.choiceChipText,
+                      formData.month === month && styles.choiceChipTextActive,
+                    ]}
+                  >
+                    {month}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
             <Text style={styles.inputLabel}>Base Ashram *</Text>
-            <TouchableOpacity
-              style={styles.pickerTrigger}
-              onPress={() => setBasePickerVisible(true)}
-            >
-              <Text style={styles.pickerTriggerText}>{formData.baseLocation || 'Select base'}</Text>
-              <IconButton icon="chevron-down" size={20} iconColor={colors.text.secondary} />
-            </TouchableOpacity>
+            <View style={styles.choiceRow}>
+              {BASE_LOCATIONS.map((baseLocation) => (
+                <TouchableOpacity
+                  key={baseLocation}
+                  style={[
+                    styles.choiceChip,
+                    formData.baseLocation === baseLocation && styles.choiceChipActive,
+                  ]}
+                  onPress={() => setFormData((prev) => ({ ...prev, baseLocation }))}
+                >
+                  <Text
+                    style={[
+                      styles.choiceChipText,
+                      formData.baseLocation === baseLocation && styles.choiceChipTextActive,
+                    ]}
+                  >
+                    {baseLocation}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
             <Text style={styles.inputLabel}>Internal Locations *</Text>
             <TextInput
@@ -685,25 +698,16 @@ export function ScheduleScreen() {
       />
 
       <FAB icon="plus" style={styles.fab} onPress={openCreateModal} color={colors.text.white} />
+      <FAB
+        icon="upload"
+        style={styles.importFab}
+        onPress={handleImportLatestSchedule}
+        color={colors.primary.maroon}
+        customSize={52}
+        loading={importing}
+      />
 
       {renderFormModal()}
-      {renderSimplePicker(
-        monthPickerVisible,
-        'Select Month',
-        MONTHS,
-        formData.month,
-        (value) => setFormData((prev) => ({ ...prev, month: value })),
-        () => setMonthPickerVisible(false)
-      )}
-      {renderSimplePicker(
-        basePickerVisible,
-        'Select Base Ashram',
-        BASE_LOCATIONS as string[],
-        formData.baseLocation || '',
-        (value) =>
-          setFormData((prev) => ({ ...prev, baseLocation: value as Schedule['baseLocation'] })),
-        () => setBasePickerVisible(false)
-      )}
     </View>
   );
 }
@@ -875,6 +879,14 @@ const styles = StyleSheet.create({
     bottom: spacing.lg,
     backgroundColor: colors.primary.saffron,
   },
+  importFab: {
+    position: 'absolute',
+    right: spacing.lg,
+    bottom: 92,
+    backgroundColor: colors.background.warmWhite,
+    borderWidth: 1,
+    borderColor: colors.border.gold as string,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -925,23 +937,30 @@ const styles = StyleSheet.create({
     minHeight: 60,
     textAlignVertical: 'top',
   },
-  pickerTrigger: {
+  choiceRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.background.parchment,
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  choiceChip: {
     borderWidth: 1,
     borderColor: colors.border.gold,
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.background.parchment,
     paddingHorizontal: spacing.md,
-    paddingVertical: Platform.OS === 'ios' ? spacing.sm : 2,
+    paddingVertical: spacing.sm,
   },
-  pickerTriggerText: {
-    fontSize: 15,
+  choiceChipActive: {
+    backgroundColor: colors.primary.maroon,
+    borderColor: colors.primary.maroon,
+  },
+  choiceChipText: {
+    fontSize: 13,
     color: colors.text.primary,
+    fontWeight: '600',
   },
-  placeholderText: {
-    color: colors.text.secondary,
+  choiceChipTextActive: {
+    color: colors.gold.light,
   },
   switchRow: {
     flexDirection: 'row',
@@ -983,46 +1002,6 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.6,
-  },
-  pickerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pickerContent: {
-    backgroundColor: colors.background.warmWhite,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    width: '80%',
-    maxHeight: '60%',
-  },
-  pickerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.primary.maroon,
-    textAlign: 'center',
-    marginBottom: spacing.md,
-  },
-  pickerScroll: {
-    maxHeight: 300,
-  },
-  pickerItem: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.sm,
-    marginBottom: 2,
-  },
-  pickerItemSelected: {
-    backgroundColor: colors.primary.saffron,
-  },
-  pickerItemText: {
-    fontSize: 16,
-    color: colors.text.primary,
-  },
-  pickerItemTextSelected: {
-    color: colors.text.white,
-    fontWeight: '600',
   },
   emptyState: {
     padding: spacing.xxl,
