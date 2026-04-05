@@ -17,6 +17,7 @@ import { UsersScreen } from '../screens/users/UsersScreen';
 import { EventsScreen } from '../screens/events/EventsScreen';
 import { DonationsScreen } from '../screens/donations/DonationsScreen';
 import { ScheduleScreen } from '../screens/schedule/ScheduleScreen';
+import { AppointmentInboxScreen } from '../screens/schedule/AppointmentInboxScreen';
 import { ArticlesScreen } from '../screens/content/ArticlesScreen';
 import { VideosScreen } from '../screens/content/VideosScreen';
 import { PodcastsScreen } from '../screens/content/PodcastsScreen';
@@ -43,6 +44,7 @@ const linking: LinkingOptions<any> = {
         },
       },
       ScheduleStack: 'schedule',
+      AppointmentInboxStack: 'appointments',
       ArticlesStack: 'articles',
       VideosStack: 'videos',
       PodcastsStack: 'podcasts',
@@ -70,6 +72,7 @@ function TabIcon({ label, focused, color }: { label: string; focused: boolean; c
 // Icon mapping for More screen items (enterprise-grade, no emojis)
 const MODULE_ICONS: Record<string, React.ComponentProps<typeof Icon>['name']> = {
   ScheduleStack: 'calendar-clock',
+  AppointmentInboxStack: 'clipboard-list-outline',
   ArticlesStack: 'newspaper-variant-outline',
   VideosStack: 'video-outline',
   PodcastsStack: 'microphone-outline',
@@ -84,6 +87,7 @@ const MODULE_ICONS: Record<string, React.ComponentProps<typeof Icon>['name']> = 
 // Module ID mapping for permission checks
 const SCREEN_TO_MODULE: Record<string, ModuleId> = {
   ScheduleStack: 'schedule',
+  AppointmentInboxStack: 'schedule',
   ArticlesStack: 'articles',
   VideosStack: 'videos',
   PodcastsStack: 'podcasts',
@@ -102,6 +106,7 @@ function MoreScreen({ navigation }: any) {
 
   const allItems = [
     { label: t('tabs.schedule'), screen: 'ScheduleStack' },
+    { label: t('admin.appointments'), screen: 'AppointmentInboxStack' },
     { label: t('admin.articles'), screen: 'ArticlesStack' },
     { label: t('admin.videos'), screen: 'VideosStack' },
     { label: t('admin.podcasts'), screen: 'PodcastsStack' },
@@ -208,6 +213,7 @@ function makeStack(name: string, Component: React.ComponentType<any>, titleKey: 
 }
 
 const ScheduleStack = makeStack('Schedule', ScheduleScreen, 'tabs.schedule');
+const AppointmentInboxStack = makeStack('Appointments', AppointmentInboxScreen, 'admin.appointments');
 const ArticlesStack = makeStack('Articles', ArticlesScreen, 'admin.articles');
 const VideosStack = makeStack('Videos', VideosScreen, 'admin.videos');
 const PodcastsStack = makeStack('Podcasts', PodcastsScreen, 'admin.podcasts');
@@ -271,6 +277,7 @@ export function AppNavigator() {
           <>
             <Stack.Screen name="AdminMain" component={AdminTabs} />
             <Stack.Screen name="ScheduleStack" component={ScheduleStack} />
+            <Stack.Screen name="AppointmentInboxStack" component={AppointmentInboxStack} />
             <Stack.Screen name="ArticlesStack" component={ArticlesStack} />
             <Stack.Screen name="VideosStack" component={VideosStack} />
             <Stack.Screen name="PodcastsStack" component={PodcastsStack} />

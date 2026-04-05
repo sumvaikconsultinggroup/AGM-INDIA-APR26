@@ -19,7 +19,6 @@ import { colors, spacing, borderRadius, shadows } from '../../theme';
 import CityPickerModal, { City } from './CityPickerModal';
 
 const STORAGE_KEY_CITY = '@panchang_selected_city';
-const STORAGE_KEY_LAST_PANCHANG = '@panchang_last_data';
 const DEFAULT_CITY: City = {
   _id: 'default',
   name: 'Haridwar',
@@ -75,6 +74,7 @@ interface TimePeriod {
 }
 
 interface PanchangData {
+  date?: string;
   tithi?: { name?: string; paksha?: string; number?: number; startTime?: string; endTime?: string };
   nakshatra?: { name?: string; deity?: string; planet?: string; pada?: number; endTime?: string };
   yoga?: { name?: string; nature?: string; number?: number };
@@ -174,18 +174,6 @@ function normalizePanchang(payload: unknown): PanchangData | null {
   };
 }
 
-async function loadCachedPanchang(): Promise<PanchangData | null> {
-  try {
-    const cached = await AsyncStorage.getItem(STORAGE_KEY_LAST_PANCHANG);
-    if (!cached) return null;
-    return normalizePanchang(JSON.parse(cached));
-  } catch { return null; }
-}
-
-async function saveCachedPanchang(data: PanchangData): Promise<void> {
-  try { await AsyncStorage.setItem(STORAGE_KEY_LAST_PANCHANG, JSON.stringify(data)); } catch {}
-}
-
 function formatTime(time?: string): string {
   if (!time || time === 'N/A') return '--:--';
   return time;
@@ -194,6 +182,17 @@ function formatTime(time?: string): string {
 function formatPeriod(p?: TimePeriod): string {
   if (!p?.start || !p?.end) return '--:-- - --:--';
   return `${p.start} - ${p.end}`;
+}
+
+function formatDisplayDate(date?: string): string {
+  if (!date) return '';
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return parsed.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 }
 
 // ─── Sub-Components ──────────────────────────────────────────────────
@@ -302,37 +301,51 @@ export default function PanchangScreen() {
   const fetchPanchangData = async () => {
     if (!refreshing) setLoading(true);
     setFetchError(null);
-    try {
-      const [panchangRes, festivalsRes] = await Promise.all([
-        getPanchangToday({ lat: selectedCity.lat, lng: selectedCity.lng, city: selectedCity.name, timezone: selectedCity.timezone }),
-        getPanchangFestivals({ upcoming: true, limit: 5 }),
-      ]);
+    const [panchangResult, festivalsResult] = await Promise.allSettled([
+      getPanchangToday({
+        lat: selectedCity.lat,
+        lng: selectedCity.lng,
+        city: selectedCity.name,
+        timezone: selectedCity.timezone,
+      }),
+      getPanchangFestivals({ upcoming: true, limit: 5 }),
+    ]);
 
-      const normalized = normalizePanchang(panchangRes);
+    if (panchangResult.status === 'fulfilled') {
+      const normalized = normalizePanchang(panchangResult.value);
       if (normalized) {
         setPanchang(normalized);
-        await saveCachedPanchang(normalized);
       } else {
-        const cached = await loadCachedPanchang();
-        setPanchang(cached);
-        if (!cached) setFetchError('Unable to load Panchang data');
+        setPanchang(null);
+        setFetchError('Live Panchang data is incomplete for this location/date.');
       }
-
-      const rawFestivalData = unwrapPayload<any[]>(festivalsRes) || [];
-      const festivalData = Array.isArray(rawFestivalData) ? rawFestivalData : [];
-      setFestivals(festivalData.map((f: any) => {
-        const festDate = new Date(f.date);
-        const now = new Date();
-        const daysUntil = Math.max(0, Math.ceil((festDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-        return { ...f, daysUntil };
-      }));
-    } catch {
-      const cached = await loadCachedPanchang();
-      setPanchang(cached);
-      setFetchError('Unable to connect. Showing cached data.');
-    } finally {
-      setLoading(false);
+    } else {
+      if (panchangResult.reason instanceof Error) {
+        console.warn('Panchang data fetch failed:', panchangResult.reason.message);
+      }
+      setPanchang(null);
+      setFetchError('Unable to load live Panchang data.');
     }
+
+    if (festivalsResult.status === 'fulfilled') {
+      const rawFestivalData = unwrapPayload<any[]>(festivalsResult.value) || [];
+      const festivalData = Array.isArray(rawFestivalData) ? rawFestivalData : [];
+      setFestivals(
+        festivalData.map((f: any) => {
+          const festDate = new Date(f.date);
+          const now = new Date();
+          const daysUntil = Math.max(0, Math.ceil((festDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+          return { ...f, daysUntil };
+        }),
+      );
+    } else {
+      if (festivalsResult.reason instanceof Error) {
+        console.warn('Panchang festival list unavailable:', festivalsResult.reason.message);
+      }
+      setFestivals([]);
+    }
+
+    setLoading(false);
   };
 
   const onRefresh = useCallback(async () => {
@@ -349,6 +362,9 @@ export default function PanchangScreen() {
 
   const isEkadashi = (panchang?.tithi?.number === 11 || panchang?.tithi?.number === 26);
   const primaryFestival = panchang?.festival || panchang?.festivals?.[0];
+  const displayDate = formatDisplayDate(panchang?.date);
+  const displayDay = panchang?.dayNameHindi || panchang?.dayName || '';
+  const displayLocation = [selectedCity.name, selectedCity.timezone].filter(Boolean).join(' • ');
 
   if (loading && !refreshing) {
     return (
@@ -413,6 +429,22 @@ export default function PanchangScreen() {
               )}
               <Text style={styles.heroLabel}>पंचांग</Text>
               <Text style={styles.heroSubLabel}>Five Elements of Time</Text>
+              {(displayDay || displayDate) && (
+                <View style={styles.heroMetaWrap}>
+                  <View style={styles.heroDateBadge}>
+                    <Icon name="calendar-month-outline" size={16} color={colors.primary.maroon} />
+                    <Text style={styles.heroDateText}>
+                      {[displayDay, displayDate].filter(Boolean).join(' • ')}
+                    </Text>
+                  </View>
+                  {!!displayLocation && (
+                    <View style={styles.heroLocationBadge}>
+                      <Icon name="map-marker-radius-outline" size={15} color={colors.gold.dark} />
+                      <Text style={styles.heroLocationText}>{displayLocation}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
 
               {/* Tithi */}
               <View style={styles.tithiRow}>
@@ -741,7 +773,12 @@ const styles = StyleSheet.create({
   heroCard: { margin: spacing.lg, marginTop: spacing.sm, padding: spacing.lg, backgroundColor: colors.background.warmWhite, borderRadius: borderRadius.lg, borderWidth: 1, borderColor: colors.border.gold as string, overflow: 'hidden', ...shadows.warm },
   ekadashiCard: { borderColor: colors.gold.main, borderWidth: 2 },
   heroLabel: { fontSize: 22, fontWeight: '700', color: colors.primary.maroon, textAlign: 'center' },
-  heroSubLabel: { fontSize: 13, color: colors.text.secondary, textAlign: 'center', marginBottom: spacing.lg },
+  heroSubLabel: { fontSize: 13, color: colors.text.secondary, textAlign: 'center', marginBottom: spacing.sm },
+  heroMetaWrap: { alignItems: 'center', marginBottom: spacing.lg, gap: spacing.xs },
+  heroDateBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'center', gap: spacing.xs, backgroundColor: 'rgba(128, 0, 32, 0.06)', borderWidth: 1, borderColor: 'rgba(128, 0, 32, 0.12)', borderRadius: borderRadius.full, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  heroDateText: { fontSize: 12, fontWeight: '600', color: colors.primary.maroon, textAlign: 'center' },
+  heroLocationBadge: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, backgroundColor: 'rgba(212,160,23,0.08)', borderWidth: 1, borderColor: 'rgba(212,160,23,0.18)', borderRadius: borderRadius.full, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  heroLocationText: { fontSize: 11, fontWeight: '500', color: colors.gold.dark, textAlign: 'center' },
   tithiRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md },
   tithiMain: { alignItems: 'center' },
   tithiLabel: { fontSize: 13, color: colors.text.secondary, marginBottom: spacing.xs },

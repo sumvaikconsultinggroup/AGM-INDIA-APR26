@@ -34,20 +34,31 @@ export interface IRequestSchedule {
   eventLocation?: string;
   eventTime?: string; // Added field
   eventDetails?: string; // Added field
+  baseLocation?: string;
 }
 
 // Main document interface
 export interface IScheduleRegistration extends Document {
+  userId?: string;
   name: string;
   email: string;
   phone: string;
   purpose: MeetingPurpose;
   additionalInfo?: string;
   preferedTime: PreferredTime;
+  language?: string;
+  assignedTo?: string;
+  internalNotes?: string;
   status?: RegistrationStatus;
   isDeleted?: boolean;
   reschedule?: boolean; // Flag to indicate if this was rescheduled
   rescheduleDate?: Date; // Original reschedule date (for tracking)
+  approvedAt?: Date;
+  rejectedAt?: Date;
+  emailNotificationSentAt?: Date;
+  whatsappNotificationSentAt?: Date;
+  nextDayReminderSentAt?: Date;
+  morningReminderSentAt?: Date;
   requestedSchedule?: IRequestSchedule;
   createdAt: Date;
   updatedAt: Date;
@@ -83,6 +94,11 @@ const RequestedScheduleSchema = new Schema<IRequestSchedule>(
       trim: true,
       maxlength: [1000, 'Event details cannot exceed 1000 characters'],
     },
+    baseLocation: {
+      type: String,
+      required: false,
+      trim: true,
+    },
   },
   { _id: false }
 );
@@ -94,6 +110,11 @@ const ScheduleRegistrationSchema = new Schema<IScheduleRegistration>(
       type: String,
       required: [true, 'Full name is required'],
       trim: true,
+    },
+    userId: {
+      type: String,
+      trim: true,
+      index: true,
     },
     email: {
       type: String,
@@ -115,6 +136,19 @@ const ScheduleRegistrationSchema = new Schema<IScheduleRegistration>(
       type: String,
       maxlength: [500, 'Additional information cannot exceed 500 characters'],
     },
+    language: {
+      type: String,
+      trim: true,
+      default: 'en',
+    },
+    assignedTo: {
+      type: String,
+      trim: true,
+    },
+    internalNotes: {
+      type: String,
+      trim: true,
+    },
     preferedTime: {
       type: String,
       enum: Object.values(PreferredTime),
@@ -134,6 +168,30 @@ const ScheduleRegistrationSchema = new Schema<IScheduleRegistration>(
       default: false,
     },
     rescheduleDate: {
+      type: Date,
+      required: false,
+    },
+    approvedAt: {
+      type: Date,
+      required: false,
+    },
+    rejectedAt: {
+      type: Date,
+      required: false,
+    },
+    emailNotificationSentAt: {
+      type: Date,
+      required: false,
+    },
+    whatsappNotificationSentAt: {
+      type: Date,
+      required: false,
+    },
+    nextDayReminderSentAt: {
+      type: Date,
+      required: false,
+    },
+    morningReminderSentAt: {
       type: Date,
       required: false,
     },

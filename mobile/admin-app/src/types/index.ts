@@ -68,11 +68,28 @@ export interface Schedule {
   _id: string;
   month: string;
   locations: string;
+  baseLocation?: 'Haridwar Ashram' | 'Delhi Ashram' | 'Other';
+  publicTitle?: {
+    en?: string;
+    hi?: string;
+  };
+  publicLocation?: {
+    en?: string;
+    hi?: string;
+  };
+  publicNotes?: {
+    en?: string;
+    hi?: string;
+  };
+  internalNotes?: string;
+  changeNote?: string;
+  isLastMinuteUpdate?: boolean;
   timeSlots: {
     period?: string;
     startDate: string;
     endDate: string;
     _id: string;
+    slotCapacity?: number;
   }[];
   appointment?: boolean;
   maxPeople?: number;
@@ -80,6 +97,48 @@ export interface Schedule {
   dateRange?: string;
   earliestStartDate?: string;
   latestEndDate?: string;
+  currentAppointments?: number;
+  totalCapacity?: number;
+  remainingCapacity?: number;
+  isBlocked?: boolean;
+  slotStats?: {
+    startDate: string;
+    endDate?: string;
+    period?: string;
+    slotCapacity?: number;
+    bookedCount?: number;
+    remainingCapacity?: number;
+    isBlocked?: boolean;
+  }[];
+}
+
+export interface ScheduleRegistration {
+  _id: string;
+  userId?: string;
+  name: string;
+  email: string;
+  phone: string;
+  purpose: string;
+  additionalInfo?: string;
+  preferedTime?: string;
+  language?: string;
+  assignedTo?: string;
+  internalNotes?: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  reschedule?: boolean;
+  rescheduleDate?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  requestedSchedule?: {
+    scheduleId?: string;
+    eventDate?: string;
+    eventLocation?: string;
+    eventTime?: string;
+    eventDetails?: string;
+    baseLocation?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Article {

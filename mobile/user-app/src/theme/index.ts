@@ -27,6 +27,12 @@ export const colors = {
     gold: '#D4A017',
     white: '#FFFFFF',
   },
+  status: {
+    success: '#4CAF50',
+    warning: '#FF9800',
+    error: '#F44336',
+    info: '#2196F3',
+  },
   border: {
     gold: 'rgba(212, 160, 23, 0.3)',
     maroon: 'rgba(128, 0, 32, 0.2)',

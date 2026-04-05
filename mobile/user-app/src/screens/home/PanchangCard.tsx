@@ -24,6 +24,10 @@ interface PanchangSummary {
   moonRashi?: { name?: string };
 }
 
+interface PanchangCardProps {
+  onPress?: () => void;
+}
+
 function unwrapPayload<T = unknown>(payload: unknown, maxDepth = 3): T | null {
   let current: unknown = payload;
   for (let i = 0; i < maxDepth; i++) {
@@ -36,7 +40,7 @@ function unwrapPayload<T = unknown>(payload: unknown, maxDepth = 3): T | null {
   return (current as T) ?? null;
 }
 
-export default function PanchangCard() {
+export default function PanchangCard({ onPress }: PanchangCardProps) {
   const navigation = useNavigation<any>();
   const [data, setData] = useState<PanchangSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,11 +61,18 @@ export default function PanchangCard() {
 
   const primaryFestival = data?.festival || (data?.festivals && data.festivals[0]) || null;
   const dayQuality = data?.dayQuality;
+  const handlePress = () => {
+    if (onPress) {
+      onPress();
+      return;
+    }
+    navigation.navigate('Panchang');
+  };
 
   return (
     <TouchableOpacity
       style={styles.container}
-      onPress={() => navigation.navigate('Panchang')}
+      onPress={handlePress}
       activeOpacity={0.7}
     >
       {/* Gold top accent */}

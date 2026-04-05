@@ -2,6 +2,26 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import ScheduleRegistration, { RegistrationStatus } from '@/models/ScheduleRegistration';
 import mongoose from 'mongoose';
+import { sendRegistrationLifecycleNotifications } from '@/lib/scheduleNotifications';
+
+const ScheduleRegistrationModel = ScheduleRegistration;
+
+async function parseUpdatePayload(req) {
+  const contentType = req.headers.get('content-type') || '';
+
+  if (contentType.includes('application/json')) {
+    return await req.json();
+  }
+
+  const formData = await req.formData();
+  const payload = {};
+
+  for (const [key, value] of formData.entries()) {
+    payload[key] = value;
+  }
+
+  return payload;
+}
 
 // Get a single schedule registration by ID
 export async function GET(req, { params }) {
@@ -16,7 +36,7 @@ export async function GET(req, { params }) {
       );
     }
     
-    const registration = await ScheduleRegistration.findById(id);
+    const registration = await ScheduleRegistrationModel.findById(id);
     
     if (!registration || registration.isDeleted) {
       return NextResponse.json(
@@ -52,7 +72,7 @@ export async function PUT(req, { params }) {
     }
     
     // Check if registration exists
-    const registration = await ScheduleRegistration.findById(id);
+    const registration = await ScheduleRegistrationModel.findById(id);
     if (!registration || registration.isDeleted) {
       return NextResponse.json(
         { success: false, message: 'Registration not found' },
@@ -60,15 +80,23 @@ export async function PUT(req, { params }) {
       );
     }
     
-    const formData = await req.formData();
+    const payload = await parseUpdatePayload(req);
     
     const updateData = {};
     
     // Handle status update
-    if (formData.has('status')) {
-      const status = formData.get('status');
+    if (payload.status) {
+      const status = payload.status;
       if (Object.values(RegistrationStatus).includes(status)) {
         updateData.status = status;
+        if (status === RegistrationStatus.APPROVED) {
+          updateData.approvedAt = new Date();
+          updateData.rejectedAt = undefined;
+        }
+        if (status === RegistrationStatus.REJECTED) {
+          updateData.rejectedAt = new Date();
+          updateData.approvedAt = undefined;
+        }
       } else {
         return NextResponse.json(
           { success: false, message: 'Invalid status value' },
@@ -78,13 +106,13 @@ export async function PUT(req, { params }) {
     }
     
     // Handle reschedule update
-    if (formData.has('reschedule')) {
-      const reschedule = formData.get('reschedule');
-      updateData.reschedule = reschedule === 'true';
+    if (payload.reschedule !== undefined) {
+      const reschedule = payload.reschedule;
+      updateData.reschedule = reschedule === true || reschedule === 'true';
       
-      if (updateData.reschedule && formData.has('rescheduleDate')) {
+      if (updateData.reschedule && payload.rescheduleDate) {
         try {
-          const rescheduleDate = formData.get('rescheduleDate');
+          const rescheduleDate = payload.rescheduleDate;
           // Validate date format
           const dateObj = new Date(rescheduleDate);
           
@@ -99,8 +127,9 @@ export async function PUT(req, { params }) {
           updateData.rescheduleDate = dateObj;
           
           // Also update the eventDate in requestedSchedule if provided
-          if (formData.has('requestedSchedule[eventDate]')) {
-            const newEventDateStr = formData.get('requestedSchedule[eventDate]');
+          if (payload['requestedSchedule[eventDate]'] || payload.requestedSchedule?.eventDate) {
+            const newEventDateStr =
+              payload['requestedSchedule[eventDate]'] || payload.requestedSchedule?.eventDate;
             const eventDateObj = new Date(newEventDateStr);
             
             if (isNaN(eventDateObj.getTime())) {
@@ -120,19 +149,98 @@ export async function PUT(req, { params }) {
         }
       }
     }
+
+    if (payload.assignedTo !== undefined) {
+      updateData.assignedTo = payload.assignedTo || undefined;
+    }
+
+    if (payload.internalNotes !== undefined) {
+      updateData.internalNotes = payload.internalNotes || undefined;
+    }
+
+    if (payload.userId !== undefined) {
+      updateData.userId = payload.userId || undefined;
+    }
+
+    const requestedSchedulePatch = payload.requestedSchedule || {};
+    const eventTime = payload['requestedSchedule[eventTime]'] || requestedSchedulePatch.eventTime;
+    const eventLocation =
+      payload['requestedSchedule[eventLocation]'] || requestedSchedulePatch.eventLocation;
+    const eventDetails =
+      payload['requestedSchedule[eventDetails]'] || requestedSchedulePatch.eventDetails;
+    const baseLocation =
+      payload['requestedSchedule[baseLocation]'] || requestedSchedulePatch.baseLocation;
+
+    if (eventTime !== undefined) {
+      updateData['requestedSchedule.eventTime'] = eventTime || undefined;
+    }
+
+    if (eventLocation !== undefined) {
+      updateData['requestedSchedule.eventLocation'] = eventLocation || undefined;
+    }
+
+    if (eventDetails !== undefined) {
+      updateData['requestedSchedule.eventDetails'] = eventDetails || undefined;
+    }
+
+    if (baseLocation !== undefined) {
+      updateData['requestedSchedule.baseLocation'] = baseLocation || undefined;
+    }
+
+    if (payload.emailNotificationSentAt) {
+      updateData.emailNotificationSentAt = new Date(payload.emailNotificationSentAt);
+    }
+
+    if (payload.whatsappNotificationSentAt) {
+      updateData.whatsappNotificationSentAt = new Date(payload.whatsappNotificationSentAt);
+    }
+
+    if (payload.nextDayReminderSentAt) {
+      updateData.nextDayReminderSentAt = new Date(payload.nextDayReminderSentAt);
+    }
+
+    if (payload.morningReminderSentAt) {
+      updateData.morningReminderSentAt = new Date(payload.morningReminderSentAt);
+    }
     
     // Update the registration
-    const updatedRegistration = await ScheduleRegistration.findByIdAndUpdate(
+    const updatedRegistration = await ScheduleRegistrationModel.findByIdAndUpdate(
       id, 
       updateData,
       { new: true, runValidators: true }
     );
-    
+
     if (!updatedRegistration) {
       return NextResponse.json(
         { success: false, message: 'Failed to update registration' },
         { status: 500 }
       );
+    }
+    
+    if (payload.status === RegistrationStatus.APPROVED) {
+      const results = await sendRegistrationLifecycleNotifications(updatedRegistration, 'approved');
+      if (results.email) {
+        updateData.emailNotificationSentAt = new Date();
+      }
+      if (results.whatsapp) {
+        updateData.whatsappNotificationSentAt = new Date();
+      }
+      if (results.email || results.whatsapp) {
+        await ScheduleRegistrationModel.findByIdAndUpdate(id, {
+          $set: {
+            ...(results.email ? { emailNotificationSentAt: new Date() } : {}),
+            ...(results.whatsapp ? { whatsappNotificationSentAt: new Date() } : {}),
+          },
+        });
+      }
+    }
+
+    if (payload.status === RegistrationStatus.REJECTED) {
+      await sendRegistrationLifecycleNotifications(updatedRegistration, 'rejected');
+    }
+
+    if (updateData.reschedule) {
+      await sendRegistrationLifecycleNotifications(updatedRegistration, 'rescheduled');
     }
     
     return NextResponse.json(
@@ -167,7 +275,7 @@ export async function DELETE(req, { params }) {
     }
     
     // Soft delete by setting isDeleted flag
-    const deletedRegistration = await ScheduleRegistration.findByIdAndUpdate(
+    const deletedRegistration = await ScheduleRegistrationModel.findByIdAndUpdate(
       id,
       { isDeleted: true },
       { new: true }
