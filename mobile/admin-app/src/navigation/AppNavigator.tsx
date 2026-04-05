@@ -24,6 +24,7 @@ import { BooksScreen } from '../screens/books/BooksScreen';
 import { RoomBookingScreen } from '../screens/rooms/RoomBookingScreen';
 import { VolunteersScreen } from '../screens/volunteers/VolunteersScreen';
 import { MessagesScreen } from '../screens/messages/MessagesScreen';
+import { TeamManagementScreen } from '../screens/team/TeamManagementScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -77,6 +78,7 @@ const MODULE_ICONS: Record<string, React.ComponentProps<typeof Icon>['name']> = 
   UsersStack: 'account-group-outline',
   VolunteersStack: 'hand-heart-outline',
   MessagesStack: 'message-text-outline',
+  TeamStack: 'shield-account-outline',
 };
 
 // Module ID mapping for permission checks
@@ -90,6 +92,7 @@ const SCREEN_TO_MODULE: Record<string, ModuleId> = {
   UsersStack: 'users',
   VolunteersStack: 'volunteers',
   MessagesStack: 'messages',
+  TeamStack: 'users',
 };
 
 // "More" screen — grid of all remaining admin sections (RBAC-filtered)
@@ -107,6 +110,7 @@ function MoreScreen({ navigation }: any) {
     { label: t('admin.users'), screen: 'UsersStack' },
     { label: t('admin.volunteers'), screen: 'VolunteersStack' },
     { label: t('admin.messages'), screen: 'MessagesStack' },
+    { label: 'Team', screen: 'TeamStack' },
   ];
 
   // Filter items based on RBAC permissions
@@ -212,6 +216,7 @@ const RoomsStack = makeStack('Rooms', RoomBookingScreen, 'admin.rooms');
 const UsersStack = makeStack('Users', UsersScreen, 'admin.users');
 const VolunteersStack = makeStack('Volunteers', VolunteersScreen, 'admin.volunteers');
 const MessagesStack = makeStack('Messages', MessagesScreen, 'admin.messages');
+const TeamStack = makeStack('Team', TeamManagementScreen, 'admin.users');
 
 function AdminTabs() {
   const insets = useSafeAreaInsets();
@@ -274,6 +279,7 @@ export function AppNavigator() {
             <Stack.Screen name="UsersStack" component={UsersStack} />
             <Stack.Screen name="VolunteersStack" component={VolunteersStack} />
             <Stack.Screen name="MessagesStack" component={MessagesStack} />
+            <Stack.Screen name="TeamStack" component={TeamStack} />
           </>
         ) : (
           <Stack.Screen name="AdminLogin" component={LoginScreen} />

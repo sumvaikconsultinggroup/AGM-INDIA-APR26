@@ -1,6 +1,11 @@
 import citiesData from '@/data/cities.json';
 import { getMoonLongitude, getMoonSunAngle, getSunLongitude } from '@/lib/panchang/astronomy';
 import { calculateAyana, calculateHinduMonth, calculateKarana, calculateNakshatra, calculateRitu, calculateShakaSamvat, calculateTithi, calculateVikramSamvat, calculateYoga } from '@/lib/panchang/calculator';
+import {
+  getMoonRashi, getSunRashi, getCurrentHora, getDishaShool,
+  calculateDurMuhurta, calculateVarjyam, getSamvatName,
+  getAuspiciousActivities, calculateDayQuality,
+} from '@/lib/panchang/enhancedCalculator';
 import { findFestivals } from '@/lib/panchang/festivals';
 import {
   calculateAbhijitMuhurta,
@@ -173,11 +178,33 @@ export function buildPanchangData({
   if (tithi.number === 4 && tithi.paksha === 'Krishna') vratDays.push('Sankashti Chaturthi');
   if (tithi.number === 14 && tithi.paksha === 'Krishna') vratDays.push('Shivaratri');
 
+  // Enhanced calculations
+  const moonRashi = getMoonRashi(date);
+  const sunRashi = getSunRashi(date);
+  const hora = getCurrentHora(date, sunTimes.sunrise, sunTimes.sunset, dayOfWeek);
+  const dishaShool = getDishaShool(dayOfWeek);
+  const durMuhurta = calculateDurMuhurta(sunTimes.sunrise, sunTimes.sunset, dayOfWeek);
+  const varjyam = calculateVarjyam(nakshatra.number, nakshatra.startTime, nakshatra.endTime);
+  const vikramSamvat = calculateVikramSamvat(date);
+  const samvatName = getSamvatName(vikramSamvat);
+  const dayQuality = calculateDayQuality(tithi.number, yoga.nature, nakshatra.number, dayOfWeek);
+  const auspiciousActivities = getAuspiciousActivities(tithi.number, nakshatra.number, yoga.number, dayOfWeek);
+
+  // Day name
+  const dayNames = ['Ravivaar', 'Somvaar', 'Mangalvaar', 'Budhvaar', 'Guruvaar', 'Shukravaar', 'Shanivaar'];
+  const dayNamesHindi = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
+
   return {
     date: dateKey,
     locationName: cityName,
     lat,
     lng,
+    // Day info
+    dayName: dayNames[dayOfWeek],
+    dayNameHindi: dayNamesHindi[dayOfWeek],
+    dayOfWeek,
+    dayQuality,
+    // Core Panchang (5 elements)
     tithi: {
       ...tithi,
       startTime: formatTime24(new Date(tithi.startTime), timezone),
@@ -198,15 +225,38 @@ export function buildPanchangData({
       name: currentKaranaName,
       currentHalf: currentKaranaHalf,
     },
+    // Rashi (NEW)
+    moonRashi,
+    sunRashi,
+    // Hora (NEW)
+    hora,
+    // Sun/Moon timings
     sunrise: formatTime24(sunTimes.sunrise, timezone),
     sunset: formatTime24(sunTimes.sunset, timezone),
     moonrise: moonTimes.moonrise ? formatTime24(moonTimes.moonrise, timezone) : 'N/A',
     moonset: moonTimes.moonset ? formatTime24(moonTimes.moonset, timezone) : 'N/A',
+    // Muhurta & Inauspicious timings
     rahuKaal: formatPeriod(rahuKaal),
     yamaghanda: formatPeriod(yamaghanda),
     gulikaKaal: formatPeriod(gulikaKaal),
     brahmaMuhurta: formatPeriod(brahmaMuhurta),
     abhijitMuhurta: formatPeriod(abhijitMuhurta),
+    // Enhanced inauspicious timings (NEW)
+    dishaShool,
+    durMuhurta: durMuhurta.map(dm => ({
+      ...dm,
+      start: formatTime24(new Date(dm.start), timezone),
+      end: formatTime24(new Date(dm.end), timezone),
+      startIso: dm.start,
+      endIso: dm.end,
+    })),
+    varjyam: varjyam ? {
+      start: formatTime24(new Date(varjyam.start), timezone),
+      end: formatTime24(new Date(varjyam.end), timezone),
+      startIso: varjyam.start,
+      endIso: varjyam.end,
+    } : null,
+    // Consolidated muhurta object
     muhurta: {
       brahmaMuhurta: formatPeriod(brahmaMuhurta),
       abhijitMuhurta: formatPeriod(abhijitMuhurta),
@@ -214,13 +264,16 @@ export function buildPanchangData({
       yamaghanda: formatPeriod(yamaghanda),
       gulikaKaal: formatPeriod(gulikaKaal),
     },
+    // Hindu calendar
     hinduMonth,
     paksha: tithi.paksha,
-    vikramSamvat: calculateVikramSamvat(date),
-    samvatYear: calculateVikramSamvat(date),
+    vikramSamvat,
+    samvatName, // NEW
+    samvatYear: vikramSamvat,
     shakaSamvat: calculateShakaSamvat(date),
     ritu: calculateRitu(hinduMonth),
     ayana: calculateAyana(date),
+    // Choghadiya
     choghadiya: {
       day: choghadiya.day.map((period) => ({
         ...period,
@@ -237,12 +290,16 @@ export function buildPanchangData({
         endIso: period.end,
       })),
     },
+    // Festivals & Vrat
     festivals,
     festival: festivals[0] || null,
     ekadashi,
     isPurnima: tithi.number === 15,
     isAmavasya: tithi.number === 30,
     vratDays,
+    // Auspicious activities (NEW)
+    auspiciousActivities,
+    // Raw astronomical data
     sunLongitude: getSunLongitude(date),
     moonLongitude: getMoonLongitude(date),
     timezone,

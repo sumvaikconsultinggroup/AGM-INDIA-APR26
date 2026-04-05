@@ -18,6 +18,7 @@ const NAMESPACES = [
   'podcasts',
   'gallery',
   'auth',
+  'panchang',
 ];
 
 i18n
