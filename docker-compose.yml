@@ -1,0 +1,60 @@
+# Docker Compose — Local Development
+# Usage: docker-compose up --build
+
+version: '3.9'
+
+services:
+  # ─── MongoDB ───────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: agm-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: agm_india
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─── Dashboard + API Backend ───────────────────
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agm-dashboard
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    env_file:
+      - dashboard-next/.env
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/agm_india
+      - NODE_ENV=production
+
+  # ─── Website ───────────────────────────────────
+  website:
+    build:
+      context: ./website
+      dockerfile: Dockerfile
+    container_name: agm-website
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - dashboard
+    environment:
+      - NEXT_PUBLIC_API_URL=http://dashboard:3000
+      - NODE_ENV=production
+
+volumes:
+  mongo_data:
+    driver: local

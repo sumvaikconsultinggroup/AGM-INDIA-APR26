@@ -23,27 +23,58 @@ interface ArticleData {
   coverImage?: string;
 }
 
-// GET all articles
-export async function GET(): Promise<NextResponse<ApiResponse>> {
+// GET all articles (with optional pagination)
+export async function GET(req: Request): Promise<NextResponse<ApiResponse>> {
   try {
     await connectDB();
 
-    const articles = await Article.find({ isDeleted: { $ne: true } })
-      .sort({ publishedDate: -1 }) // Most recent articles first
+    const url = new URL(req.url);
+    const page = parseInt(url.searchParams.get('page') || '0', 10);
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '0', 10), 100);
+    const search = url.searchParams.get('search') || '';
+    const category = url.searchParams.get('category') || '';
+
+    const filter: Record<string, unknown> = { isDeleted: { $ne: true } };
+    if (search) {
+      const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      filter.$or = [{ title: regex }, { description: regex }];
+    }
+    if (category) filter.category = category;
+
+    // Paginated response
+    if (page > 0 && limit > 0) {
+      const skip = (page - 1) * limit;
+      const [articles, total] = await Promise.all([
+        Article.find(filter).sort({ publishedDate: -1 }).skip(skip).limit(limit).select('-__v').lean(),
+        Article.countDocuments(filter),
+      ]);
+      const sanitizedArticles = JSON.parse(JSON.stringify(articles));
+      const totalPages = Math.ceil(total / limit);
+
+      return NextResponse.json(
+        {
+          success: true,
+          message: 'Articles fetched successfully',
+          data: sanitizedArticles,
+          meta: { page, limit, total, totalPages, hasNextPage: page < totalPages, hasPrevPage: page > 1 },
+        },
+        { status: 200, headers: { 'Cache-Control': 'public, max-age=120, stale-while-revalidate=60', 'X-Total-Count': String(total) } }
+      );
+    }
+
+    // Legacy: return all articles
+    const articles = await Article.find(filter)
+      .sort({ publishedDate: -1 })
       .select('-__v')
       .lean();
 
     if (!articles?.length) {
       return NextResponse.json<ApiResponse>(
-        {
-          success: false,
-          message: 'No articles found',
-        },
+        { success: false, message: 'No articles found' },
         { status: 404 }
       );
     }
 
-    // Safely stringify and parse to handle any problematic values
     const sanitizedArticles = JSON.parse(JSON.stringify(articles));
 
     return NextResponse.json(
@@ -60,7 +91,6 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
       {
         success: false,
         message: 'Failed to fetch articles',
-        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

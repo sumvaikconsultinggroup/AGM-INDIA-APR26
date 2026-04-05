@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { useAuth } from '../context/AuthContext';
+import { usePermissions } from '../context/PermissionContext';
+import type { ModuleId } from '../context/PermissionContext';
 import { colors, spacing, borderRadius } from '../theme';
 import { useI18n } from '../i18n/I18nProvider';
 import { LoginScreen } from '../screens/auth/LoginScreen';
@@ -64,24 +66,63 @@ function TabIcon({ label, focused, color }: { label: string; focused: boolean; c
   return <Icon name={icons[label] || 'circle'} size={focused ? 23 : 21} color={color} />;
 }
 
-// "More" screen — grid of all remaining admin sections
+// Icon mapping for More screen items (enterprise-grade, no emojis)
+const MODULE_ICONS: Record<string, React.ComponentProps<typeof Icon>['name']> = {
+  ScheduleStack: 'calendar-clock',
+  ArticlesStack: 'newspaper-variant-outline',
+  VideosStack: 'video-outline',
+  PodcastsStack: 'microphone-outline',
+  BooksStack: 'book-open-page-variant-outline',
+  RoomsStack: 'door-open',
+  UsersStack: 'account-group-outline',
+  VolunteersStack: 'hand-heart-outline',
+  MessagesStack: 'message-text-outline',
+};
+
+// Module ID mapping for permission checks
+const SCREEN_TO_MODULE: Record<string, ModuleId> = {
+  ScheduleStack: 'schedule',
+  ArticlesStack: 'articles',
+  VideosStack: 'videos',
+  PodcastsStack: 'podcasts',
+  BooksStack: 'books',
+  RoomsStack: 'rooms',
+  UsersStack: 'users',
+  VolunteersStack: 'volunteers',
+  MessagesStack: 'messages',
+};
+
+// "More" screen — grid of all remaining admin sections (RBAC-filtered)
 function MoreScreen({ navigation }: any) {
   const { t } = useI18n();
-  const items = [
-    { label: t('tabs.schedule'), icon: '🗓️', screen: 'ScheduleStack' },
-    { label: t('admin.articles'), icon: '📰', screen: 'ArticlesStack' },
-    { label: t('admin.videos'), icon: '🎬', screen: 'VideosStack' },
-    { label: t('admin.podcasts'), icon: '🎙️', screen: 'PodcastsStack' },
-    { label: t('admin.books'), icon: '📚', screen: 'BooksStack' },
-    { label: t('admin.rooms'), icon: '🏠', screen: 'RoomsStack' },
-    { label: t('admin.users'), icon: '👥', screen: 'UsersStack' },
-    { label: t('admin.volunteers'), icon: '🤝', screen: 'VolunteersStack' },
-    { label: t('admin.messages'), icon: '💬', screen: 'MessagesStack' },
+  const { canAccessModule, role } = usePermissions();
+
+  const allItems = [
+    { label: t('tabs.schedule'), screen: 'ScheduleStack' },
+    { label: t('admin.articles'), screen: 'ArticlesStack' },
+    { label: t('admin.videos'), screen: 'VideosStack' },
+    { label: t('admin.podcasts'), screen: 'PodcastsStack' },
+    { label: t('admin.books'), screen: 'BooksStack' },
+    { label: t('admin.rooms'), screen: 'RoomsStack' },
+    { label: t('admin.users'), screen: 'UsersStack' },
+    { label: t('admin.volunteers'), screen: 'VolunteersStack' },
+    { label: t('admin.messages'), screen: 'MessagesStack' },
   ];
+
+  // Filter items based on RBAC permissions
+  const items = allItems.filter(item => {
+    const moduleId = SCREEN_TO_MODULE[item.screen];
+    return moduleId ? canAccessModule(moduleId) : true;
+  });
 
   return (
     <ScrollView style={moreStyles.container} contentContainerStyle={moreStyles.content}>
-      <Text style={moreStyles.title}>{t('admin.allSections')}</Text>
+      <View style={moreStyles.header}>
+        <Text style={moreStyles.title}>{t('admin.allSections')}</Text>
+        <View style={moreStyles.roleBadge}>
+          <Text style={moreStyles.roleBadgeText}>{role.toUpperCase()}</Text>
+        </View>
+      </View>
       <View style={moreStyles.grid}>
         {items.map((item) => (
           <TouchableOpacity
@@ -92,11 +133,22 @@ function MoreScreen({ navigation }: any) {
             accessibilityRole="button"
             accessibilityLabel={t('admin.openSection', { section: item.label })}
           >
-            <Text style={moreStyles.cardIcon}>{item.icon}</Text>
+            <Icon
+              name={MODULE_ICONS[item.screen] || 'circle-outline'}
+              size={28}
+              color={colors.primary.saffron}
+              style={{ marginBottom: spacing.xs }}
+            />
             <Text style={moreStyles.cardLabel}>{item.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
+      {items.length === 0 && (
+        <View style={moreStyles.emptyState}>
+          <Icon name="lock-outline" size={48} color={colors.text.secondary} />
+          <Text style={moreStyles.emptyText}>No additional sections available for your role.</Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -104,7 +156,15 @@ function MoreScreen({ navigation }: any) {
 const moreStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background.parchment },
   content: { padding: spacing.lg },
-  title: { fontSize: 22, fontWeight: '700', color: colors.primary.maroon, marginBottom: spacing.lg },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg },
+  title: { fontSize: 22, fontWeight: '700', color: colors.primary.maroon },
+  roleBadge: {
+    backgroundColor: colors.primary.saffron,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  roleBadgeText: { fontSize: 10, fontWeight: '700', color: '#fff', letterSpacing: 1 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   card: {
     width: '30%',
@@ -115,9 +175,15 @@ const moreStyles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border.gold as string,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
   },
-  cardIcon: { fontSize: 28, marginBottom: spacing.xs },
   cardLabel: { fontSize: 12, fontWeight: '600', color: colors.text.primary, textAlign: 'center' },
+  emptyState: { alignItems: 'center', marginTop: spacing.xxl },
+  emptyText: { fontSize: 14, color: colors.text.secondary, marginTop: spacing.md, textAlign: 'center' },
 });
 
 // Wrap each screen in its own stack for proper header

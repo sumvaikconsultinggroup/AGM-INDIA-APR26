@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { Card } from 'react-native-paper';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { colors, spacing, borderRadius } from '../../theme';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { usePermissions } from '../../context/PermissionContext';
 import { useI18n } from '../../i18n/I18nProvider';
 import { LanguageSwitcher } from '../../components/common/LanguageSwitcher';
+import type { ModuleId } from '../../context/PermissionContext';
 
 interface StatCard {
   title: string;
@@ -13,18 +16,20 @@ interface StatCard {
   icon: string;
   color: string;
   route: string;
+  module: ModuleId;
 }
 
 export function DashboardScreen({ navigation }: any) {
   const { admin, logout } = useAuth();
+  const { role, canAccessModule } = usePermissions();
   const { t } = useI18n();
   const [stats, setStats] = useState<StatCard[]>([
-    { title: t('admin.statUsers'), value: 0, icon: 'account-group', color: colors.primary.saffron, route: 'UsersStack' },
-    { title: t('admin.statEvents'), value: 0, icon: 'calendar', color: colors.accent.peacock, route: 'Events' },
-    { title: t('admin.statDonations'), value: 0, icon: 'hand-heart', color: colors.primary.maroon, route: 'Donations' },
-    { title: t('admin.statVolunteers'), value: 0, icon: 'account-heart', color: colors.accent.sage, route: 'VolunteersStack' },
-    { title: t('admin.statBooks'), value: 0, icon: 'book-open-variant', color: colors.gold.main, route: 'BooksStack' },
-    { title: t('admin.statArticles'), value: 0, icon: 'newspaper', color: colors.primary.vermillion, route: 'Content' },
+    { title: t('admin.statUsers'), value: 0, icon: 'account-group', color: colors.primary.saffron, route: 'UsersStack', module: 'users' },
+    { title: t('admin.statEvents'), value: 0, icon: 'calendar', color: colors.accent.peacock, route: 'Events', module: 'events' },
+    { title: t('admin.statDonations'), value: 0, icon: 'hand-heart', color: colors.primary.maroon, route: 'Donations', module: 'donations' },
+    { title: t('admin.statVolunteers'), value: 0, icon: 'account-heart', color: colors.accent.sage, route: 'VolunteersStack', module: 'volunteers' },
+    { title: t('admin.statBooks'), value: 0, icon: 'book-open-variant', color: colors.gold.main, route: 'BooksStack', module: 'books' },
+    { title: t('admin.statArticles'), value: 0, icon: 'newspaper', color: colors.primary.vermillion, route: 'Content', module: 'articles' },
   ]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -84,7 +89,7 @@ export function DashboardScreen({ navigation }: any) {
           {t('admin.welcome', { name: admin?.username || t('common.admin') })}
         </Text>
         <Text style={styles.roleText}>
-          {t('admin.roleLabel', { role: admin?.role || 'admin' })}
+          {t('admin.roleLabel', { role: role || admin?.role || 'admin' })}
         </Text>
         <TouchableOpacity onPress={logout} style={styles.logoutButton}>
           <Text style={styles.logoutText}>{t('common.logout')}</Text>
@@ -95,9 +100,9 @@ export function DashboardScreen({ navigation }: any) {
         <LanguageSwitcher />
       </View>
 
-      {/* Stats Grid */}
+      {/* Stats Grid — RBAC filtered */}
       <View style={styles.statsGrid}>
-        {stats.map((stat) => (
+        {stats.filter(stat => canAccessModule(stat.module)).map((stat) => (
           <TouchableOpacity
             key={stat.title}
             style={styles.statCardContainer}

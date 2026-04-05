@@ -50,27 +50,62 @@ const uploadToCloudinary = async (file: File): Promise<string> => {
   }
 };
 
-// GET all events
-export async function GET(): Promise<NextResponse<ApiResponse>> {
+// GET all events (with optional pagination)
+export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> {
   try {
     await connectDB();
 
-    const events = await Event.find({ isDeleted: { $ne: true } })
+    const url = new URL(req.url);
+    const page = parseInt(url.searchParams.get('page') || '0', 10);
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '0', 10), 100);
+    const search = url.searchParams.get('search') || '';
+
+    const filter: Record<string, unknown> = { isDeleted: { $ne: true } };
+
+    // Optional text search
+    if (search) {
+      const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      filter.$or = [{ eventName: regex }, { description: regex }, { eventLocation: regex }];
+    }
+
+    // If pagination params are provided, use paginated response
+    if (page > 0 && limit > 0) {
+      const skip = (page - 1) * limit;
+      const [events, total] = await Promise.all([
+        Event.find(filter).sort({ eventDate: -1 }).skip(skip).limit(limit).select('-__v').lean(),
+        Event.countDocuments(filter),
+      ]);
+
+      const sanitizedEvents = JSON.parse(JSON.stringify(events));
+      const totalPages = Math.ceil(total / limit);
+
+      return NextResponse.json(
+        {
+          success: true,
+          message: 'Events fetched successfully',
+          data: sanitizedEvents,
+          meta: { page, limit, total, totalPages, hasNextPage: page < totalPages, hasPrevPage: page > 1 },
+        },
+        {
+          status: 200,
+          headers: { 'Cache-Control': 'public, max-age=120, stale-while-revalidate=60', 'X-Total-Count': String(total) },
+        }
+      );
+    }
+
+    // Legacy: return all events (backward compatible)
+    const events = await Event.find(filter)
       .sort({ eventDate: 1 })
       .select('-__v')
       .lean();
 
     if (!events?.length) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'No events found',
-        },
+        { success: false, message: 'No events found' },
         { status: 404 }
       );
     }
 
-    // Safely stringify and parse to handle any problematic values
     const sanitizedEvents = JSON.parse(JSON.stringify(events));
 
     return NextResponse.json(

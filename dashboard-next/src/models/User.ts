@@ -199,7 +199,7 @@ const userSchema = new Schema<IUser>(
         return this.authMethod === 'normal';
       },
       minlength: [8, 'Password must be at least 8 characters'],
-      maxlength: [15, 'Password cannot be more than 15 characters'],
+      maxlength: [128, 'Password cannot be more than 128 characters'],
       select: false,
     },
     

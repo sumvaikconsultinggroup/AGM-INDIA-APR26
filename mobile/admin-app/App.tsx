@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { PaperProvider, MD3LightTheme } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
+import { PermissionProvider } from './src/context/PermissionContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { colors } from './src/theme';
 import { I18nProvider } from './src/i18n/I18nProvider';
@@ -25,8 +26,10 @@ export default function App() {
       <PaperProvider theme={theme}>
         <I18nProvider>
           <AuthProvider>
-            <StatusBar style="dark" />
-            <AppNavigator />
+            <PermissionProvider>
+              <StatusBar style="dark" />
+              <AppNavigator />
+            </PermissionProvider>
           </AuthProvider>
         </I18nProvider>
       </PaperProvider>

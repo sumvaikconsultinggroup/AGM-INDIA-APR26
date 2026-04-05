@@ -22,6 +22,30 @@ import {
 import { useAllowedService } from '@/context/AllowedServiceContext';
 import { useI18n } from '@/context/I18nContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useEffect, useState } from 'react';
+
+interface DashboardStats {
+  totalEvents: number;
+  upcomingEvents: number;
+  totalUsers: number;
+  newUsersThisMonth: number;
+  totalVolunteers: number;
+  totalDonationCampaigns: number;
+  activeCampaigns: number;
+  totalBooks: number;
+  totalArticles: number;
+  totalPodcasts: number;
+  totalVideoSeries: number;
+  totalSchedules: number;
+  totalConnectMessages: number;
+  totalRoomBookings: number;
+  growth: {
+    events: string;
+    users: string;
+    volunteers: string;
+    donations: string;
+  };
+}
 
 interface DashboardCardProps {
   serviceKey: string;
@@ -52,6 +76,23 @@ const dashboardCards: DashboardCardProps[] = [
 export default function MainDashBoard() {
   const { isLoading, hasPermission } = useAllowedService();
   const { t } = useI18n();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/dashboard/stats');
+        const data = await res.json();
+        if (data.success) setStats(data.data);
+      } catch (err) {
+        console.error('Failed to fetch dashboard stats:', err);
+      } finally {
+        setStatsLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
 
   if (isLoading) {
     return (
@@ -110,16 +151,16 @@ export default function MainDashBoard() {
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Quick Stats — REAL data from DB */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200 dark:border-orange-800 hover:shadow-lg transition-all duration-300 hover:scale-105">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-orange-600 dark:text-orange-400">{t('dashboardPage.stats.totalEvents')}</p>
-                <h3 className="text-3xl font-bold text-orange-900 dark:text-orange-100 mt-2">24</h3>
+                <h3 className="text-3xl font-bold text-orange-900 dark:text-orange-100 mt-2">{statsLoading ? '...' : (stats?.totalEvents ?? 0)}</h3>
                 <p className="text-xs text-orange-600 dark:text-orange-400 mt-1 flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" /> {t('dashboardPage.stats.growthThisMonth', { value: '+12%' })}
+                  <TrendingUp className="h-3 w-3" /> {t('dashboardPage.stats.growthThisMonth', { value: stats?.growth?.events ?? '+0%' })}
                 </p>
               </div>
               <div className="p-4 bg-orange-500 rounded-xl shadow-lg">
@@ -134,9 +175,9 @@ export default function MainDashBoard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-pink-600 dark:text-pink-400">{t('dashboardPage.stats.donations')}</p>
-                <h3 className="text-3xl font-bold text-pink-900 dark:text-pink-100 mt-2">₹1.2L</h3>
+                <h3 className="text-3xl font-bold text-pink-900 dark:text-pink-100 mt-2">{statsLoading ? '...' : (stats?.activeCampaigns ?? 0)}</h3>
                 <p className="text-xs text-pink-600 dark:text-pink-400 mt-1 flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" /> {t('dashboardPage.stats.growthThisMonth', { value: '+8%' })}
+                  <TrendingUp className="h-3 w-3" /> {t('dashboardPage.stats.growthThisMonth', { value: stats?.growth?.donations ?? '+0%' })}
                 </p>
               </div>
               <div className="p-4 bg-pink-500 rounded-xl shadow-lg">
@@ -151,9 +192,9 @@ export default function MainDashBoard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-blue-600 dark:text-blue-400">{t('dashboardPage.stats.activeUsers')}</p>
-                <h3 className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">1,248</h3>
+                <h3 className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">{statsLoading ? '...' : (stats?.totalUsers ?? 0).toLocaleString()}</h3>
                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" /> {t('dashboardPage.stats.growthThisMonth', { value: '+24%' })}
+                  <TrendingUp className="h-3 w-3" /> {t('dashboardPage.stats.growthThisMonth', { value: stats?.growth?.users ?? '+0%' })}
                 </p>
               </div>
               <div className="p-4 bg-blue-500 rounded-xl shadow-lg">
@@ -168,9 +209,9 @@ export default function MainDashBoard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-600 dark:text-green-400">{t('dashboardPage.stats.volunteers')}</p>
-                <h3 className="text-3xl font-bold text-green-900 dark:text-green-100 mt-2">342</h3>
+                <h3 className="text-3xl font-bold text-green-900 dark:text-green-100 mt-2">{statsLoading ? '...' : (stats?.totalVolunteers ?? 0).toLocaleString()}</h3>
                 <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" /> {t('dashboardPage.stats.growthThisMonth', { value: '+16%' })}
+                  <TrendingUp className="h-3 w-3" /> {t('dashboardPage.stats.growthThisMonth', { value: stats?.growth?.volunteers ?? '+0%' })}
                 </p>
               </div>
               <div className="p-4 bg-green-500 rounded-xl shadow-lg">

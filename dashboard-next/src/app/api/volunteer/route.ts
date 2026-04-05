@@ -39,19 +39,53 @@ async function uploadToCloudinary(file: File): Promise<string> {
   });
 }
 
-export async function GET(): Promise<NextResponse<ApiResponse>> {
+export async function GET(req: NextRequest): Promise<NextResponse<ApiResponse>> {
   try {
     await connectDB();
 
-    // Simple query to get all non-deleted volunteers, newest first
-    const volunteers = await Volunteer.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
+    const url = new URL(req.url);
+    const page = parseInt(url.searchParams.get('page') || '0', 10);
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '0', 10), 100);
+    const search = url.searchParams.get('search') || '';
+    const approved = url.searchParams.get('approved');
+
+    const filter: Record<string, unknown> = { isDeleted: false };
+    if (search) {
+      const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      filter.$or = [{ fullName: regex }, { email: regex }, { phone: regex }, { city: regex }];
+    }
+    if (approved === 'true') filter.isApproved = true;
+    if (approved === 'false') filter.isApproved = { $ne: true };
+
+    // Paginated response
+    if (page > 0 && limit > 0) {
+      const skip = (page - 1) * limit;
+      const [volunteers, total] = await Promise.all([
+        Volunteer.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+        Volunteer.countDocuments(filter),
+      ]);
+      const totalPages = Math.ceil(total / limit);
+
+      return NextResponse.json(
+        {
+          success: true,
+          message: 'Volunteers fetched successfully',
+          data: volunteers as unknown as IVolunteer[],
+          meta: { page, limit, total, totalPages, hasNextPage: page < totalPages, hasPrevPage: page > 1 },
+        },
+        {
+          status: 200,
+          headers: { 'Cache-Control': 'private, max-age=60, stale-while-revalidate=30', 'X-Total-Count': String(total) },
+        }
+      );
+    }
+
+    // Legacy: return all volunteers
+    const volunteers = await Volunteer.find(filter).sort({ createdAt: -1 }).lean();
 
     if (!volunteers?.length) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'No volunteers found',
-        },
+        { success: false, message: 'No volunteers found' },
         { status: 404 }
       );
     }
@@ -75,7 +109,6 @@ export async function GET(): Promise<NextResponse<ApiResponse>> {
       {
         success: false,
         message: 'Failed to fetch volunteers',
-        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

@@ -4,43 +4,66 @@ import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { connectDB } from '@/lib/mongodb';
+import { authLimiter, getClientIp } from '@/lib/rateLimiter';
+import { checkAccountLockout, recordFailedAttempt, clearLockout, sanitizeString } from '@/lib/security';
 
 // POST handler for login
 export async function POST(req) {
   try {
+    // Rate limiting
+    const ip = getClientIp(req);
+    const rateResult = authLimiter.check(`user:${ip}`);
+    if (!rateResult.allowed) {
+      return NextResponse.json(
+        { success: false, message: "Too many login attempts. Please try again later.", code: "RATE_LIMITED" },
+        { status: 429, headers: { "Retry-After": String(rateResult.retryAfter || 60) } }
+      );
+    }
+
     await connectDB();
 
-    // Parse request body
     const body = await req.json();
-    const { email, password } = body;
+    const email = sanitizeString(body.email || '').toLowerCase();
+    const password = body.password || '';
 
-    // Validate input
     if (!email || !password) {
       return NextResponse.json(
-        { message: "All fields are required" },
+        { success: false, message: "Email and password are required" },
         { status: 400 }
       );
     }
 
-    // Find user by email
+    // Account lockout check
+    const lockoutKey = `user:${email}`;
+    const lockout = checkAccountLockout(lockoutKey);
+    if (lockout.locked) {
+      return NextResponse.json(
+        { success: false, message: `Account temporarily locked. Try again in ${lockout.retryAfterSeconds} seconds.`, code: "ACCOUNT_LOCKED" },
+        { status: 423 }
+      );
+    }
+
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
+      recordFailedAttempt(lockoutKey);
       return NextResponse.json(
-        { message: "Invalid credentials" },
+        { success: false, message: "Invalid credentials" },
         { status: 401 }
       );
     }
 
-    // Compare passwords
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return NextResponse.json(
-        { message: "Invalid credentials" },
-        { status: 401 }
-      );
+      const lockResult = recordFailedAttempt(lockoutKey);
+      const msg = lockResult.locked
+        ? "Account locked due to too many failed attempts. Try again in 15 minutes."
+        : `Invalid credentials. ${lockResult.remainingAttempts} attempts remaining.`;
+      return NextResponse.json({ success: false, message: msg }, { status: 401 });
     }
 
-    // Create JWT token
+    // Successful login — clear lockout
+    clearLockout(lockoutKey);
+
     const token = jwt.sign(
       {
         userId: user._id,
@@ -48,12 +71,12 @@ export async function POST(req) {
         role: user.role || "user",
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "24h" }
     );
 
-    // Create a response
     const response = NextResponse.json(
       {
+        success: true,
         message: "Login successful",
         user: {
           _id: user._id,
@@ -71,10 +94,9 @@ export async function POST(req) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 3600,
+      maxAge: 86400, // 24 hours
       path: "/",
     };
-    // Keep both cookie names for full app compatibility.
     response.cookies.set({ name: "token", value: token, ...cookieOptions });
     response.cookies.set({ name: "auth_token", value: token, ...cookieOptions });
 
@@ -82,7 +104,7 @@ export async function POST(req) {
   } catch (error) {
     console.error("Server error during login:", error);
     return NextResponse.json(
-      { message: "Server error", error: error.message },
+      { success: false, message: "Server error" },
       { status: 500 }
     );
   }

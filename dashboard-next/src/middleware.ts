@@ -7,8 +7,7 @@ const allowedOrigins = [
   "https://avdheshanandgmission.org",
   "https://avdheshanandg.org",
   "http://localhost:5173",
-
-
+  "http://localhost:3000",
 ];
 
 // Public API endpoints that don't require authentication
@@ -41,6 +40,8 @@ const publicApiEndpoints: { path: string; methods?: string[] }[] = [
   { path: "/api/panchang/month", methods: ["GET"] },
   { path: "/api/panchang/festivals", methods: ["GET"] },
   { path: "/api/panchang/cities", methods: ["GET"] },
+  { path: "/api/health", methods: ["GET"] },
+  { path: "/api/dashboard/stats", methods: ["GET"] },
 ];
 
 const adminOnlyApiPrefixes: string[] = [
