@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { Schedule } from '@/models/Schedule';
+import ScheduleRegistration, { RegistrationStatus } from '@/models/ScheduleRegistration';
 import { connectDB } from '@/lib/mongodb';
 import { sendEmail } from '@/utils/sendEmail';
+import { notifyApprovedDevoteesOfScheduleUpdate } from '@/lib/scheduleNotifications';
 
-// Helper function to format date for display
 function formatDate(date) {
   if (!date) return 'N/A';
   return new Date(date).toLocaleDateString('en-US', {
@@ -15,49 +16,105 @@ function formatDate(date) {
   });
 }
 
-// Helper for validation - updated for optional fields and maxPeople
+function normalizeLocalizedText(value) {
+  const normalized = {
+    en: value?.en?.trim() || undefined,
+    hi: value?.hi?.trim() || undefined,
+  };
+
+  return normalized.en || normalized.hi ? normalized : undefined;
+}
+
+function getEarliestDate(timeSlots) {
+  if (!timeSlots?.length) return null;
+  return timeSlots.reduce((earliest, slot) => {
+    const date = new Date(slot.startDate);
+    return !earliest || date < earliest ? date : earliest;
+  }, null);
+}
+
+function getLatestDate(timeSlots) {
+  if (!timeSlots?.length) return null;
+  return timeSlots.reduce((latest, slot) => {
+    const date = slot.endDate ? new Date(slot.endDate) : new Date(slot.startDate);
+    return !latest || date > latest ? date : latest;
+  }, null);
+}
+
+function getSlotDateKey(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().split('T')[0];
+}
+
+function shouldTriggerUrgentNotification(originalSchedule, payload, updatedSchedule) {
+  if (payload.isLastMinuteUpdate === true) return true;
+  if (payload.changeNote && payload.changeNote !== originalSchedule.changeNote) return true;
+  if (payload.locations && payload.locations !== originalSchedule.locations) return true;
+  if (payload.baseLocation && payload.baseLocation !== originalSchedule.baseLocation) return true;
+  if (payload.timeSlots) return true;
+  return Boolean(updatedSchedule?.isLastMinuteUpdate && updatedSchedule?.changeNote);
+}
+
+function deriveBaseLocation(baseLocation, locations) {
+  if (baseLocation) return baseLocation;
+  const normalizedLocations = (locations || '').toLowerCase();
+  if (normalizedLocations.includes('haridwar') || normalizedLocations.includes('हरिद्वार')) {
+    return 'Haridwar Ashram';
+  }
+  if (normalizedLocations.includes('delhi') || normalizedLocations.includes('दिल्ली')) {
+    return 'Delhi Ashram';
+  }
+  return 'Other';
+}
+
 const validatePartialScheduleUpdate = (data) => {
   const { timeSlots, maxPeople } = data;
 
-  // Validate maxPeople if provided
   if (maxPeople !== undefined) {
     if (typeof maxPeople !== 'number') {
-      return 'Maximum people must be a number';
+      return 'Daily appointment capacity must be a number';
     }
-    
+
     if (maxPeople < 1) {
-      return 'Maximum people must be at least 1';
+      return 'Daily appointment capacity must be at least 1';
     }
-    
+
     if (maxPeople > 1000) {
-      return 'Maximum people cannot exceed 1000';
+      return 'Daily appointment capacity cannot exceed 1000';
     }
   }
 
   if (timeSlots) {
     for (const slot of timeSlots) {
-      // Only startDate is required now
       if (!slot.startDate) {
         return 'Each time slot must include at least a startDate';
       }
 
       const start = new Date(slot.startDate);
-      
-      // Check if startDate is valid
-      if (isNaN(start.getTime())) {
+      if (Number.isNaN(start.getTime())) {
         return 'Invalid startDate format';
       }
 
-      // Only validate endDate if it's provided
       if (slot.endDate) {
         const end = new Date(slot.endDate);
-
-        if (isNaN(end.getTime())) {
+        if (Number.isNaN(end.getTime())) {
           return 'Invalid endDate format';
         }
 
         if (start >= end) {
           return 'Time slot endDate must be after startDate';
+        }
+      }
+
+      if (slot.slotCapacity !== undefined) {
+        if (
+          typeof slot.slotCapacity !== 'number' ||
+          slot.slotCapacity < 1 ||
+          slot.slotCapacity > 1000
+        ) {
+          return 'Slot capacity must be a number between 1 and 1000';
         }
       }
     }
@@ -66,19 +123,77 @@ const validatePartialScheduleUpdate = (data) => {
   return null;
 };
 
+async function buildScheduleWithStats(schedule) {
+  const scheduleId = String(schedule._id);
+  const registrations = await ScheduleRegistration.find({
+    isDeleted: { $ne: true },
+    status: { $ne: RegistrationStatus.REJECTED },
+    'requestedSchedule.scheduleId': scheduleId,
+  })
+    .select('requestedSchedule')
+    .lean();
+
+  const countMap = new Map();
+  registrations.forEach((registration) => {
+    const key = `${scheduleId}:${getSlotDateKey(registration.requestedSchedule?.eventDate) || 'unspecified'}`;
+    countMap.set(key, (countMap.get(key) || 0) + 1);
+  });
+
+  const currentDate = new Date();
+  const earliestStartDate = getEarliestDate(schedule.timeSlots);
+  const latestEndDate = getLatestDate(schedule.timeSlots);
+  const defaultCapacity = schedule.maxPeople || 100;
+
+  const slotStats = (schedule.timeSlots || []).map((slot) => {
+    const dateKey = getSlotDateKey(slot.startDate);
+    const slotCapacity = slot.slotCapacity || defaultCapacity;
+    const bookedCount = countMap.get(`${scheduleId}:${dateKey || 'unspecified'}`) || 0;
+    const remainingCapacity = Math.max(slotCapacity - bookedCount, 0);
+
+    return {
+      ...slot,
+      slotCapacity,
+      bookedCount,
+      remainingCapacity,
+      isBlocked: schedule.appointment ? remainingCapacity <= 0 : false,
+      dateKey,
+    };
+  });
+
+  const totalCapacity = slotStats.length
+    ? slotStats.reduce((sum, slot) => sum + (slot.slotCapacity || defaultCapacity), 0)
+    : defaultCapacity;
+  const currentAppointments = slotStats.length
+    ? slotStats.reduce((sum, slot) => sum + (slot.bookedCount || 0), 0)
+    : Array.from(countMap.values()).reduce((sum, value) => sum + value, 0);
+  const remainingCapacity = Math.max(totalCapacity - currentAppointments, 0);
+
+  return {
+    ...schedule,
+    earliestStartDate,
+    latestEndDate,
+    isUpcoming: earliestStartDate ? earliestStartDate >= currentDate : false,
+    isPast: latestEndDate ? latestEndDate < currentDate : false,
+    dateRange: `${formatDate(earliestStartDate)} - ${formatDate(latestEndDate)}`,
+    totalCapacity,
+    currentAppointments,
+    remainingCapacity,
+    isBlocked: schedule.appointment
+      ? slotStats.length > 0
+        ? slotStats.every((slot) => slot.isBlocked)
+        : remainingCapacity <= 0
+      : false,
+    slotStats,
+  };
+}
+
 export async function DELETE(req, { params }) {
   try {
     await connectDB();
-    const { id } = await  params;
+    const { id } = await params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Invalid Schedule ID',
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: 'Invalid Schedule ID' }, { status: 400 });
     }
 
     const deletedSchedule = await Schedule.findByIdAndUpdate(
@@ -88,64 +203,18 @@ export async function DELETE(req, { params }) {
     );
 
     if (!deletedSchedule) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Schedule not found',
-        },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, message: 'Schedule not found' }, { status: 404 });
     }
 
-    // Send notification about schedule deletion
     try {
       const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
-      
       if (adminEmail) {
-        const adminEmailSubject = `Schedule for ${deletedSchedule.month} Deleted`;
-        
-        const adminEmailText = `
-          The schedule for ${deletedSchedule.month} has been deleted.
-          
-          Schedule Details:
-          - Month: ${deletedSchedule.month}
-          - Locations: ${deletedSchedule.locations}
-          
-          This schedule has been marked as deleted and will no longer appear in the public schedule listings.
-        `;
-        
-        const adminEmailHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-            <div style="text-align: center; margin-bottom: 20px;">
-              <h1 style="color: #e11d48;">Schedule Deleted</h1>
-            </div>
-            
-            <p>The schedule for <strong>${deletedSchedule.month}</strong> has been deleted.</p>
-            
-            <div style="background-color: #fee2e2; border-left: 4px solid #e11d48; padding: 15px; margin: 20px 0;">
-              <h3 style="margin-top: 0;">Deleted Schedule Details:</h3>
-              <p><strong>Month:</strong> ${deletedSchedule.month}</p>
-              <p><strong>Locations:</strong> ${deletedSchedule.locations}</p>
-              <p><strong>Deleted at:</strong> ${formatDate(new Date())}</p>
-            </div>
-            
-            <p>This schedule has been marked as deleted and will no longer appear in the public schedule listings.</p>
-            
-            <p><a href="${process.env.NEXT_PUBLIC_APP_URL || ''}/dashboard/schedule" 
-                  style="display: inline-block; background-color: #4f6df5; color: white; padding: 10px 20px; 
-                  text-decoration: none; border-radius: 5px; margin-top: 10px;">
-               Manage Schedules
-            </a></p>
-          </div>
-        `;
-        
         await sendEmail(
           adminEmail,
-          adminEmailSubject,
-          adminEmailText,
-          adminEmailHtml
+          `Schedule for ${deletedSchedule.month} Deleted`,
+          `The schedule for ${deletedSchedule.month} has been deleted.`,
+          `<div style="font-family: Arial, sans-serif;"><h1>Schedule Deleted</h1><p>The schedule for <strong>${deletedSchedule.month}</strong> has been deleted.</p></div>`
         );
-        console.log('Schedule deletion notification sent to admin:', adminEmail);
       }
     } catch (emailError) {
       console.error('Error sending schedule deletion notification:', emailError);
@@ -165,12 +234,7 @@ export async function DELETE(req, { params }) {
       {
         success: false,
         message: 'Failed to mark schedule as deleted',
-        error:
-          process.env.NODE_ENV === 'development'
-            ? error instanceof Error
-              ? error.message
-              : 'Unknown error'
-            : undefined,
+        error: process.env.NODE_ENV === 'development' ? error?.message : undefined,
       },
       { status: 500 }
     );
@@ -183,70 +247,51 @@ export async function PUT(req, { params }) {
     const { id } = await params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Invalid Schedule ID',
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: 'Invalid Schedule ID' }, { status: 400 });
     }
 
-    // Get the original schedule to compare changes
     const originalSchedule = await Schedule.findById(id).lean();
-    
     if (!originalSchedule) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Schedule not found',
-        },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, message: 'Schedule not found' }, { status: 404 });
     }
 
     const data = await req.json();
     const validationError = validatePartialScheduleUpdate(data);
-
     if (validationError) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: validationError,
-        },
-        { status: 400 }
-      );
-    }
-    
-    // Format timeSlots if provided - handle the optional fields
-    if (data.timeSlots) {
-      data.timeSlots = data.timeSlots.map(slot => {
-        const formattedSlot = {
-          startDate: new Date(slot.startDate),
-        };
-        
-        // Only add period if provided
-        if (slot.period) {
-          formattedSlot.period = slot.period;
-        }
-        
-        // Only add endDate if provided
-        if (slot.endDate) {
-          formattedSlot.endDate = new Date(slot.endDate);
-        }
-        
-        return formattedSlot;
-      });
+      return NextResponse.json({ success: false, message: validationError }, { status: 400 });
     }
 
-    // Set default value for maxPeople if not provided but present in original
-    if (data.maxPeople === undefined && originalSchedule.maxPeople) {
+    if (data.timeSlots) {
+      data.timeSlots = data.timeSlots.map((slot) => ({
+        startDate: new Date(slot.startDate),
+        endDate: slot.endDate ? new Date(slot.endDate) : undefined,
+        period: slot.period,
+        slotCapacity: slot.slotCapacity,
+      }));
+    }
+
+    if (data.maxPeople === undefined && originalSchedule.maxPeople !== undefined) {
       data.maxPeople = originalSchedule.maxPeople;
     }
 
-    // Set default value for appointment if not provided but present in original
     if (data.appointment === undefined && originalSchedule.appointment !== undefined) {
       data.appointment = originalSchedule.appointment;
+    }
+
+    if (data.locations && data.baseLocation === undefined) {
+      data.baseLocation = deriveBaseLocation(originalSchedule.baseLocation, data.locations);
+    } else if (data.baseLocation === undefined) {
+      data.baseLocation = originalSchedule.baseLocation || deriveBaseLocation(undefined, originalSchedule.locations);
+    }
+
+    if (data.publicTitle) {
+      data.publicTitle = normalizeLocalizedText(data.publicTitle);
+    }
+    if (data.publicLocation) {
+      data.publicLocation = normalizeLocalizedText(data.publicLocation);
+    }
+    if (data.publicNotes) {
+      data.publicNotes = normalizeLocalizedText(data.publicNotes);
     }
 
     const updatedSchedule = await Schedule.findByIdAndUpdate(
@@ -256,123 +301,41 @@ export async function PUT(req, { params }) {
     );
 
     if (!updatedSchedule) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Schedule not found',
-        },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, message: 'Schedule not found' }, { status: 404 });
     }
-    
-    // Send notification about schedule update
+
     try {
       const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
-      
       if (adminEmail) {
-        // Helper function to get earliest date from time slots
-        function getEarliestDate(timeSlots) {
-          if (!timeSlots || timeSlots.length === 0) return null;
-          
-          return timeSlots.reduce((earliest, slot) => {
-            const date = new Date(slot.startDate);
-            return !earliest || date < earliest ? date : earliest;
-          }, null);
-        }
-        
-        // Helper function to get latest date from time slots
-        function getLatestDate(timeSlots) {
-          if (!timeSlots || timeSlots.length === 0) return null;
-          
-          return timeSlots.reduce((latest, slot) => {
-            // Use endDate if available, otherwise use startDate
-            const date = slot.endDate ? new Date(slot.endDate) : new Date(slot.startDate);
-            return !latest || date > latest ? date : latest;
-          }, null);
-        }
-        
         const earliestDate = getEarliestDate(updatedSchedule.timeSlots);
         const latestDate = getLatestDate(updatedSchedule.timeSlots);
-        
-        // Create formatted schedule information for email
-        const locationsList = updatedSchedule.locations.split(/[,\n]/)
-          .map(loc => loc.trim())
-          .filter(loc => loc)
-          .join(', ');
-          
-        const timeSlotsText = updatedSchedule.timeSlots.length > 0
-          ? updatedSchedule.timeSlots.map((slot, index) => {
-              const periodText = slot.period ? `${slot.period}: ` : '';
-              const startDateText = formatDate(slot.startDate);
-              const endDateText = slot.endDate ? ` to ${formatDate(slot.endDate)}` : '';
-              return `  ${index + 1}. ${periodText}${startDateText}${endDateText}`;
-            }).join('\n')
-          : '  No time slots defined';
-        
-        const adminEmailSubject = `Schedule for ${updatedSchedule.month} Updated`;
-        
-        const adminEmailText = `
-          The schedule for ${updatedSchedule.month} has been updated.
-          
-          Updated Schedule Details:
-          - Month: ${updatedSchedule.month}
-          - Locations: ${locationsList}
-          - Date Range: ${formatDate(earliestDate)} - ${formatDate(latestDate)}
-          
-          Time Slots:
-${timeSlotsText}
-          
-          View and manage this schedule in the dashboard.
-        `;
-        
-        const adminEmailHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-            <div style="text-align: center; margin-bottom: 20px;">
-              <h1 style="color: #4f6df5;">Schedule Updated</h1>
-            </div>
-            
-            <p>The schedule for <strong>${updatedSchedule.month}</strong> has been updated.</p>
-            
-            <div style="background-color: #f7f9fc; border-left: 4px solid #4f6df5; padding: 15px; margin: 20px 0;">
-              <h3 style="margin-top: 0;">Updated Schedule Details:</h3>
-              <p><strong>Month:</strong> ${updatedSchedule.month}</p>
-              <p><strong>Locations:</strong> ${locationsList}</p>
-              <p><strong>Date Range:</strong> ${formatDate(earliestDate)} - ${formatDate(latestDate)}</p>
-              
-              <div style="margin-top: 15px;">
-                <p><strong>Time Slots:</strong></p>
-                ${updatedSchedule.timeSlots.length > 0 
-                  ? `<ol style="margin-top: 5px;">
-                      ${updatedSchedule.timeSlots.map((slot) => {
-                        const periodText = slot.period ? `<strong>${slot.period}:</strong> ` : '';
-                        const startDateText = formatDate(slot.startDate);
-                        const endDateText = slot.endDate ? ` to ${formatDate(slot.endDate)}` : '';
-                        return `<li>${periodText}${startDateText}${endDateText}</li>`;
-                      }).join('')}
-                    </ol>`
-                  : '<p>No time slots defined</p>'
-                }
-              </div>
-            </div>
-            
-            <p><a href="${process.env.NEXT_PUBLIC_APP_URL || ''}/dashboard/schedule/${updatedSchedule._id}" 
-                  style="display: inline-block; background-color: #4f6df5; color: white; padding: 10px 20px; 
-                  text-decoration: none; border-radius: 5px; margin-top: 10px;">
-               View Updated Schedule
-            </a></p>
-          </div>
-        `;
-        
         await sendEmail(
           adminEmail,
-          adminEmailSubject,
-          adminEmailText,
-          adminEmailHtml
+          `Schedule for ${updatedSchedule.month} Updated`,
+          `The schedule for ${updatedSchedule.month} has been updated.\nDate Range: ${formatDate(earliestDate)} - ${formatDate(latestDate)}`,
+          `<div style="font-family: Arial, sans-serif;"><h1>Schedule Updated</h1><p><strong>${updatedSchedule.month}</strong> was updated.</p><p>Date Range: ${formatDate(earliestDate)} - ${formatDate(latestDate)}</p></div>`
         );
-        console.log('Schedule update notification sent to admin:', adminEmail);
       }
     } catch (emailError) {
       console.error('Error sending schedule update notification:', emailError);
+    }
+
+    if (shouldTriggerUrgentNotification(originalSchedule, data, updatedSchedule)) {
+      try {
+        const now = new Date();
+        const approvedRegistrations = await ScheduleRegistration.find({
+          isDeleted: { $ne: true },
+          status: RegistrationStatus.APPROVED,
+          'requestedSchedule.scheduleId': String(updatedSchedule._id),
+          'requestedSchedule.eventDate': { $gte: now },
+        }).lean();
+
+        if (approvedRegistrations.length) {
+          await notifyApprovedDevoteesOfScheduleUpdate(updatedSchedule, approvedRegistrations);
+        }
+      } catch (notifyError) {
+        console.error('Failed to notify approved devotees about schedule update:', notifyError);
+      }
     }
 
     return NextResponse.json(
@@ -389,12 +352,7 @@ ${timeSlotsText}
       {
         success: false,
         message: 'Failed to update schedule',
-        error:
-          process.env.NODE_ENV === 'development'
-            ? error instanceof Error
-              ? error.message
-              : 'Unknown error'
-            : undefined,
+        error: process.env.NODE_ENV === 'development' ? error?.message : undefined,
       },
       { status: 500 }
     );
@@ -407,13 +365,7 @@ export async function GET(req, { params }) {
     const { id } = params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Invalid Schedule ID',
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, message: 'Invalid Schedule ID' }, { status: 400 });
     }
 
     const schedule = await Schedule.findOne({
@@ -423,58 +375,12 @@ export async function GET(req, { params }) {
 
     if (!schedule) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'Schedule not found or has been deleted',
-        },
+        { success: false, message: 'Schedule not found or has been deleted' },
         { status: 404 }
       );
     }
-    
-    // Process schedule with additional metadata
-    const monthOrder = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
-    ];
-    
-    // Helper function to get earliest date from time slots
-    function getEarliestDate(timeSlots) {
-      if (!timeSlots || timeSlots.length === 0) return null;
-      
-      return timeSlots.reduce((earliest, slot) => {
-        const date = new Date(slot.startDate);
-        return !earliest || date < earliest ? date : earliest;
-      }, null);
-    }
-    
-    // Helper function to get latest date from time slots
-    function getLatestDate(timeSlots) {
-      if (!timeSlots || timeSlots.length === 0) return null;
-      
-      return timeSlots.reduce((latest, slot) => {
-        // Use endDate if available, otherwise use startDate
-        const date = slot.endDate ? new Date(slot.endDate) : new Date(slot.startDate);
-        return !latest || date > latest ? date : latest;
-      }, null);
-    }
-    
-    const currentDate = new Date();
-    const earliestStartDate = getEarliestDate(schedule.timeSlots);
-    const latestEndDate = getLatestDate(schedule.timeSlots);
-    
-    // Ensure maxPeople has a default value if undefined
-    const maxPeople = schedule.maxPeople !== undefined ? schedule.maxPeople : 100;
-    
-    const enhancedSchedule = {
-      ...schedule,
-      monthIndex: monthOrder.indexOf(schedule.month),
-      earliestStartDate,
-      latestEndDate,
-      isUpcoming: earliestStartDate ? earliestStartDate >= currentDate : false,
-      isPast: latestEndDate ? latestEndDate < currentDate : false,
-      dateRange: `${formatDate(earliestStartDate)} - ${formatDate(latestEndDate)}`,
-      maxPeople, // Ensure maxPeople is included with default value
-    };
+
+    const enhancedSchedule = await buildScheduleWithStats(schedule);
 
     return NextResponse.json(
       {
@@ -495,12 +401,7 @@ export async function GET(req, { params }) {
       {
         success: false,
         message: 'Failed to fetch schedule',
-        error:
-          process.env.NODE_ENV === 'development'
-            ? error instanceof Error
-              ? error.message
-              : 'Unknown error'
-            : undefined,
+        error: process.env.NODE_ENV === 'development' ? error?.message : undefined,
       },
       { status: 500 }
     );

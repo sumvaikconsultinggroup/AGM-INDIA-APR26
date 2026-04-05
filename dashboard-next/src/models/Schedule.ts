@@ -5,6 +5,12 @@ export interface ITimeSlot extends Document {
   period?: 'morning' | 'afternoon' | 'evening' | 'night' | 'whole day'; // Made optional
   startDate: Date;
   endDate?: Date; // Made optional
+  slotCapacity?: number;
+}
+
+export interface ILocalizedText {
+  en?: string;
+  hi?: string;
 }
 
 // Define TimeSlot schema
@@ -22,7 +28,20 @@ const timeSlotSchema = new Schema<ITimeSlot>({
     type: Date,
     required: false, // Made optional
   },
+  slotCapacity: {
+    type: Number,
+    required: false,
+    min: [1, 'Slot capacity must be at least 1'],
+  },
 });
+
+const localizedTextSchema = new Schema<ILocalizedText>(
+  {
+    en: { type: String, trim: true },
+    hi: { type: String, trim: true },
+  },
+  { _id: false }
+);
 
 // Now, define an interface for the Schedule
 export interface ISchedule extends Document {
@@ -47,6 +66,13 @@ export interface ISchedule extends Document {
   maxPeople?: number;
   request?: boolean;
   updatedAt?: Date;
+  baseLocation?: 'Haridwar Ashram' | 'Delhi Ashram' | 'Other';
+  publicTitle?: ILocalizedText;
+  publicLocation?: ILocalizedText;
+  publicNotes?: ILocalizedText;
+  internalNotes?: string;
+  changeNote?: string;
+  isLastMinuteUpdate?: boolean;
 }
 
 // Define Schedule schema
@@ -83,6 +109,11 @@ const scheduleSchema = new Schema<ISchedule>(
       type: Boolean,
       required: false,
     },
+    baseLocation: {
+      type: String,
+      enum: ['Haridwar Ashram', 'Delhi Ashram', 'Other'],
+      default: 'Other',
+    },
     appointment: {
       type: Boolean,
       required: false,
@@ -93,7 +124,30 @@ const scheduleSchema = new Schema<ISchedule>(
       min: [1, 'Max people must be at least 1'],
       default: 100,
     },
-    
+    publicTitle: {
+      type: localizedTextSchema,
+      default: {},
+    },
+    publicLocation: {
+      type: localizedTextSchema,
+      default: {},
+    },
+    publicNotes: {
+      type: localizedTextSchema,
+      default: {},
+    },
+    internalNotes: {
+      type: String,
+      trim: true,
+    },
+    changeNote: {
+      type: String,
+      trim: true,
+    },
+    isLastMinuteUpdate: {
+      type: Boolean,
+      default: false,
+    },
     isDeleted: {
       type: Boolean,
       default: false,

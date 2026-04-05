@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import NotificationPreference from '@/models/NotificationPreference';
 
+const NotificationPreferenceModel = NotificationPreference as any;
+
 // Register or update notification preferences
 export async function POST(req: NextRequest) {
   try {
@@ -30,7 +32,7 @@ export async function POST(req: NextRequest) {
       ...(userId && { userId }),
     };
 
-    const preference = await NotificationPreference.findOneAndUpdate(
+    const preference = await NotificationPreferenceModel.findOneAndUpdate(
       { pushToken },
       { $set: updateData },
       { upsert: true, new: true, projection: { _id: 0, __v: 0 } }
@@ -54,7 +56,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Push token is required' }, { status: 400 });
     }
 
-    const preference = await NotificationPreference.findOne(
+    const preference = await NotificationPreferenceModel.findOne(
       { pushToken },
       { _id: 0, __v: 0 }
     ).lean();
@@ -81,7 +83,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Push token is required' }, { status: 400 });
     }
 
-    await NotificationPreference.findOneAndUpdate(
+    await NotificationPreferenceModel.findOneAndUpdate(
       { pushToken },
       { $set: { isActive: false } }
     );

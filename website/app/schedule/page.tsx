@@ -1,5 +1,6 @@
 import { Contact } from '@/components/sections/Contact';
 import { Events } from '@/components/sections/Events';
+import { ScheduleBoard } from '@/components/sections/ScheduleBoard';
 import { ScheduleHero } from '@/components/sections/ScheduleHero';
 
 export const metadata = {
@@ -11,6 +12,7 @@ export default function SchedulePage() {
   return (
     <div className="bg-parchment pt-20">
       <ScheduleHero />
+      <ScheduleBoard />
       <Events />
       <Contact />
     </div>

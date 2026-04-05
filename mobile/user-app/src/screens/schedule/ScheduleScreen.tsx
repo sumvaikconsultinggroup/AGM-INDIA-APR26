@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   Alert,
   SectionList,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -25,21 +27,41 @@ interface Event {
   description?: string;
 }
 
+interface LocalizedText {
+  en?: string;
+  hi?: string;
+}
+
 interface TimeSlot {
   period?: string;
   startDate: string;
-  endDate: string;
-  _id: string;
+  endDate?: string;
+  _id?: string;
+  slotCapacity?: number;
+  bookedCount?: number;
+  remainingCapacity?: number;
+  isBlocked?: boolean;
 }
 
 interface Schedule {
   _id: string;
   month: string;
   locations: string;
+  baseLocation?: 'Haridwar Ashram' | 'Delhi Ashram' | 'Other';
   timeSlots: TimeSlot[];
+  slotStats?: TimeSlot[];
   appointment?: boolean;
   maxPeople?: number;
   dateRange?: string;
+  publicTitle?: LocalizedText;
+  publicLocation?: LocalizedText;
+  publicNotes?: LocalizedText;
+  changeNote?: string;
+  isLastMinuteUpdate?: boolean;
+  currentAppointments?: number;
+  remainingCapacity?: number;
+  totalCapacity?: number;
+  isBlocked?: boolean;
 }
 
 interface GroupedSchedule {
@@ -47,15 +69,60 @@ interface GroupedSchedule {
   data: Schedule[];
 }
 
+type RequestForm = {
+  name: string;
+  email: string;
+  phone: string;
+  purpose: string;
+  preferredTime: string;
+  additionalInfo: string;
+};
+
+const PURPOSE_OPTIONS = [
+  'Personal Guidance',
+  'Spiritual Discussion',
+  'Community Event',
+  'Organization Collaboration',
+  'Media Interview',
+  'Educational Institution Visit',
+  'Cultural Program',
+  'Charitable Work Discussion',
+  'Other',
+];
+
+const PREFERRED_TIMES = ['Morning', 'Afternoon', 'Evening', 'Whole Day'];
+
+const EMPTY_FORM: RequestForm = {
+  name: '',
+  email: '',
+  phone: '',
+  purpose: 'Personal Guidance',
+  preferredTime: 'Morning',
+  additionalInfo: '',
+};
+
 export function ScheduleScreen() {
-  const { isAuthenticated } = useAuth();
-  const { t } = useTranslation();
+  const { isAuthenticated, user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [events, setEvents] = useState<Event[]>([]);
   const [schedules, setSchedules] = useState<GroupedSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [registering, setRegistering] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'events' | 'schedules'>('events');
+  const [activeTab, setActiveTab] = useState<'events' | 'schedules'>('schedules');
+  const [requestModalVisible, setRequestModalVisible] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
+  const [requestForm, setRequestForm] = useState<RequestForm>(EMPTY_FORM);
+
+  const locale = i18n.language?.startsWith('hi') ? 'hi-IN' : 'en-IN';
+
+  const pickLocalizedText = (localized?: LocalizedText, fallback?: string) => {
+    if (i18n.language?.startsWith('hi')) {
+      return localized?.hi || localized?.en || fallback || '';
+    }
+    return localized?.en || localized?.hi || fallback || '';
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -64,23 +131,32 @@ export function ScheduleScreen() {
         api.get('/schedule').catch(() => ({ data: [] })),
       ]);
 
-      // Sort events by date
       const sortedEvents = (eventsRes.data || []).sort(
-        (a: Event, b: Event) =>
-          new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
+        (a: Event, b: Event) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
       );
       setEvents(sortedEvents);
 
-      // Group schedules by month/date
-      const rawSchedules = schedulesRes.data || [];
-      const grouped = groupSchedulesByMonth(rawSchedules);
-      setSchedules(grouped);
+      const rawSchedules = (schedulesRes.data || []).filter((item: Schedule) => !item.isBlocked || item.appointment);
+      setSchedules(groupSchedulesByMonth(rawSchedules));
     } catch (error) {
       console.error('Error fetching schedule data:', error);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    setRequestForm((prev) => ({
+      ...prev,
+      name: user?.name || prev.name,
+      email: user?.email || prev.email,
+      phone: user?.phone || prev.phone,
+    }));
+  }, [user]);
 
   const groupSchedulesByMonth = (items: Schedule[]): GroupedSchedule[] => {
     const groups: Record<string, Schedule[]> = {};
@@ -103,28 +179,24 @@ export function ScheduleScreen() {
     }));
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchData();
     setRefreshing(false);
   }, [fetchData]);
 
-  const formatDate = (dateString: string) => {
+  const formatShortDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', {
+    return date.toLocaleDateString(locale, {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
     });
   };
 
-  const formatFullDate = (dateString: string) => {
+  const formatLongDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', {
+    return date.toLocaleDateString(locale, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -145,27 +217,74 @@ export function ScheduleScreen() {
     }
   };
 
-  const handleRegister = async (scheduleId: string, title: string) => {
+  const openRequestModal = (schedule: Schedule) => {
     if (!isAuthenticated) {
-      Alert.alert(
-        'Sign In Required',
-        'Please sign in to register for schedules.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Sign In Required', 'Please sign in to request an appointment with Swami Ji.');
       return;
     }
 
-    setRegistering(scheduleId);
+    setSelectedSchedule(schedule);
+    setSelectedSlotIndex(0);
+    setRequestForm({
+      ...EMPTY_FORM,
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+    });
+    setRequestModalVisible(true);
+  };
+
+  const handleRegister = async () => {
+    if (!selectedSchedule) return;
+
+    const activeSlots = selectedSchedule.slotStats?.length
+      ? selectedSchedule.slotStats
+      : selectedSchedule.timeSlots || [];
+    const selectedSlot = activeSlots[selectedSlotIndex];
+
+    if (!selectedSlot?.startDate) {
+      Alert.alert('Unavailable', 'This schedule does not have a requestable date right now.');
+      return;
+    }
+
+    if (!requestForm.name || !requestForm.email || !requestForm.phone) {
+      Alert.alert('Missing Details', 'Please fill in your name, email, and phone.');
+      return;
+    }
+
+    setRegistering(selectedSchedule._id);
     try {
-      await api.post('/scheduleRegistration', { scheduleId });
-      Alert.alert('Success', `You have registered for "${title}"`, [
-        { text: 'OK' },
-      ]);
+      await api.post('/scheduleRegistration', {
+        userId: user?._id,
+        name: requestForm.name,
+        email: requestForm.email,
+        phone: requestForm.phone,
+        purpose: requestForm.purpose,
+        preferredTime: requestForm.preferredTime,
+        additionalInfo: requestForm.additionalInfo,
+        language: i18n.language || 'en',
+        requestedSchedule: {
+          scheduleId: selectedSchedule._id,
+          eventDate: selectedSlot.startDate,
+          eventTime: selectedSlot.period || requestForm.preferredTime,
+          eventLocation:
+            pickLocalizedText(selectedSchedule.publicLocation, selectedSchedule.locations) ||
+            selectedSchedule.locations,
+          eventDetails: pickLocalizedText(selectedSchedule.publicNotes),
+          baseLocation: selectedSchedule.baseLocation,
+        },
+      });
+
+      setRequestModalVisible(false);
+      await fetchData();
+      Alert.alert(
+        'Request Sent',
+        'Your appointment request has been shared with the seva team. You will receive confirmation after approval.'
+      );
     } catch (error: any) {
       Alert.alert(
         'Registration Failed',
-        error.response?.data?.message || 'Please try again later.',
-        [{ text: 'OK' }]
+        error.response?.data?.message || error.message || 'Please try again later.'
       );
     } finally {
       setRegistering(null);
@@ -179,11 +298,9 @@ export function ScheduleScreen() {
         style={styles.eventGradient}
       >
         <View style={styles.eventDateBadge}>
-          <Text style={styles.eventDateDay}>
-            {new Date(event.eventDate).getDate()}
-          </Text>
+          <Text style={styles.eventDateDay}>{new Date(event.eventDate).getDate()}</Text>
           <Text style={styles.eventDateMonth}>
-            {new Date(event.eventDate).toLocaleDateString('en-IN', {
+            {new Date(event.eventDate).toLocaleDateString(locale, {
               month: 'short',
             })}
           </Text>
@@ -192,70 +309,265 @@ export function ScheduleScreen() {
           <Text style={styles.eventName}>{event.eventName}</Text>
           <View style={styles.eventMeta}>
             <Icon name="calendar" size={14} color={colors.text.secondary} />
-            <Text style={styles.eventMetaText}>
-              {formatFullDate(event.eventDate)}
-            </Text>
+            <Text style={styles.eventMetaText}>{formatLongDate(event.eventDate)}</Text>
           </View>
-          {event.eventLocation && (
+          {event.eventLocation ? (
             <View style={styles.eventMeta}>
               <Icon name="map-marker" size={14} color={colors.text.secondary} />
               <Text style={styles.eventMetaText}>{event.eventLocation}</Text>
             </View>
-          )}
+          ) : null}
         </View>
       </LinearGradient>
     </TouchableOpacity>
   );
 
   const renderScheduleItem = ({ item }: { item: Schedule }) => {
-    const firstSlot = item.timeSlots?.[0];
+    const activeSlots = item.slotStats?.length ? item.slotStats : item.timeSlots || [];
+    const firstSlot = activeSlots[0];
     const period = firstSlot?.period;
-    const startDate = firstSlot?.startDate;
+    const title = pickLocalizedText(item.publicTitle, item.locations);
+    const location = pickLocalizedText(item.publicLocation, item.locations);
 
     return (
       <View style={styles.scheduleItem}>
         <View style={styles.scheduleLeft}>
-          {startDate && (
+          {firstSlot?.startDate ? (
             <View style={styles.scheduleDate}>
-              <Text style={styles.scheduleDateText}>{formatDate(startDate)}</Text>
+              <Text style={styles.scheduleDateText}>{formatShortDate(firstSlot.startDate)}</Text>
             </View>
-          )}
-          {period && (
+          ) : null}
+          {period ? (
             <View style={styles.periodBadge}>
-              <Icon
-                name={getPeriodIcon(period)}
-                size={12}
-                color={colors.gold.dark}
-              />
+              <Icon name={getPeriodIcon(period)} size={12} color={colors.gold.dark} />
               <Text style={styles.periodText}>{period}</Text>
             </View>
-          )}
+          ) : null}
         </View>
         <View style={styles.scheduleContent}>
-          <Text style={styles.scheduleTitle} numberOfLines={3}>{item.locations}</Text>
-          {item.dateRange && (
-            <Text style={styles.scheduleTime}>
-              {item.dateRange}
+          <Text style={styles.scheduleTitle}>{title}</Text>
+          <Text style={styles.scheduleLocation}>
+            {item.baseLocation || 'Ashram'} • {location}
+          </Text>
+          {item.dateRange ? <Text style={styles.scheduleTime}>{item.dateRange}</Text> : null}
+          {item.changeNote ? <Text style={styles.changeNote}>{item.changeNote}</Text> : null}
+
+          <View style={styles.capacityRow}>
+            <Text style={styles.capacityText}>
+              {`Open ${item.remainingCapacity ?? item.maxPeople ?? 0} / ${item.totalCapacity ?? item.maxPeople ?? 0}`}
             </Text>
-          )}
-          {item.appointment && (
+            {item.isLastMinuteUpdate ? (
+              <View style={styles.lastMinuteBadge}>
+                <Text style={styles.lastMinuteBadgeText}>Updated</Text>
+              </View>
+            ) : null}
+          </View>
+
+          {item.appointment ? (
             <TouchableOpacity
-              style={styles.registerButton}
-              onPress={() => handleRegister(item._id, item.locations)}
-              disabled={registering === item._id}
+              style={[
+                styles.registerButton,
+                item.isBlocked && styles.registerButtonDisabled,
+              ]}
+              onPress={() => openRequestModal(item)}
+              disabled={item.isBlocked || registering === item._id}
             >
               {registering === item._id ? (
                 <ActivityIndicator size="small" color={colors.text.white} />
               ) : (
                 <>
-                  <Icon name="check-circle" size={14} color={colors.text.white} />
-                  <Text style={styles.registerButtonText}>{t('schedule.registerNow')}</Text>
+                  <Icon name="account-check" size={14} color={colors.text.white} />
+                  <Text style={styles.registerButtonText}>
+                    {item.isBlocked ? 'Fully Booked' : 'Request Appointment'}
+                  </Text>
                 </>
               )}
             </TouchableOpacity>
-          )}
+          ) : null}
         </View>
       </View>
+    );
+  };
+
+  const renderRequestModal = () => {
+    const schedule = selectedSchedule;
+    if (!schedule) return null;
+
+    const activeSlots = schedule.slotStats?.length ? schedule.slotStats : schedule.timeSlots || [];
+    const selectedSlot = activeSlots[selectedSlotIndex];
+
+    return (
+      <Modal visible={requestModalVisible} animationType="slide" transparent>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Request Appointment</Text>
+              <TouchableOpacity onPress={() => setRequestModalVisible(false)}>
+                <Icon name="close" size={24} color={colors.text.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalScheduleTitle}>
+                {pickLocalizedText(schedule.publicTitle, schedule.locations)}
+              </Text>
+              <Text style={styles.modalMetaText}>
+                {schedule.baseLocation || 'Ashram'} •{' '}
+                {pickLocalizedText(schedule.publicLocation, schedule.locations)}
+              </Text>
+
+              <Text style={styles.inputLabel}>Choose Schedule Date</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.slotScroller}>
+                {activeSlots.map((slot, index) => (
+                  <TouchableOpacity
+                    key={`${slot.startDate}-${index}`}
+                    style={[
+                      styles.slotChip,
+                      index === selectedSlotIndex && styles.slotChipActive,
+                      slot.isBlocked && styles.slotChipBlocked,
+                    ]}
+                    onPress={() => setSelectedSlotIndex(index)}
+                    disabled={slot.isBlocked}
+                  >
+                    <Text
+                      style={[
+                        styles.slotChipText,
+                        index === selectedSlotIndex && styles.slotChipTextActive,
+                      ]}
+                    >
+                      {formatShortDate(slot.startDate)}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.slotChipSubtext,
+                        index === selectedSlotIndex && styles.slotChipTextActive,
+                      ]}
+                    >
+                      {slot.isBlocked
+                        ? 'Full'
+                        : `${slot.remainingCapacity ?? slot.slotCapacity ?? schedule.maxPeople ?? 0} open`}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {selectedSlot?.startDate ? (
+                <View style={styles.summaryCard}>
+                  <Text style={styles.summaryTitle}>Selected Day</Text>
+                  <Text style={styles.summaryText}>{formatLongDate(selectedSlot.startDate)}</Text>
+                  <Text style={styles.summaryText}>
+                    {selectedSlot.period || requestForm.preferredTime} •{' '}
+                    {pickLocalizedText(schedule.publicLocation, schedule.locations)}
+                  </Text>
+                </View>
+              ) : null}
+
+              <Text style={styles.inputLabel}>Full Name</Text>
+              <TextInput
+                style={styles.input}
+                value={requestForm.name}
+                onChangeText={(value) => setRequestForm((prev) => ({ ...prev, name: value }))}
+                placeholder="Your name"
+              />
+
+              <Text style={styles.inputLabel}>Email</Text>
+              <TextInput
+                style={styles.input}
+                value={requestForm.email}
+                onChangeText={(value) => setRequestForm((prev) => ({ ...prev, email: value }))}
+                placeholder="you@example.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+
+              <Text style={styles.inputLabel}>Phone</Text>
+              <TextInput
+                style={styles.input}
+                value={requestForm.phone}
+                onChangeText={(value) => setRequestForm((prev) => ({ ...prev, phone: value }))}
+                placeholder="+91"
+                keyboardType="phone-pad"
+              />
+
+              <Text style={styles.inputLabel}>Meeting Purpose</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionScroller}>
+                {PURPOSE_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option}
+                    style={[
+                      styles.optionChip,
+                      requestForm.purpose === option && styles.optionChipActive,
+                    ]}
+                    onPress={() => setRequestForm((prev) => ({ ...prev, purpose: option }))}
+                  >
+                    <Text
+                      style={[
+                        styles.optionChipText,
+                        requestForm.purpose === option && styles.optionChipTextActive,
+                      ]}
+                    >
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              <Text style={styles.inputLabel}>Preferred Time</Text>
+              <View style={styles.inlineOptions}>
+                {PREFERRED_TIMES.map((option) => (
+                  <TouchableOpacity
+                    key={option}
+                    style={[
+                      styles.optionChip,
+                      requestForm.preferredTime === option && styles.optionChipActive,
+                    ]}
+                    onPress={() =>
+                      setRequestForm((prev) => ({ ...prev, preferredTime: option }))
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.optionChipText,
+                        requestForm.preferredTime === option && styles.optionChipTextActive,
+                      ]}
+                    >
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.inputLabel}>Additional Info</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={requestForm.additionalInfo}
+                onChangeText={(value) =>
+                  setRequestForm((prev) => ({ ...prev, additionalInfo: value }))
+                }
+                placeholder="Tell the seva team why you want to meet Swami Ji"
+                multiline
+                numberOfLines={4}
+              />
+
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  (!selectedSlot || selectedSlot.isBlocked || registering === schedule._id) &&
+                    styles.registerButtonDisabled,
+                ]}
+                onPress={handleRegister}
+                disabled={!selectedSlot || selectedSlot.isBlocked || registering === schedule._id}
+              >
+                {registering === schedule._id ? (
+                  <ActivityIndicator size="small" color={colors.text.white} />
+                ) : (
+                  <Text style={styles.submitButtonText}>Submit Appointment Request</Text>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     );
   };
 
@@ -270,28 +582,7 @@ export function ScheduleScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Tab Switcher */}
       <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'events' && styles.tabActive]}
-          onPress={() => setActiveTab('events')}
-        >
-          <Icon
-            name="calendar-star"
-            size={18}
-            color={
-              activeTab === 'events' ? colors.text.white : colors.text.primary
-            }
-          />
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'events' && styles.tabTextActive,
-            ]}
-          >
-            Events
-          </Text>
-        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'schedules' && styles.tabActive]}
           onPress={() => setActiveTab('schedules')}
@@ -299,17 +590,23 @@ export function ScheduleScreen() {
           <Icon
             name="calendar-clock"
             size={18}
-            color={
-              activeTab === 'schedules' ? colors.text.white : colors.text.primary
-            }
+            color={activeTab === 'schedules' ? colors.text.white : colors.text.primary}
           />
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'schedules' && styles.tabTextActive,
-            ]}
-          >
-            Schedules
+          <Text style={[styles.tabText, activeTab === 'schedules' && styles.tabTextActive]}>
+            Schedule
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'events' && styles.tabActive]}
+          onPress={() => setActiveTab('events')}
+        >
+          <Icon
+            name="calendar-star"
+            size={18}
+            color={activeTab === 'events' ? colors.text.white : colors.text.primary}
+          />
+          <Text style={[styles.tabText, activeTab === 'events' && styles.tabTextActive]}>
+            Events
           </Text>
         </TouchableOpacity>
       </View>
@@ -335,15 +632,9 @@ export function ScheduleScreen() {
             events.map((event) => <View key={event._id}>{renderEventCard(event)}</View>)
           ) : (
             <View style={styles.emptyState}>
-              <Icon
-                name="calendar-blank"
-                size={48}
-                color={colors.text.secondary}
-              />
+              <Icon name="calendar-blank" size={48} color={colors.text.secondary} />
               <Text style={styles.emptyTitle}>{t('schedule.noEvents')}</Text>
-              <Text style={styles.emptySubtitle}>
-                Check back later for new events
-              </Text>
+              <Text style={styles.emptySubtitle}>Check back later for new events</Text>
             </View>
           )}
           <View style={{ height: spacing.xxl }} />
@@ -370,19 +661,15 @@ export function ScheduleScreen() {
           }
           ListEmptyComponent={() => (
             <View style={styles.emptyState}>
-              <Icon
-                name="calendar-clock"
-                size={48}
-                color={colors.text.secondary}
-              />
+              <Icon name="calendar-clock" size={48} color={colors.text.secondary} />
               <Text style={styles.emptyTitle}>No Schedules Available</Text>
-              <Text style={styles.emptySubtitle}>
-                Check back later for updates
-              </Text>
+              <Text style={styles.emptySubtitle}>Check back later for updates</Text>
             </View>
           )}
         />
       )}
+
+      {renderRequestModal()}
     </View>
   );
 }
@@ -529,7 +816,7 @@ const styles = StyleSheet.create({
   scheduleLeft: {
     alignItems: 'center',
     marginRight: spacing.md,
-    minWidth: 60,
+    minWidth: 70,
   },
   scheduleDate: {
     backgroundColor: colors.background.cream,
@@ -566,11 +853,38 @@ const styles = StyleSheet.create({
   scheduleTime: {
     fontSize: 12,
     color: colors.text.secondary,
+    marginTop: spacing.xs,
   },
   scheduleLocation: {
     fontSize: 12,
     color: colors.text.secondary,
-    marginTop: 2,
+  },
+  changeNote: {
+    fontSize: 12,
+    color: colors.status.warning,
+    marginTop: spacing.xs,
+  },
+  capacityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+  },
+  capacityText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.accent.peacock,
+  },
+  lastMinuteBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.status.warning,
+  },
+  lastMinuteBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.text.white,
   },
   registerButton: {
     flexDirection: 'row',
@@ -581,6 +895,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
     marginTop: spacing.sm,
+  },
+  registerButtonDisabled: {
+    opacity: 0.5,
   },
   registerButtonText: {
     fontSize: 12,
@@ -602,5 +919,153 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text.secondary,
     marginTop: spacing.xs,
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  modalCard: {
+    maxHeight: '92%',
+    backgroundColor: colors.background.warmWhite,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    padding: spacing.lg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.primary.maroon,
+  },
+  modalScheduleTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text.primary,
+  },
+  modalMetaText: {
+    fontSize: 13,
+    color: colors.text.secondary,
+    marginTop: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text.primary,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.border.gold as string,
+    backgroundColor: colors.background.parchment,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    color: colors.text.primary,
+  },
+  textArea: {
+    minHeight: 88,
+    textAlignVertical: 'top',
+  },
+  slotScroller: {
+    marginTop: spacing.xs,
+  },
+  slotChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border.gold as string,
+    backgroundColor: colors.background.parchment,
+    marginRight: spacing.sm,
+  },
+  slotChipActive: {
+    backgroundColor: colors.primary.saffron,
+    borderColor: colors.primary.saffron,
+  },
+  slotChipBlocked: {
+    opacity: 0.5,
+  },
+  slotChipText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.text.primary,
+  },
+  slotChipTextActive: {
+    color: colors.text.white,
+  },
+  slotChipSubtext: {
+    fontSize: 11,
+    color: colors.text.secondary,
+    marginTop: 2,
+  },
+  summaryCard: {
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.background.cream,
+    borderWidth: 1,
+    borderColor: colors.border.gold as string,
+  },
+  summaryTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary.maroon,
+    marginBottom: spacing.xs,
+  },
+  summaryText: {
+    fontSize: 13,
+    color: colors.text.primary,
+    marginBottom: 2,
+  },
+  optionScroller: {
+    marginTop: spacing.xs,
+  },
+  inlineOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  optionChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border.gold as string,
+    backgroundColor: colors.background.parchment,
+    marginRight: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  optionChipActive: {
+    backgroundColor: colors.primary.maroon,
+    borderColor: colors.primary.maroon,
+  },
+  optionChipText: {
+    fontSize: 12,
+    color: colors.text.primary,
+    fontWeight: '600',
+  },
+  optionChipTextActive: {
+    color: colors.text.white,
+  },
+  submitButton: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg,
+    backgroundColor: colors.primary.saffron,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    color: colors.text.white,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

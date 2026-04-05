@@ -50,27 +50,6 @@ interface MonthData {
   days: DayData[];
 }
 
-function buildFallbackDayData(day: number): DayData {
-  const tithiNames = ['Pratipada', 'Dwitiya', 'Tritiya', 'Chaturthi', 'Panchami', 'Shashthi', 'Saptami'];
-  const nakshatraNames = ['Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashira', 'Ardra', 'Punarvasu'];
-  const yogaNames = ['Shubha', 'Siddha', 'Ayushman', 'Saubhagya', 'Dhriti'];
-  const karanaNames = ['Bava', 'Balava', 'Kaulava', 'Taitila', 'Garija'];
-
-  return {
-    date: day,
-    tithi: tithiNames[(day - 1) % tithiNames.length],
-    nakshatra: nakshatraNames[(day - 1) % nakshatraNames.length],
-    yoga: yogaNames[(day - 1) % yogaNames.length],
-    karana: karanaNames[(day - 1) % karanaNames.length],
-    paksha: day <= 15 ? 'Shukla' : 'Krishna',
-    sunrise: '06:15',
-    sunset: '18:30',
-    rahuKaal: '16:30 - 18:00',
-    isPurnima: day === 15,
-    isAmavasya: day === 30,
-  };
-}
-
 function unwrapPayload<T = unknown>(payload: unknown, maxDepth = 3): T | null {
   let current: unknown = payload;
   for (let i = 0; i < maxDepth; i += 1) {
@@ -161,6 +140,7 @@ export default function PanchangCalendarScreen() {
   const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
   const [dayDetailLoading, setDayDetailLoading] = useState(false);
   const [detailVisible, setDetailVisible] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMonthData();
@@ -168,6 +148,7 @@ export default function PanchangCalendarScreen() {
 
   const fetchMonthData = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const response = await getPanchangMonth({
         month,
@@ -194,19 +175,11 @@ export default function PanchangCalendarScreen() {
         setMonthData({ days: [] });
       }
     } catch (error) {
-      // API endpoint may not be available, using placeholder month view
       if (error instanceof Error) {
-        console.warn('Panchang month API unavailable, using placeholder:', error.message);
+        console.warn('Panchang month API unavailable:', error.message);
       }
-      // Generate fallback month data
-      const daysInMonth = new Date(year, month, 0).getDate();
-      const days: DayData[] = [];
-      for (let i = 1; i <= daysInMonth; i++) {
-        const fallback = buildFallbackDayData(i);
-        fallback.dateIso = formatIsoDate(year, month, i);
-        days.push(fallback);
-      }
-      setMonthData({ days });
+      setMonthData({ days: [] });
+      setFetchError('Unable to load live monthly Panchang data. Check backend connection.');
     } finally {
       setLoading(false);
     }
@@ -257,7 +230,7 @@ export default function PanchangCalendarScreen() {
       }
     } catch (error) {
       if (error instanceof Error) {
-        console.warn('Panchang day detail fetch failed, using month data:', error.message);
+        console.warn('Panchang day detail fetch failed:', error.message);
       }
     } finally {
       setDayDetailLoading(false);
@@ -318,6 +291,13 @@ export default function PanchangCalendarScreen() {
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
+          {!!fetchError && (
+            <View style={styles.errorBanner}>
+              <Icon name="alert-circle-outline" size={16} color={colors.primary.vermillion} />
+              <Text style={styles.errorBannerText}>{fetchError}</Text>
+            </View>
+          )}
+
           {/* Weekday Headers */}
           <View style={styles.weekdayRow}>
             {WEEKDAYS.map((day) => (
@@ -394,6 +374,14 @@ export default function PanchangCalendarScreen() {
                   <Text style={styles.legendName}>{f.name}</Text>
                 </View>
               ))}
+            </View>
+          )}
+
+          {!fetchError && (!monthData?.days || monthData.days.length === 0) && (
+            <View style={styles.emptyState}>
+              <Icon name="calendar-blank-outline" size={40} color={colors.text.secondary} />
+              <Text style={styles.emptyStateTitle}>No monthly Panchang data available</Text>
+              <Text style={styles.emptyStateSubtitle}>Try another month or retry after the API is available.</Text>
             </View>
           )}
 
@@ -607,6 +595,43 @@ const styles = StyleSheet.create({
     width: DAY_SIZE,
     alignItems: 'center',
     paddingVertical: spacing.xs,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    backgroundColor: 'rgba(227, 66, 52, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(227, 66, 52, 0.25)',
+    gap: spacing.xs,
+  },
+  errorBannerText: {
+    flex: 1,
+    color: colors.primary.vermillion,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+  },
+  emptyStateTitle: {
+    marginTop: spacing.md,
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text.primary,
+  },
+  emptyStateSubtitle: {
+    marginTop: spacing.xs,
+    textAlign: 'center',
+    fontSize: 13,
+    color: colors.text.secondary,
   },
   weekdayText: {
     fontSize: 12,

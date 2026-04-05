@@ -14,13 +14,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {
-  Card,
-  FAB,
-  ActivityIndicator,
-  Chip,
-  IconButton,
-} from 'react-native-paper';
+import { Card, FAB, ActivityIndicator, Chip, IconButton } from 'react-native-paper';
 import { colors, spacing, borderRadius } from '../../theme';
 import api from '../../services/api';
 import { Schedule } from '../../types';
@@ -45,24 +39,50 @@ const MONTHS = [
   'December',
 ];
 
+const BASE_LOCATIONS: Array<Schedule['baseLocation']> = [
+  'Haridwar Ashram',
+  'Delhi Ashram',
+  'Other',
+];
+
 interface ScheduleFormData {
   month: string;
   locations: string;
+  baseLocation: Schedule['baseLocation'];
   startDate: string;
   endDate: string;
   period: string;
   maxPeople: string;
+  slotCapacity: string;
   appointment: boolean;
+  publicTitleEn: string;
+  publicTitleHi: string;
+  publicLocationEn: string;
+  publicLocationHi: string;
+  publicNotesEn: string;
+  publicNotesHi: string;
+  changeNote: string;
+  isLastMinuteUpdate: boolean;
 }
 
 const EMPTY_FORM: ScheduleFormData = {
   month: '',
   locations: '',
+  baseLocation: 'Delhi Ashram',
   startDate: '',
   endDate: '',
   period: '',
   maxPeople: '',
+  slotCapacity: '',
   appointment: false,
+  publicTitleEn: '',
+  publicTitleHi: '',
+  publicLocationEn: '',
+  publicLocationHi: '',
+  publicNotesEn: '',
+  publicNotesHi: '',
+  changeNote: '',
+  isLastMinuteUpdate: false,
 };
 
 export function ScheduleScreen() {
@@ -72,11 +92,11 @@ export function ScheduleScreen() {
   const [error, setError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [monthPickerVisible, setMonthPickerVisible] = useState(false);
+  const [basePickerVisible, setBasePickerVisible] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [formData, setFormData] = useState<ScheduleFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
-  // ── Fetch schedules ──
   const fetchSchedules = useCallback(async () => {
     try {
       setError(null);
@@ -101,7 +121,6 @@ export function ScheduleScreen() {
     fetchSchedules();
   }, [fetchSchedules]);
 
-  // ── Group by month ──
   const groupedSchedules = useMemo((): ScheduleSection[] => {
     const groups: Record<string, Schedule[]> = {};
 
@@ -113,7 +132,6 @@ export function ScheduleScreen() {
       groups[key].push(schedule);
     });
 
-    // Sort items within each group by earliestStartDate
     Object.keys(groups).forEach((key) => {
       groups[key].sort((a, b) => {
         const dateA = a.earliestStartDate ? new Date(a.earliestStartDate).getTime() : 0;
@@ -122,22 +140,11 @@ export function ScheduleScreen() {
       });
     });
 
-    // Sort sections by the month order
-    const sections = Object.keys(groups)
+    return Object.keys(groups)
       .map((title) => ({ title, data: groups[title] }))
-      .sort((a, b) => {
-        const idxA = MONTHS.indexOf(a.title);
-        const idxB = MONTHS.indexOf(b.title);
-        if (idxA === -1 && idxB === -1) return 0;
-        if (idxA === -1) return 1;
-        if (idxB === -1) return -1;
-        return idxA - idxB;
-      });
-
-    return sections;
+      .sort((a, b) => MONTHS.indexOf(a.title) - MONTHS.indexOf(b.title));
   }, [schedules]);
 
-  // ── CRUD helpers ──
   const openCreateModal = () => {
     setEditingSchedule(null);
     setFormData(EMPTY_FORM);
@@ -145,11 +152,12 @@ export function ScheduleScreen() {
   };
 
   const openEditModal = (schedule: Schedule) => {
-    setEditingSchedule(schedule);
     const firstSlot = schedule.timeSlots?.[0];
+    setEditingSchedule(schedule);
     setFormData({
       month: schedule.month,
       locations: schedule.locations,
+      baseLocation: schedule.baseLocation || 'Other',
       startDate: firstSlot?.startDate
         ? new Date(firstSlot.startDate).toISOString().split('T')[0]
         : '',
@@ -158,18 +166,27 @@ export function ScheduleScreen() {
         : '',
       period: firstSlot?.period ?? '',
       maxPeople: schedule.maxPeople != null ? String(schedule.maxPeople) : '',
+      slotCapacity: firstSlot?.slotCapacity != null ? String(firstSlot.slotCapacity) : '',
       appointment: schedule.appointment ?? false,
+      publicTitleEn: schedule.publicTitle?.en || '',
+      publicTitleHi: schedule.publicTitle?.hi || '',
+      publicLocationEn: schedule.publicLocation?.en || '',
+      publicLocationHi: schedule.publicLocation?.hi || '',
+      publicNotesEn: schedule.publicNotes?.en || '',
+      publicNotesHi: schedule.publicNotes?.hi || '',
+      changeNote: schedule.changeNote || '',
+      isLastMinuteUpdate: Boolean(schedule.isLastMinuteUpdate),
     });
     setModalVisible(true);
   };
 
-  const handleSave = async () => {
-    const isValidIsoDate = (value: string) => {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-      const parsed = new Date(`${value}T00:00:00`);
-      return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
-    };
+  const isValidIsoDate = (value: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const parsed = new Date(`${value}T00:00:00`);
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+  };
 
+  const handleSave = async () => {
     if (!formData.month.trim()) {
       Alert.alert('Validation', 'Please select a month.');
       return;
@@ -191,18 +208,45 @@ export function ScheduleScreen() {
       return;
     }
 
+    const maxPeople = formData.maxPeople ? Number(formData.maxPeople) : undefined;
+    const slotCapacity = formData.slotCapacity ? Number(formData.slotCapacity) : undefined;
+    if (maxPeople !== undefined && Number.isNaN(maxPeople)) {
+      Alert.alert('Validation', 'Daily appointment capacity must be numeric.');
+      return;
+    }
+    if (slotCapacity !== undefined && Number.isNaN(slotCapacity)) {
+      Alert.alert('Validation', 'Slot capacity must be numeric.');
+      return;
+    }
+
     const body = {
       month: formData.month.trim(),
       locations: formData.locations.trim(),
+      baseLocation: formData.baseLocation,
       timeSlots: [
         {
           period: formData.period.trim() || undefined,
           startDate: new Date(formData.startDate).toISOString(),
           endDate: new Date(formData.endDate).toISOString(),
+          slotCapacity,
         },
       ],
       appointment: formData.appointment,
-      maxPeople: formData.maxPeople ? Number(formData.maxPeople) : undefined,
+      maxPeople,
+      publicTitle: {
+        en: formData.publicTitleEn.trim() || undefined,
+        hi: formData.publicTitleHi.trim() || undefined,
+      },
+      publicLocation: {
+        en: formData.publicLocationEn.trim() || undefined,
+        hi: formData.publicLocationHi.trim() || undefined,
+      },
+      publicNotes: {
+        en: formData.publicNotesEn.trim() || undefined,
+        hi: formData.publicNotesHi.trim() || undefined,
+      },
+      changeNote: formData.changeNote.trim() || undefined,
+      isLastMinuteUpdate: formData.isLastMinuteUpdate,
     };
 
     try {
@@ -241,14 +285,14 @@ export function ScheduleScreen() {
             }
           },
         },
-      ],
+      ]
     );
   };
 
-  // ── Render helpers ──
   const renderScheduleItem = ({ item }: { item: Schedule }) => {
     const firstSlot = item.timeSlots?.[0];
     const period = firstSlot?.period;
+    const slotCapacity = firstSlot?.slotCapacity;
 
     return (
       <Card style={styles.card}>
@@ -256,51 +300,57 @@ export function ScheduleScreen() {
           <View style={styles.leftStripe} />
           <View style={styles.detailsSection}>
             <Text style={styles.locationText} numberOfLines={2}>
-              {item.locations}
+              {item.publicTitle?.en || item.publicTitle?.hi || item.locations}
+            </Text>
+            <Text style={styles.secondaryText}>
+              {item.baseLocation || 'Ashram schedule'}
             </Text>
 
-            {item.dateRange ? (
-              <Text style={styles.dateRangeText}>{item.dateRange}</Text>
-            ) : null}
+            {item.dateRange ? <Text style={styles.dateRangeText}>{item.dateRange}</Text> : null}
 
             <View style={styles.metaRow}>
               {period ? (
-                <Chip
-                  style={styles.periodChip}
-                  textStyle={styles.periodChipText}
-                  compact
-                >
+                <Chip style={styles.periodChip} textStyle={styles.periodChipText} compact>
                   {period}
                 </Chip>
               ) : null}
 
-              {item.maxPeople != null ? (
-                <Text style={styles.maxPeopleText}>Max {item.maxPeople} people</Text>
+              {item.appointment ? (
+                <Chip style={styles.appointmentChip} textStyle={styles.appointmentChipText} compact>
+                  Appointment open
+                </Chip>
               ) : null}
 
-              {item.appointment ? (
-                <Chip
-                  style={styles.appointmentChip}
-                  textStyle={styles.appointmentChipText}
-                  compact
-                >
-                  Appointment
+              {item.isLastMinuteUpdate ? (
+                <Chip style={styles.urgentChip} textStyle={styles.urgentChipText} compact>
+                  Last-minute update
                 </Chip>
               ) : null}
             </View>
 
+            <View style={styles.metricsRow}>
+              <Text style={styles.metricText}>
+                Daily capacity: {item.maxPeople ?? 100}
+              </Text>
+              {slotCapacity ? (
+                <Text style={styles.metricText}>Slot cap: {slotCapacity}</Text>
+              ) : null}
+              {item.currentAppointments != null ? (
+                <Text style={styles.metricText}>Booked: {item.currentAppointments}</Text>
+              ) : null}
+              {item.remainingCapacity != null ? (
+                <Text style={styles.metricText}>Open: {item.remainingCapacity}</Text>
+              ) : null}
+            </View>
+
+            {item.changeNote ? <Text style={styles.changeNoteText}>{item.changeNote}</Text> : null}
+
             <View style={styles.cardActionRow}>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => openEditModal(item)}
-              >
+              <TouchableOpacity style={styles.actionButton} onPress={() => openEditModal(item)}>
                 <IconButton icon="pencil" iconColor={colors.accent.peacock} size={18} />
                 <Text style={styles.actionButtonText}>Edit</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => handleDelete(item)}
-              >
+              <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
                 <IconButton icon="delete" iconColor={colors.status.error} size={18} />
                 <Text style={[styles.actionButtonText, { color: colors.status.error }]}>
                   Delete
@@ -327,46 +377,43 @@ export function ScheduleScreen() {
       <Text style={styles.emptyStateIcon}>📅</Text>
       <Text style={styles.emptyStateText}>No schedules available</Text>
       <Text style={styles.emptyStateSubtext}>
-        Tap the + button to create a new schedule
+        Create the Delhi or Haridwar schedule here and every surface will read from the same source.
       </Text>
     </View>
   );
 
-  // ── Month picker modal ──
-  const renderMonthPicker = () => (
-    <Modal
-      visible={monthPickerVisible}
-      animationType="fade"
-      transparent
-      onRequestClose={() => setMonthPickerVisible(false)}
-    >
-      <TouchableOpacity
-        style={styles.pickerOverlay}
-        activeOpacity={1}
-        onPress={() => setMonthPickerVisible(false)}
-      >
+  const renderSimplePicker = (
+    visible: boolean,
+    title: string,
+    items: string[],
+    selectedValue: string,
+    onSelect: (value: string) => void,
+    onClose: () => void
+  ) => (
+    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
+      <TouchableOpacity style={styles.pickerOverlay} activeOpacity={1} onPress={onClose}>
         <View style={styles.pickerContent}>
-          <Text style={styles.pickerTitle}>Select Month</Text>
+          <Text style={styles.pickerTitle}>{title}</Text>
           <ScrollView style={styles.pickerScroll}>
-            {MONTHS.map((m) => (
+            {items.map((item) => (
               <TouchableOpacity
-                key={m}
+                key={item}
                 style={[
                   styles.pickerItem,
-                  formData.month === m && styles.pickerItemSelected,
+                  selectedValue === item && styles.pickerItemSelected,
                 ]}
                 onPress={() => {
-                  setFormData((p) => ({ ...p, month: m }));
-                  setMonthPickerVisible(false);
+                  onSelect(item);
+                  onClose();
                 }}
               >
                 <Text
                   style={[
                     styles.pickerItemText,
-                    formData.month === m && styles.pickerItemTextSelected,
+                    selectedValue === item && styles.pickerItemTextSelected,
                   ]}
                 >
-                  {m}
+                  {item}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -376,7 +423,6 @@ export function ScheduleScreen() {
     </Modal>
   );
 
-  // ── Create / edit modal ──
   const renderFormModal = () => (
     <Modal
       visible={modalVisible}
@@ -411,85 +457,172 @@ export function ScheduleScreen() {
               style={styles.pickerTrigger}
               onPress={() => setMonthPickerVisible(true)}
             >
-              <Text
-                style={[
-                  styles.pickerTriggerText,
-                  !formData.month && styles.placeholderText,
-                ]}
-              >
+              <Text style={[styles.pickerTriggerText, !formData.month && styles.placeholderText]}>
                 {formData.month || 'Select a month'}
               </Text>
               <IconButton icon="chevron-down" size={20} iconColor={colors.text.secondary} />
             </TouchableOpacity>
 
-            <Text style={styles.inputLabel}>Locations *</Text>
+            <Text style={styles.inputLabel}>Base Ashram *</Text>
+            <TouchableOpacity
+              style={styles.pickerTrigger}
+              onPress={() => setBasePickerVisible(true)}
+            >
+              <Text style={styles.pickerTriggerText}>{formData.baseLocation || 'Select base'}</Text>
+              <IconButton icon="chevron-down" size={20} iconColor={colors.text.secondary} />
+            </TouchableOpacity>
+
+            <Text style={styles.inputLabel}>Internal Locations *</Text>
             <TextInput
               style={[styles.textInput, styles.textArea]}
               value={formData.locations}
-              onChangeText={(t) => setFormData((p) => ({ ...p, locations: t }))}
-              placeholder="e.g. Mumbai, Delhi"
+              onChangeText={(value) => setFormData((prev) => ({ ...prev, locations: value }))}
+              placeholder="Exact venue details used by staff"
               placeholderTextColor={colors.text.secondary}
               multiline
               numberOfLines={2}
+            />
+
+            <Text style={styles.inputLabel}>Public Title (English)</Text>
+            <TextInput
+              style={styles.textInput}
+              value={formData.publicTitleEn}
+              onChangeText={(value) => setFormData((prev) => ({ ...prev, publicTitleEn: value }))}
+              placeholder="Delhi Ashram darshan and meetings"
+              placeholderTextColor={colors.text.secondary}
+            />
+
+            <Text style={styles.inputLabel}>Public Title (Hindi)</Text>
+            <TextInput
+              style={styles.textInput}
+              value={formData.publicTitleHi}
+              onChangeText={(value) => setFormData((prev) => ({ ...prev, publicTitleHi: value }))}
+              placeholder="दिल्ली आश्रम दर्शन एवं मुलाकात"
+              placeholderTextColor={colors.text.secondary}
+            />
+
+            <Text style={styles.inputLabel}>Public Location (English)</Text>
+            <TextInput
+              style={styles.textInput}
+              value={formData.publicLocationEn}
+              onChangeText={(value) => setFormData((prev) => ({ ...prev, publicLocationEn: value }))}
+              placeholder="Delhi Ashram, New Delhi"
+              placeholderTextColor={colors.text.secondary}
+            />
+
+            <Text style={styles.inputLabel}>Public Location (Hindi)</Text>
+            <TextInput
+              style={styles.textInput}
+              value={formData.publicLocationHi}
+              onChangeText={(value) => setFormData((prev) => ({ ...prev, publicLocationHi: value }))}
+              placeholder="दिल्ली आश्रम, नई दिल्ली"
+              placeholderTextColor={colors.text.secondary}
             />
 
             <Text style={styles.inputLabel}>Start Date * (YYYY-MM-DD)</Text>
             <TextInput
               style={styles.textInput}
               value={formData.startDate}
-              onChangeText={(t) => setFormData((p) => ({ ...p, startDate: t }))}
-              placeholder="2025-10-14"
+              onChangeText={(value) => setFormData((prev) => ({ ...prev, startDate: value }))}
+              placeholder="2026-04-07"
               placeholderTextColor={colors.text.secondary}
-              keyboardType="default"
             />
 
             <Text style={styles.inputLabel}>End Date * (YYYY-MM-DD)</Text>
             <TextInput
               style={styles.textInput}
               value={formData.endDate}
-              onChangeText={(t) => setFormData((p) => ({ ...p, endDate: t }))}
-              placeholder="2025-10-15"
+              onChangeText={(value) => setFormData((prev) => ({ ...prev, endDate: value }))}
+              placeholder="2026-04-07"
               placeholderTextColor={colors.text.secondary}
-              keyboardType="default"
             />
 
-            <Text style={styles.inputLabel}>Period</Text>
+            <Text style={styles.inputLabel}>Meeting Window</Text>
             <TextInput
               style={styles.textInput}
               value={formData.period}
-              onChangeText={(t) => setFormData((p) => ({ ...p, period: t }))}
-              placeholder="e.g. Morning, Evening"
+              onChangeText={(value) => setFormData((prev) => ({ ...prev, period: value }))}
+              placeholder="Morning / Evening / Whole day"
               placeholderTextColor={colors.text.secondary}
             />
 
-            <Text style={styles.inputLabel}>Max People</Text>
+            <Text style={styles.inputLabel}>Daily Appointment Capacity</Text>
             <TextInput
               style={styles.textInput}
               value={formData.maxPeople}
-              onChangeText={(t) => setFormData((p) => ({ ...p, maxPeople: t }))}
-              placeholder="e.g. 50"
+              onChangeText={(value) => setFormData((prev) => ({ ...prev, maxPeople: value }))}
+              placeholder="25"
               placeholderTextColor={colors.text.secondary}
               keyboardType="numeric"
             />
 
+            <Text style={styles.inputLabel}>Slot Capacity Override</Text>
+            <TextInput
+              style={styles.textInput}
+              value={formData.slotCapacity}
+              onChangeText={(value) => setFormData((prev) => ({ ...prev, slotCapacity: value }))}
+              placeholder="Optional if this date has a special cap"
+              placeholderTextColor={colors.text.secondary}
+              keyboardType="numeric"
+            />
+
+            <Text style={styles.inputLabel}>Public Notes (English)</Text>
+            <TextInput
+              style={[styles.textInput, styles.textArea]}
+              value={formData.publicNotesEn}
+              onChangeText={(value) => setFormData((prev) => ({ ...prev, publicNotesEn: value }))}
+              placeholder="Instructions for visitors"
+              placeholderTextColor={colors.text.secondary}
+              multiline
+              numberOfLines={3}
+            />
+
+            <Text style={styles.inputLabel}>Public Notes (Hindi)</Text>
+            <TextInput
+              style={[styles.textInput, styles.textArea]}
+              value={formData.publicNotesHi}
+              onChangeText={(value) => setFormData((prev) => ({ ...prev, publicNotesHi: value }))}
+              placeholder="आगंतुकों के लिए निर्देश"
+              placeholderTextColor={colors.text.secondary}
+              multiline
+              numberOfLines={3}
+            />
+
+            <Text style={styles.inputLabel}>Change Note</Text>
+            <TextInput
+              style={[styles.textInput, styles.textArea]}
+              value={formData.changeNote}
+              onChangeText={(value) => setFormData((prev) => ({ ...prev, changeNote: value }))}
+              placeholder="Use this for last-minute changes or urgent updates"
+              placeholderTextColor={colors.text.secondary}
+              multiline
+              numberOfLines={2}
+            />
+
             <View style={styles.switchRow}>
-              <Text style={styles.inputLabel}>Appointment Required</Text>
+              <Text style={styles.inputLabel}>Accept appointment requests</Text>
               <Switch
                 value={formData.appointment}
-                onValueChange={(v) => setFormData((p) => ({ ...p, appointment: v }))}
-                trackColor={{
-                  false: colors.text.secondary,
-                  true: colors.status.success,
-                }}
+                onValueChange={(value) => setFormData((prev) => ({ ...prev, appointment: value }))}
+                trackColor={{ false: colors.text.secondary, true: colors.status.success }}
+                thumbColor={colors.text.white}
+              />
+            </View>
+
+            <View style={styles.switchRow}>
+              <Text style={styles.inputLabel}>Mark as last-minute update</Text>
+              <Switch
+                value={formData.isLastMinuteUpdate}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, isLastMinuteUpdate: value }))
+                }
+                trackColor={{ false: colors.text.secondary, true: colors.status.warning }}
                 thumbColor={colors.text.white}
               />
             </View>
 
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}
-              >
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -500,9 +633,7 @@ export function ScheduleScreen() {
                 {saving ? (
                   <ActivityIndicator size="small" color={colors.text.white} />
                 ) : (
-                  <Text style={styles.saveButtonText}>
-                    {editingSchedule ? 'Update' : 'Create'}
-                  </Text>
+                  <Text style={styles.saveButtonText}>{editingSchedule ? 'Update' : 'Create'}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -512,7 +643,6 @@ export function ScheduleScreen() {
     </Modal>
   );
 
-  // ── Loading / error ──
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -533,7 +663,6 @@ export function ScheduleScreen() {
     );
   }
 
-  // ── Main render ──
   return (
     <View style={styles.container}>
       <SectionList
@@ -555,15 +684,26 @@ export function ScheduleScreen() {
         showsVerticalScrollIndicator={false}
       />
 
-      <FAB
-        icon="plus"
-        style={styles.fab}
-        onPress={openCreateModal}
-        color={colors.text.white}
-      />
+      <FAB icon="plus" style={styles.fab} onPress={openCreateModal} color={colors.text.white} />
 
       {renderFormModal()}
-      {renderMonthPicker()}
+      {renderSimplePicker(
+        monthPickerVisible,
+        'Select Month',
+        MONTHS,
+        formData.month,
+        (value) => setFormData((prev) => ({ ...prev, month: value })),
+        () => setMonthPickerVisible(false)
+      )}
+      {renderSimplePicker(
+        basePickerVisible,
+        'Select Base Ashram',
+        BASE_LOCATIONS as string[],
+        formData.baseLocation || '',
+        (value) =>
+          setFormData((prev) => ({ ...prev, baseLocation: value as Schedule['baseLocation'] })),
+        () => setBasePickerVisible(false)
+      )}
     </View>
   );
 }
@@ -602,8 +742,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 100,
   },
-
-  // ── Section header ──
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -628,8 +766,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.primary.maroon,
   },
-
-  // ── Schedule card ──
   card: {
     marginHorizontal: spacing.md,
     marginTop: spacing.sm,
@@ -656,6 +792,11 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     marginBottom: spacing.xs,
   },
+  secondaryText: {
+    fontSize: 12,
+    color: colors.text.secondary,
+    marginBottom: spacing.xs,
+  },
   dateRangeText: {
     fontSize: 13,
     color: colors.text.secondary,
@@ -667,6 +808,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
+  metricsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  metricText: {
+    fontSize: 12,
+    color: colors.accent.peacock,
+    fontWeight: '500',
+  },
+  changeNoteText: {
+    fontSize: 12,
+    color: colors.status.warning,
+    marginTop: spacing.sm,
+  },
   periodChip: {
     backgroundColor: colors.accent.peacock,
     height: 24,
@@ -676,16 +833,20 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
   },
-  maxPeopleText: {
-    fontSize: 12,
-    color: colors.accent.peacock,
-    fontWeight: '500',
-  },
   appointmentChip: {
     backgroundColor: colors.primary.saffron,
     height: 24,
   },
   appointmentChipText: {
+    color: colors.text.white,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  urgentChip: {
+    backgroundColor: colors.status.warning,
+    height: 24,
+  },
+  urgentChipText: {
     color: colors.text.white,
     fontSize: 10,
     fontWeight: '600',
@@ -708,16 +869,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: -spacing.sm,
   },
-
-  // ── FAB ──
   fab: {
     position: 'absolute',
     right: spacing.lg,
     bottom: spacing.lg,
     backgroundColor: colors.primary.saffron,
   },
-
-  // ── Form modal ──
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -728,7 +885,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     padding: spacing.lg,
-    maxHeight: '90%',
+    maxHeight: '92%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -827,8 +984,6 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.6,
   },
-
-  // ── Month picker ──
   pickerOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -869,8 +1024,6 @@ const styles = StyleSheet.create({
     color: colors.text.white,
     fontWeight: '600',
   },
-
-  // ── Empty state ──
   emptyState: {
     padding: spacing.xxl,
     alignItems: 'center',

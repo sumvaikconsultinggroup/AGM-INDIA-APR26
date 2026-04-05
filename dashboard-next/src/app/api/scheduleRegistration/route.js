@@ -5,28 +5,176 @@ import ScheduleRegistration, {
   RegistrationStatus,
   PreferredTime,
 } from '@/models/ScheduleRegistration';
+import { Schedule } from '@/models/Schedule';
 import { sendEmail } from '@/utils/sendEmail';
 
-// GET all registrations
-export async function GET() {
+const ScheduleRegistrationModel = ScheduleRegistration;
+
+function getSlotDateKey(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().split('T')[0];
+}
+
+function deriveBaseLocation(schedule) {
+  if (schedule?.baseLocation) return schedule.baseLocation;
+  const locations = (schedule?.locations || '').toLowerCase();
+  if (locations.includes('haridwar') || locations.includes('हरिद्वार')) return 'Haridwar Ashram';
+  if (locations.includes('delhi') || locations.includes('दिल्ली')) return 'Delhi Ashram';
+  return 'Other';
+}
+
+function formatPurpose(purpose) {
+  return String(purpose || '')
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function formatDate(dateString) {
+  if (!dateString) return 'To be determined';
+  return new Date(dateString).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+async function parseRegistrationPayload(req) {
+  const contentType = req.headers.get('content-type') || '';
+
+  if (contentType.includes('application/json')) {
+    const body = await req.json();
+    return {
+      name: body.name,
+      email: body.email,
+      phone: body.phone,
+      purpose: body.purpose,
+      additionalInfo: body.additionalInfo,
+      preferedTime: body.preferredTime || body.preferedTime,
+      userId: body.userId,
+      language: body.language,
+      assignedTo: body.assignedTo,
+      internalNotes: body.internalNotes,
+      requestedSchedule: body.requestedSchedule || {
+        scheduleId: body.scheduleId,
+        eventDate: body.eventDate,
+        eventTime: body.eventTime,
+        eventLocation: body.eventLocation,
+        eventDetails: body.eventDetails,
+        baseLocation: body.baseLocation,
+      },
+    };
+  }
+
+  const formData = await req.formData();
+  return {
+    name: formData.get('name'),
+    email: formData.get('email'),
+    phone: formData.get('phone'),
+    purpose: formData.get('purpose'),
+    additionalInfo: formData.get('additionalInfo'),
+    preferedTime: formData.get('preferredTime') || formData.get('preferedTime'),
+    userId: formData.get('userId'),
+    language: formData.get('language'),
+    assignedTo: formData.get('assignedTo'),
+    internalNotes: formData.get('internalNotes'),
+    requestedSchedule: {
+      scheduleId: formData.get('requestedSchedule[scheduleId]') || formData.get('scheduleId'),
+      eventDate: formData.get('requestedSchedule[eventDate]') || formData.get('eventDate'),
+      eventTime: formData.get('requestedSchedule[eventTime]') || formData.get('eventTime'),
+      eventLocation:
+        formData.get('requestedSchedule[eventLocation]') || formData.get('eventLocation'),
+      eventDetails:
+        formData.get('requestedSchedule[eventDetails]') || formData.get('eventDetails'),
+      baseLocation:
+        formData.get('requestedSchedule[baseLocation]') || formData.get('baseLocation'),
+    },
+  };
+}
+
+async function getCapacityState(scheduleId, eventDate) {
+  if (!scheduleId || !eventDate) {
+    return null;
+  }
+
+  const schedule = await Schedule.findById(scheduleId).lean();
+  if (!schedule || schedule.isDeleted) {
+    return null;
+  }
+
+  const dateKey = getSlotDateKey(eventDate);
+  const matchingSlot = (schedule.timeSlots || []).find(
+    (slot) => getSlotDateKey(slot.startDate) === dateKey
+  );
+
+  const slotCapacity = matchingSlot?.slotCapacity || schedule.maxPeople || 100;
+  const currentAppointments = await ScheduleRegistrationModel.countDocuments({
+    isDeleted: { $ne: true },
+    status: { $ne: RegistrationStatus.REJECTED },
+    'requestedSchedule.scheduleId': String(scheduleId),
+    'requestedSchedule.eventDate': {
+      $gte: new Date(`${dateKey}T00:00:00.000Z`),
+      $lt: new Date(`${dateKey}T23:59:59.999Z`),
+    },
+  });
+
+  return {
+    schedule,
+    slotCapacity,
+    currentAppointments,
+    remainingCapacity: Math.max(slotCapacity - currentAppointments, 0),
+    isBlocked: currentAppointments >= slotCapacity,
+  };
+}
+
+export async function GET(req) {
   try {
     await connectDB();
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get('status');
+    const date = searchParams.get('date');
+    const baseLocation = searchParams.get('baseLocation');
+    const assignedTo = searchParams.get('assignedTo');
+    const userId = searchParams.get('userId');
+    const query = { isDeleted: { $ne: true } };
 
-    const registrations = await ScheduleRegistration.find({ isDeleted: { $ne: true } }).sort({
+    if (status) {
+      query.status = status;
+    }
+
+    if (assignedTo) {
+      query.assignedTo = assignedTo;
+    }
+
+    if (userId) {
+      query.userId = userId;
+    }
+
+    if (baseLocation) {
+      query['requestedSchedule.baseLocation'] = baseLocation;
+    }
+
+    if (date) {
+      const start = new Date(`${date}T00:00:00.000Z`);
+      const end = new Date(`${date}T23:59:59.999Z`);
+      if (!Number.isNaN(start.getTime())) {
+        query['requestedSchedule.eventDate'] = { $gte: start, $lte: end };
+      }
+    }
+
+    const registrations = await ScheduleRegistrationModel.find(query).sort({
       createdAt: -1,
     });
 
-    console.log('registrations', registrations);
-
-    if (!registrations || registrations.length === 0) {
-      return NextResponse.json(
-        { success: false, message: 'No registrations found' },
-        { status: 404 }
-      );
-    }
-
     return NextResponse.json(
-      { success: true, message: 'Registrations fetched successfully', data: registrations },
+      {
+        success: true,
+        message: registrations.length ? 'Registrations fetched successfully' : 'No registrations found',
+        data: registrations,
+      },
       { status: 200 }
     );
   } catch (error) {
@@ -38,30 +186,24 @@ export async function GET() {
   }
 }
 
-// POST - Create new registration
 export async function POST(req) {
   try {
     await connectDB();
 
-    const formData = await req.formData();
-
-
-    if (!formData) {
-      return NextResponse.json({ success: false, message: 'No form data found' }, { status: 400 });
-    }
-
-    const name = formData.get('name');
-    const email = formData.get('email');
-    const phone = formData.get('phone');
-    const purpose = formData.get('purpose');
-    const additionalInfo = formData.get('additionalInfo');
-    const preferedTime = formData.get('preferredTime');
-
-    const scheduleId = formData.get('requestedSchedule[scheduleId]');
-    const scheduleDateStr = formData.get('requestedSchedule[eventDate]');
-    const scheduleTime = formData.get('requestedSchedule[eventTime]');
-    const scheduleLocation = formData.get('requestedSchedule[eventLocation]');
-    const scheduleDetails = formData.get('requestedSchedule[eventDetails]');
+    const payload = await parseRegistrationPayload(req);
+    const {
+      name,
+      email,
+      phone,
+      purpose,
+      additionalInfo,
+      preferedTime,
+      userId,
+      language,
+      assignedTo,
+      internalNotes,
+      requestedSchedule,
+    } = payload;
 
     if (!name || !email || !phone || !purpose || !preferedTime) {
       return NextResponse.json(
@@ -73,30 +215,26 @@ export async function POST(req) {
       );
     }
 
-    // Validate email format
     const emailRegex = /^\S+@\S+\.\S+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(String(email))) {
       return NextResponse.json(
         { success: false, message: 'Invalid email address format' },
         { status: 400 }
       );
     }
 
-    // Validate phone format (10 digits)
     const phoneRegex = /^[0-9+\-\s()]{7,20}$/;
-    const cleanPhone = phone.trim();
-
+    const cleanPhone = String(phone).trim();
     if (!phoneRegex.test(cleanPhone)) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Phone number must be 7–15 digits (optionally starting with +)',
+          message: 'Phone number must be 7–20 characters and can include +, -, spaces, and parentheses',
         },
         { status: 400 }
       );
     }
 
-    // Validate purpose enum
     if (!Object.values(MeetingPurpose).includes(purpose)) {
       return NextResponse.json(
         { success: false, message: 'Invalid purpose selected' },
@@ -104,7 +242,6 @@ export async function POST(req) {
       );
     }
 
-    // Validate preferred time enum
     if (!Object.values(PreferredTime).includes(preferedTime)) {
       return NextResponse.json(
         { success: false, message: 'Invalid preferred time selected' },
@@ -112,283 +249,146 @@ export async function POST(req) {
       );
     }
 
+    const requestedScheduleData = {};
+    let scheduleForNotification = null;
+
+    if (requestedSchedule?.scheduleId) {
+      requestedScheduleData.scheduleId = String(requestedSchedule.scheduleId);
+    }
+
+    if (requestedSchedule?.eventDate) {
+      const eventDate = new Date(requestedSchedule.eventDate);
+      if (Number.isNaN(eventDate.getTime())) {
+        return NextResponse.json(
+          { success: false, message: 'Invalid date format for eventDate' },
+          { status: 400 }
+        );
+      }
+      requestedScheduleData.eventDate = eventDate;
+    }
+
+    if (requestedScheduleData.scheduleId && requestedScheduleData.eventDate) {
+      const capacityState = await getCapacityState(
+        requestedScheduleData.scheduleId,
+        requestedScheduleData.eventDate
+      );
+
+      if (!capacityState) {
+        return NextResponse.json(
+          { success: false, message: 'Schedule not found for this appointment request' },
+          { status: 404 }
+        );
+      }
+
+      if (capacityState.isBlocked) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'This day is fully booked. Please choose another available schedule date.',
+          },
+          { status: 409 }
+        );
+      }
+
+      scheduleForNotification = capacityState.schedule;
+      requestedScheduleData.baseLocation =
+        requestedSchedule?.baseLocation || deriveBaseLocation(capacityState.schedule);
+      requestedScheduleData.eventLocation =
+        requestedSchedule?.eventLocation ||
+        capacityState.schedule.publicLocation?.en ||
+        capacityState.schedule.publicLocation?.hi ||
+        capacityState.schedule.locations;
+    } else if (requestedSchedule?.eventLocation) {
+      requestedScheduleData.eventLocation = String(requestedSchedule.eventLocation).trim();
+    }
+
+    if (requestedSchedule?.eventTime) {
+      requestedScheduleData.eventTime = String(requestedSchedule.eventTime).trim();
+    }
+
+    if (requestedSchedule?.eventDetails) {
+      requestedScheduleData.eventDetails = String(requestedSchedule.eventDetails).trim();
+    }
+
+    if (requestedSchedule?.baseLocation && !requestedScheduleData.baseLocation) {
+      requestedScheduleData.baseLocation = String(requestedSchedule.baseLocation).trim();
+    }
+
     const registrationData = {
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
+      name: String(name).trim(),
+      email: String(email).toLowerCase().trim(),
       phone: cleanPhone,
-      purpose: purpose,
-      preferedTime: preferedTime,
+      purpose,
+      additionalInfo: additionalInfo ? String(additionalInfo).trim() : undefined,
+      preferedTime,
+      userId: userId ? String(userId).trim() : undefined,
+      language: language ? String(language).trim() : 'en',
+      assignedTo: assignedTo ? String(assignedTo).trim() : undefined,
+      internalNotes: internalNotes ? String(internalNotes).trim() : undefined,
       status: RegistrationStatus.PENDING,
       isDeleted: false,
+      requestedSchedule: Object.keys(requestedScheduleData).length ? requestedScheduleData : undefined,
     };
 
-    if (additionalInfo) {
-      registrationData.additionalInfo = additionalInfo.trim();
-    }
-
-    if (scheduleId) {
-      const requestedScheduleData = {
-        scheduleId,
-      };
-
-if (scheduleDateStr) {
-  let eventDate;
-
-  if (scheduleDateStr.includes('T')) {
-    // ISO datetime string
-    eventDate = new Date(scheduleDateStr);
-  } else if (/^\d{4}-\d{2}-\d{2}$/.test(scheduleDateStr)) {
-    // YYYY-MM-DD format
-    eventDate = new Date(`${scheduleDateStr}T00:00:00`);
-  } else {
-    // Human-readable string like "December 10, 2025"
-    eventDate = new Date(scheduleDateStr);
-  }
-
-  if (isNaN(eventDate)) {
-    return NextResponse.json(
-      { success: false, message: 'Invalid date format for eventDate' },
-      { status: 400 }
-    );
-  }
-
-  requestedScheduleData.eventDate = eventDate;
-}
-
-      if (scheduleLocation) {
-        requestedScheduleData.eventLocation = scheduleLocation.trim();
-      }
-
-      if (scheduleTime) {
-        requestedScheduleData.eventTime = scheduleTime.trim();
-      }
-
-      if (scheduleDetails) {
-        requestedScheduleData.eventDetails = scheduleDetails.trim();
-      }
-
-      registrationData.requestedSchedule = requestedScheduleData;
-    }
-    console.log(registrationData)
     const newRegistration = new ScheduleRegistration(registrationData);
-
     await newRegistration.validate();
     await newRegistration.save();
 
-    const formatPurpose = purpose => {
-      return purpose
-        .split('_')
-        .map(word => word.charAt(0) + word.slice(1).toLowerCase())
-        .join(' ');
-    };
-
-    // Format date for display
-    const formatDate = dateString => {
-      if (!dateString) return 'To be determined';
-      return new Date(dateString).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
-    };
-
     try {
-      // Send confirmation email to the registrant
-      const confirmationEmailSubject = 'Hari Om 🙏 – Your Appointment Request is Under Review';
+      const location = registrationData.requestedSchedule?.eventLocation || 'the selected location';
+      const eventDate = registrationData.requestedSchedule?.eventDate
+        ? formatDate(registrationData.requestedSchedule.eventDate)
+        : 'the selected date';
+      const eventTime = registrationData.requestedSchedule?.eventTime || 'to be confirmed';
+      const baseLocation = registrationData.requestedSchedule?.baseLocation || 'Ashram';
+      const title =
+        scheduleForNotification?.publicTitle?.en ||
+        scheduleForNotification?.publicTitle?.hi ||
+        scheduleForNotification?.locations ||
+        'Swami Ji appointment';
 
-      // Create plain text email content
+      const confirmationEmailSubject = 'Hari Om 🙏 Your appointment request is under review';
       const confirmationEmailText = `
-        Hari Om, ${registrationData.name} 🙏
+Hari Om, ${registrationData.name} 🙏
 
-        We have humbly received your request for an appointment with Pujya Swami Avdheshanand Giri Ji Maharaj during his upcoming USA visit.
+We have received your request to meet Pujya Swami Avdheshanand Giri Ji Maharaj.
 
-        ✨ "जब श्रद्धा से शिष्य गुरु के चरणों में आता है, तो कृपा स्वतः प्रवाहित हो जाती है।" ✨
+Request summary:
+- Schedule: ${title}
+- Base: ${baseLocation}
+- Date: ${eventDate}
+- Time: ${eventTime}
+- Location: ${location}
+- Purpose: ${formatPurpose(registrationData.purpose)}
 
-        Your request is currently pending review by our seva team. We will confirm your appointment or suggest an alternate time shortly.
-
-        🪔 Appointment Request Details
-        Purpose: ${formatPurpose(registrationData.purpose)}
-
-        Preferred Time: ${registrationData.preferedTime}
-
-        Status: 🕉 Pending Review
-
-        ${
-          scheduleDateStr
-            ? `Requested Date: ${formatDate(new Date(scheduleDateStr))}
-        `
-            : ''
-        }
-        ${
-          scheduleTime
-            ? `Requested Time: ${scheduleTime}
-        `
-            : ''
-        }
-        ${
-          scheduleLocation
-            ? `Location: ${scheduleLocation}
-        `
-            : ''
-        }
-        ${additionalInfo ? `\nAdditional Information Provided:\n${additionalInfo}\n` : ''}
-
-        With Blessings,
-        Seva Team – Avdheshanand Giri Mission
-
-        🌸 "Spirituality is not renunciation of life, it is the art of living life with wisdom and balance." – Swami Avdheshanand Giri Ji 🌸
+Your request is now with the seva team for approval. You will receive confirmation once the team assigns the final meeting time and venue.
       `;
 
-      // Create HTML email content
       const confirmationEmailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; background-color: #fcfcfc;">
-          <div style="text-align: center; margin-bottom: 20px; padding: 15px; background-color: #f8f5ff;">
-            <h1 style="color: #7e57c2; font-size: 24px; margin: 0;">🌼 Hari Om – Appointment Request Received 🌼</h1>
-          </div>
-          
-          <p style="font-size: 16px;">Hari Om, <strong>${registrationData.name}</strong> 🙏</p>
-          
-          <p style="font-size: 16px;">We have humbly received your request for an appointment with Pujya Swami Avdheshanand Giri Ji Maharaj during his upcoming USA visit.</p>
-          
-          <div style="text-align: center; padding: 15px; margin: 20px 0; background-color: #faf8ff; font-style: italic;">
-            <p style="color: #5d4777;">✨ "जब श्रद्धा से शिष्य गुरु के चरणों में आता है, तो कृपा स्वतः प्रवाहित हो जाती है।" ✨</p>
-          </div>
-          
-          <p style="font-size: 16px;">Your request is currently pending review by our seva team. We will confirm your appointment or suggest an alternate time shortly.</p>
-          
-          <div style="background-color: #f9f9fc; border-left: 4px solid #b388ff; padding: 15px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #5d4777;">🪔 Appointment Request Details</h3>
-            
-            <p style="margin-bottom: 15px;"><strong>Purpose:</strong> ${formatPurpose(registrationData.purpose)}</p>
-            
-            <p style="margin-bottom: 15px;"><strong>Preferred Time:</strong> ${registrationData.preferedTime}</p>
-            
-            <p style="margin-bottom: 15px;"><strong>Status:</strong> 🕉 Pending Review</p>
-            
-            ${scheduleDateStr ? `<p style="margin-bottom: 15px;"><strong>Requested Date:</strong> ${formatDate(new Date(scheduleDateStr))}</p>` : ''}
-            
-            ${scheduleTime ? `<p style="margin-bottom: 15px;"><strong>Requested Time:</strong> ${scheduleTime}</p>` : ''}
-            
-            ${scheduleLocation ? `<p style="margin-bottom: 15px;"><strong>Location:</strong> ${scheduleLocation}</p>` : ''}
-            
-            ${
-              additionalInfo
-                ? `
-            <div style="margin-top: 15px;">
-              <p><strong>Additional Information:</strong></p>
-              <p style="font-style: italic;">"${additionalInfo}"</p>
-            </div>`
-                : ''
-            }
-          </div>
-          
-          <p style="font-size: 16px; margin-top: 25px;">With Blessings,<br />Seva Team – Avdheshanand Giri Mission</p>
-          
-          <div style="text-align: center; margin-top: 30px; padding: 15px; border-top: 1px solid #eee; background-color: #f8f5ff; font-size: 14px; color: #5d4777; font-style: italic;">
-            <p>🌸 "Spirituality is not renunciation of life, it is the art of living life with wisdom and balance." – Swami Avdheshanand Giri Ji 🌸</p>
-          </div>
-        </div>
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <h1 style="color: #7e57c2;">Hari Om 🙏 Appointment Request Received</h1>
+  <p>Hari Om, <strong>${registrationData.name}</strong></p>
+  <p>We have received your request to meet Pujya Swami Avdheshanand Giri Ji Maharaj.</p>
+  <div style="background: #faf8ff; border-left: 4px solid #b388ff; padding: 16px; margin: 20px 0;">
+    <p><strong>Schedule:</strong> ${title}</p>
+    <p><strong>Base:</strong> ${baseLocation}</p>
+    <p><strong>Date:</strong> ${eventDate}</p>
+    <p><strong>Time:</strong> ${eventTime}</p>
+    <p><strong>Location:</strong> ${location}</p>
+    <p><strong>Purpose:</strong> ${formatPurpose(registrationData.purpose)}</p>
+  </div>
+  <p>Your request is under review. After approval, our team will automatically send the confirmed meeting time and location by email and WhatsApp.</p>
+</div>
       `;
 
-      // Send confirmation email
       await sendEmail(
         registrationData.email,
         confirmationEmailSubject,
         confirmationEmailText,
         confirmationEmailHtml
       );
-
-      console.log('Confirmation email sent to registrant:', registrationData.email);
-
-      // Send notification to admin
-      const adminEmailSubject = 'New Appointment Request with Swami Ji';
-
-      // Admin notification plain text
-      const adminEmailText = `
-        Hari Om 🙏
-        
-        A new appointment request has been submitted for Pujya Swami Avdheshanand Giri Ji Maharaj.
-        
-        Appointment Request Details:
-        - Name: ${registrationData.name}
-        - Email: ${registrationData.email}
-        - Phone: ${registrationData.phone}
-        - Purpose: ${formatPurpose(registrationData.purpose)}
-        - Preferred Time: ${registrationData.preferedTime}
-        ${scheduleDateStr ? `- Requested Date: ${formatDate(new Date(scheduleDateStr))}` : ''}
-        ${scheduleTime ? `- Requested Time: ${scheduleTime}` : ''}
-        ${scheduleLocation ? `- Location: ${scheduleLocation}` : ''}
-        ${additionalInfo ? `\nAdditional Information:\n${additionalInfo}` : ''}
-        
-        Please login to the dashboard to review and respond to this appointment request.
-        
-        Hari Om 🙏
-        Seva Team
-      `;
-
-      // Admin notification HTML
-      const adminEmailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="color: #7e57c2;">New Appointment Request with Swami Ji</h1>
-          </div>
-          
-          <p style="font-size: 16px;">Hari Om 🙏</p>
-          
-          <p>A new appointment request has been submitted for Pujya Swami Avdheshanand Giri Ji Maharaj.</p>
-          
-          <div style="background-color: #f9f9fc; border-left: 4px solid #b388ff; padding: 15px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #5d4777;">Appointment Request Details:</h3>
-            <p><strong>Name:</strong> ${registrationData.name}</p>
-            <p><strong>Email:</strong> <a href="mailto:${registrationData.email}" style="color: #7e57c2;">${registrationData.email}</a></p>
-            <p><strong>Phone:</strong> ${registrationData.phone}</p>
-            <p><strong>Purpose:</strong> ${formatPurpose(registrationData.purpose)}</p>
-            <p><strong>Preferred Time:</strong> ${registrationData.preferedTime}</p>
-            ${scheduleDateStr ? `<p><strong>Requested Date:</strong> ${formatDate(new Date(scheduleDateStr))}</p>` : ''}
-            ${scheduleTime ? `<p><strong>Requested Time:</strong> ${scheduleTime}</p>` : ''}
-            ${scheduleLocation ? `<p><strong>Location:</strong> ${scheduleLocation}</p>` : ''}
-            
-            ${
-              additionalInfo
-                ? `
-            <div style="margin-top: 15px;">
-              <p><strong>Additional Information:</strong></p>
-              <p style="font-style: italic;">"${additionalInfo}"</p>
-            </div>`
-                : ''
-            }
-            
-            <p><strong>Submitted on:</strong> ${new Date().toLocaleString()}</p>
-          </div>
-          
-          <p><a href="${process.env.NEXT_PUBLIC_APP_URL || ''}/dashboard/schedule-registrations" 
-                style="display: inline-block; background-color: #7e57c2; color: white; padding: 10px 20px; 
-                text-decoration: none; border-radius: 5px; margin-top: 10px;">
-             Review in Dashboard
-          </a></p>
-          
-          <p><a href="mailto:${registrationData.email}?subject=Re: Your Appointment Request with Swami Ji" 
-                style="display: inline-block; background-color: #10b981; color: white; padding: 10px 20px; 
-                text-decoration: none; border-radius: 5px; margin-top: 10px;">
-             Contact Devotee
-          </a></p>
-          
-          <p style="margin-top: 25px;">Hari Om 🙏<br />Seva Team</p>
-        </div>
-      `;
-
-      // Get admin email from environment variables
-      const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
-
-      if (adminEmail) {
-        await sendEmail(adminEmail, adminEmailSubject, adminEmailText, adminEmailHtml);
-        console.log('Notification email sent to admin:', adminEmail);
-      } else {
-        console.warn('Admin email not configured. Skipping admin notification.');
-      }
     } catch (emailError) {
-      console.error('Error sending confirmation email:', emailError);
+      console.error('Failed to send registration confirmation email:', emailError);
     }
 
     return NextResponse.json(
@@ -401,24 +401,8 @@ if (scheduleDateStr) {
     );
   } catch (error) {
     console.error('Error creating registration:', error);
-
-    if (error?.name === 'ValidationError') {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Validation error',
-          error: error.message,
-        },
-        { status: 400 }
-      );
-    }
-
     return NextResponse.json(
-      {
-        success: false,
-        message: 'Failed to create registration',
-        error: error.message || 'Unknown error',
-      },
+      { success: false, message: 'Failed to create registration', error: error.message },
       { status: 500 }
     );
   }

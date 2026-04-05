@@ -16,6 +16,8 @@ import { buildObservationDate, buildPanchangData, resolveTimezone } from '@/lib/
 import { getUpcomingFixedFestivals } from '@/lib/panchang/festivals';
 import admin from 'firebase-admin';
 
+const NotificationPreferenceModel = NotificationPreference as any;
+
 function ensureFirebaseAdmin() {
   if (admin.apps.length) return;
   const raw = process.env.FIREBASE_ADMIN_SDK_JSON;
@@ -109,7 +111,7 @@ export async function POST(req: NextRequest) {
     const today = new Date().toISOString().split('T')[0];
 
     // Get all active subscribers who haven't been notified today
-    const subscribers = await NotificationPreference.find({
+    const subscribers = await NotificationPreferenceModel.find({
       isActive: true,
       dailyPanchang: true,
       $or: [
@@ -210,13 +212,13 @@ export async function POST(req: NextRequest) {
             // If token is invalid, deactivate it
             const errMsg = sendError instanceof Error ? sendError.message : '';
             if (errMsg.includes('not-registered') || errMsg.includes('invalid-registration-token')) {
-              await NotificationPreference.updateOne({ pushToken: sub.pushToken }, { $set: { isActive: false } });
+              await NotificationPreferenceModel.updateOne({ pushToken: sub.pushToken }, { $set: { isActive: false } });
             }
           }
         }
 
         // Mark as notified regardless (for the date tracking)
-        await NotificationPreference.updateOne(
+        await NotificationPreferenceModel.updateOne(
           { pushToken: sub.pushToken },
           { $set: { lastNotifiedDate: today } }
         );
