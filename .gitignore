@@ -29,3 +29,7 @@ pnpm-debug.log*
 # TypeScript cache
 *.tsbuildinfo
 
+-e 
+# Environment files
+*.env
+*.env.*
