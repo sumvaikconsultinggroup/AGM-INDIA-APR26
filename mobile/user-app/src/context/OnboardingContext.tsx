@@ -2,9 +2,11 @@ import React, { createContext, useContext, useEffect, useMemo, useState, ReactNo
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ONBOARDING_STORAGE_KEY = '@app_onboarding_state';
+const CURRENT_ONBOARDING_VERSION = 2;
 
 export interface OnboardingState {
   completed: boolean;
+  version?: number;
   languageCode?: string;
   notificationsPrompted?: boolean;
   notificationsEnabled?: boolean;
@@ -24,6 +26,7 @@ interface OnboardingContextType {
 
 const DEFAULT_STATE: OnboardingState = {
   completed: false,
+  version: CURRENT_ONBOARDING_VERSION,
 };
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
@@ -41,7 +44,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         if (!mounted) return;
         if (stored) {
           const parsed = JSON.parse(stored) as OnboardingState;
-          setState({ ...DEFAULT_STATE, ...parsed });
+          const nextState =
+            parsed.version === CURRENT_ONBOARDING_VERSION
+              ? { ...DEFAULT_STATE, ...parsed }
+              : {
+                  ...DEFAULT_STATE,
+                  languageCode: parsed.languageCode,
+                };
+          setState(nextState);
+          await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, JSON.stringify(nextState));
         }
       } catch {
         if (mounted) {
@@ -67,7 +78,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   };
 
   const updateState = async (partial: Partial<OnboardingState>) => {
-    const nextState = { ...state, ...partial };
+    const nextState = { ...state, ...partial, version: CURRENT_ONBOARDING_VERSION };
     await persist(nextState);
   };
 
@@ -75,6 +86,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     const nextState: OnboardingState = {
       ...state,
       ...partial,
+      version: CURRENT_ONBOARDING_VERSION,
       completed: true,
       completedAt: new Date().toISOString(),
     };
