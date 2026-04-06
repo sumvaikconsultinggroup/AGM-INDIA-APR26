@@ -25,15 +25,49 @@ import {
 } from 'react-native-paper';
 import { colors, spacing, borderRadius } from '../../theme';
 import api from '../../services/api';
-import { DonationAnalytics, DonationCampaign, DonationRecord } from '../../types';
+import { DonationAnalytics, DonationCampaign, DonationRecord, LocalizedText } from '../../types';
 
 type TabKey = 'campaigns' | 'records';
 type AnalyticsRange = 'today' | '7d' | '30d' | 'custom';
 
+const CONTENT_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'hi', label: 'Hindi' },
+  { code: 'bn', label: 'Bangla' },
+  { code: 'ta', label: 'Tamil' },
+  { code: 'te', label: 'Telugu' },
+  { code: 'mr', label: 'Marathi' },
+  { code: 'gu', label: 'Gujarati' },
+  { code: 'kn', label: 'Kannada' },
+  { code: 'ml', label: 'Malayalam' },
+  { code: 'pa', label: 'Punjabi' },
+  { code: 'or', label: 'Odia' },
+  { code: 'as', label: 'Assamese' },
+] as const;
+
+const createEmptyLocalizedText = (): LocalizedText =>
+  CONTENT_LANGUAGES.reduce<LocalizedText>((acc, { code }) => {
+    acc[code] = '';
+    return acc;
+  }, {});
+
+const normalizeLocalizedText = (localized: LocalizedText): LocalizedText =>
+  CONTENT_LANGUAGES.reduce<LocalizedText>((acc, { code }) => {
+    const value = localized[code]?.trim();
+    if (value) acc[code] = value;
+    return acc;
+  }, {});
+
+const getPrimaryLocalizedValue = (localized?: LocalizedText, fallback = '') =>
+  localized?.en?.trim() ||
+  localized?.hi?.trim() ||
+  Object.values(localized || {}).find((value) => value?.trim()) ||
+  fallback;
+
 interface CampaignFormData {
-  title: string;
-  description: string;
-  additionalText: string;
+  titleTranslations: LocalizedText;
+  descriptionTranslations: LocalizedText;
+  additionalTextTranslations: LocalizedText;
   goal: string;
   totalDays: string;
   backgroundImage: string;
@@ -41,9 +75,9 @@ interface CampaignFormData {
 }
 
 const EMPTY_FORM: CampaignFormData = {
-  title: '',
-  description: '',
-  additionalText: '',
+  titleTranslations: createEmptyLocalizedText(),
+  descriptionTranslations: createEmptyLocalizedText(),
+  additionalTextTranslations: createEmptyLocalizedText(),
   goal: '',
   totalDays: '',
   backgroundImage: '',
@@ -150,9 +184,21 @@ export function DonationsScreen() {
   const openEditModal = (campaign: DonationCampaign) => {
     setEditingCampaign(campaign);
     setFormData({
-      title: campaign.title,
-      description: campaign.description,
-      additionalText: campaign.additionalText ?? '',
+      titleTranslations: {
+        ...createEmptyLocalizedText(),
+        ...(campaign.titleTranslations || {}),
+        en: campaign.titleTranslations?.en || campaign.title || '',
+      },
+      descriptionTranslations: {
+        ...createEmptyLocalizedText(),
+        ...(campaign.descriptionTranslations || {}),
+        en: campaign.descriptionTranslations?.en || campaign.description || '',
+      },
+      additionalTextTranslations: {
+        ...createEmptyLocalizedText(),
+        ...(campaign.additionalTextTranslations || {}),
+        en: campaign.additionalTextTranslations?.en || campaign.additionalText || '',
+      },
       goal: String(campaign.goal),
       totalDays: String(campaign.totalDays),
       backgroundImage: campaign.backgroundImage ?? '',
@@ -162,7 +208,7 @@ export function DonationsScreen() {
   };
 
   const handleSave = async () => {
-    if (!formData.title.trim()) {
+    if (!getPrimaryLocalizedValue(formData.titleTranslations).trim()) {
       Alert.alert('Validation', 'Title is required.');
       return;
     }
@@ -172,9 +218,13 @@ export function DonationsScreen() {
     }
 
     const body = {
-      title: formData.title.trim(),
-      description: formData.description.trim(),
-      additionalText: formData.additionalText.trim() || undefined,
+      title: getPrimaryLocalizedValue(formData.titleTranslations).trim(),
+      description: getPrimaryLocalizedValue(formData.descriptionTranslations).trim(),
+      titleTranslations: normalizeLocalizedText(formData.titleTranslations),
+      descriptionTranslations: normalizeLocalizedText(formData.descriptionTranslations),
+      additionalText:
+        getPrimaryLocalizedValue(formData.additionalTextTranslations).trim() || undefined,
+      additionalTextTranslations: normalizeLocalizedText(formData.additionalTextTranslations),
       goal: Number(formData.goal),
       totalDays: Number(formData.totalDays) || 30,
       backgroundImage: formData.backgroundImage.trim() || undefined,
@@ -395,7 +445,7 @@ export function DonationsScreen() {
         <Card.Content>
           <View style={styles.cardHeader}>
             <Text style={styles.campaignTitle} numberOfLines={2}>
-              {item.title}
+              {getPrimaryLocalizedValue(item.titleTranslations, item.title)}
             </Text>
             <View style={styles.cardActions}>
               <Chip
@@ -415,9 +465,9 @@ export function DonationsScreen() {
             </View>
           </View>
 
-          {item.description ? (
+          {(item.description || item.descriptionTranslations) ? (
             <Text style={styles.description} numberOfLines={2}>
-              {item.description}
+              {getPrimaryLocalizedValue(item.descriptionTranslations, item.description)}
             </Text>
           ) : null}
 
@@ -595,34 +645,61 @@ export function DonationsScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.inputLabel}>Title *</Text>
-            <TextInput
-              style={styles.textInput}
-              value={formData.title}
-              onChangeText={(t) => setFormData((p) => ({ ...p, title: t }))}
-              placeholder="Campaign title"
-              placeholderTextColor={colors.text.secondary}
-            />
+            <Text style={styles.translationSectionTitle}>Localized Titles</Text>
+            {CONTENT_LANGUAGES.map(({ code, label }) => (
+              <TextInput
+                key={`campaign-title-${code}`}
+                style={styles.textInput}
+                value={formData.titleTranslations[code] || ''}
+                onChangeText={(t) =>
+                  setFormData((p) => ({
+                    ...p,
+                    titleTranslations: { ...p.titleTranslations, [code]: t },
+                  }))
+                }
+                placeholder={`Title (${label})${code === 'en' ? ' *' : ''}`}
+                placeholderTextColor={colors.text.secondary}
+              />
+            ))}
 
-            <Text style={styles.inputLabel}>Description</Text>
-            <TextInput
-              style={[styles.textInput, styles.textArea]}
-              value={formData.description}
-              onChangeText={(t) => setFormData((p) => ({ ...p, description: t }))}
-              placeholder="Campaign description"
-              placeholderTextColor={colors.text.secondary}
-              multiline
-              numberOfLines={3}
-            />
+            <Text style={styles.translationSectionTitle}>Localized Descriptions</Text>
+            {CONTENT_LANGUAGES.map(({ code, label }) => (
+              <TextInput
+                key={`campaign-description-${code}`}
+                style={[styles.textInput, styles.textArea]}
+                value={formData.descriptionTranslations[code] || ''}
+                onChangeText={(t) =>
+                  setFormData((p) => ({
+                    ...p,
+                    descriptionTranslations: { ...p.descriptionTranslations, [code]: t },
+                  }))
+                }
+                placeholder={`Description (${label})${code === 'en' ? ' *' : ''}`}
+                placeholderTextColor={colors.text.secondary}
+                multiline
+                numberOfLines={3}
+              />
+            ))}
 
-            <Text style={styles.inputLabel}>Additional Text</Text>
-            <TextInput
-              style={styles.textInput}
-              value={formData.additionalText}
-              onChangeText={(t) => setFormData((p) => ({ ...p, additionalText: t }))}
-              placeholder="Additional text (optional)"
-              placeholderTextColor={colors.text.secondary}
-            />
+            <Text style={styles.translationSectionTitle}>Localized Additional Text</Text>
+            {CONTENT_LANGUAGES.map(({ code, label }) => (
+              <TextInput
+                key={`campaign-additional-${code}`}
+                style={styles.textInput}
+                value={formData.additionalTextTranslations[code] || ''}
+                onChangeText={(t) =>
+                  setFormData((p) => ({
+                    ...p,
+                    additionalTextTranslations: {
+                      ...p.additionalTextTranslations,
+                      [code]: t,
+                    },
+                  }))
+                }
+                placeholder={`Additional text (${label})`}
+                placeholderTextColor={colors.text.secondary}
+              />
+            ))}
 
             <Text style={styles.inputLabel}>Goal Amount (INR) *</Text>
             <TextInput
@@ -1180,6 +1257,13 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     marginBottom: spacing.xs,
     marginTop: spacing.md,
+  },
+  translationSectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.primary.maroon,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   textInput: {
     backgroundColor: colors.background.parchment,

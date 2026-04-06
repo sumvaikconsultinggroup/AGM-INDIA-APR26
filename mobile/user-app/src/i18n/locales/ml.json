@@ -1,7 +1,7 @@
 {
   "tabs": {
     "home": "ഹോം",
-    "explore": "പര്യവേക്ഷണം",
+    "explore": "എക്സ്പ്ലോർ",
     "schedule": "ഷെഡ്യൂൾ",
     "donate": "ദാനം",
     "profile": "പ്രൊഫൈൽ"
@@ -34,18 +34,24 @@
     "languageEnglish": "अंग्रेज़ी"
   },
   "explore": {
-    "title": "Explore",
-    "search": "Search articles, videos, books...",
-    "articles": "Articles",
-    "videos": "Videos",
-    "books": "Books",
-    "podcasts": "Podcasts",
-    "gallery": "Gallery",
-    "events": "Events",
-    "noResults": "No results found"
+    "title": "എക്സ്പ്ലോർ",
+    "search": "ലേഖനങ്ങൾ, വീഡിയോകൾ, പുസ്തകങ്ങൾ തിരയുക...",
+    "articles": "ലേഖനങ്ങൾ",
+    "videos": "വീഡിയോകൾ",
+    "books": "പുസ്തകങ്ങൾ",
+    "podcasts": "പോഡ്‌കാസ്റ്റുകൾ",
+    "gallery": "ഗാലറി",
+    "events": "പരിപാടികൾ",
+    "noResults": "ഫലങ്ങൾ ഒന്നും ലഭ്യമായില്ല",
+    "searchPlaceholder": "{{category}} തിരയുക...",
+    "videoSeriesFallback": "വീഡിയോ പരമ്പര",
+    "byAuthor": "{{author}} എഴുതിയത്",
+    "noItemsTitle": "{{category}} ഒന്നും ലഭ്യമായില്ല",
+    "searchTryDifferent": "മറ്റൊരു തിരച്ചിൽ വാക്ക് ശ്രമിക്കുക",
+    "checkBackLater": "പുതിയ ഉള്ളടക്കത്തിന് ശേഷം വീണ്ടും നോക്കുക"
   },
   "schedule": {
-    "title": "Schedule",
+    "title": "ഷെഡ്യൂൾ",
     "upcoming": "Upcoming",
     "past": "Past",
     "noEvents": "No scheduled events",
@@ -109,8 +115,8 @@
     }
   },
   "donate": {
-    "title": "दान",
-    "supportMission": "स्वामी जी के मिशन का समर्थन करें",
+    "title": "ദാനം",
+    "supportMission": "സ്വാമിജിയുടെ ദൗത്യത്തെ പിന്തുണയ്ക്കൂ",
     "supportMissionSubtitle": "पूर्ण दाता अनुभव, सुरक्षित भुगतान और त्वरित रसीद के साथ अपनी सेवा अर्पित करें।",
     "activeCampaigns": "सक्रिय अभियान",
     "donateNow": "अभी दान करें",
@@ -125,12 +131,12 @@
     "raised": "प्राप्त",
     "goal": "लक्ष्य",
     "donors": "दानदाता",
-    "oneTime": "एक बार",
-    "monthly": "मासिक सेवा",
+    "oneTime": "ഒരിക്കൽ",
+    "monthly": "മാസിക സേവ",
     "monthlyButton": "{{amount}} मासिक सेवा प्रारम्भ करें",
     "payButton": "{{amount}} अर्पित करें",
     "checkoutTitle": "सुरक्षित दान चेकआउट",
-    "formTitle": "दाता विवरण",
+    "formTitle": "ദാതാവിന്റെ വിവരങ്ങൾ",
     "amountLabel": "राशि",
     "amountPlaceholder": "राशि दर्ज करें",
     "fullNameLabel": "पूरा नाम",
@@ -357,16 +363,16 @@
     "unexpectedError": "एक अनपेक्षित त्रुटि हुई है"
   },
   "profileLogin": {
-    "title": "Welcome, Seeker",
-    "subtitle": "Sign in to access your spiritual journey, save your preferences, and connect with our community.",
+    "title": "സ്വാഗതം, സാധകാ",
+    "subtitle": "നിങ്ങളുടെ ആത്മീയ യാത്രയ്ക്കും സമൂഹബന്ധത്തിനുമായി സൈൻ ഇൻ ചെയ്യുക.",
     "benefits": {
       "savedTeachings": "Save your favorite teachings",
       "registerEvents": "Register for upcoming events",
       "trackContributions": "Track your seva contributions",
       "personalizedNotifications": "Get personalized notifications"
     },
-    "quote": "\"The journey of a thousand miles begins with a single step\"",
-    "quoteAuthor": "— Lao Tzu"
+    "quote": "\"ആയിരം മൈൽ യാത്ര ഒരു അടിയോടെ തുടങ്ങുന്നു\"",
+    "quoteAuthor": "— ലാവോ സു"
   },
   "chat": {
     "headerTitle": "स्वामी जी से पूछें",

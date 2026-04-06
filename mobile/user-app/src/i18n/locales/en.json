@@ -42,7 +42,13 @@
     "podcasts": "Podcasts",
     "gallery": "Gallery",
     "events": "Events",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "searchPlaceholder": "Search {{category}}...",
+    "videoSeriesFallback": "Video series",
+    "byAuthor": "By {{author}}",
+    "noItemsTitle": "No {{category}} found",
+    "searchTryDifferent": "Try a different search term",
+    "checkBackLater": "Check back later for new content"
   },
   "schedule": {
     "title": "Schedule",

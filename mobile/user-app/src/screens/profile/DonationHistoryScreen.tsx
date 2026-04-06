@@ -73,7 +73,7 @@ export function DonationHistoryScreen() {
 
   const fetchHistory = useCallback(async () => {
     try {
-      const response = await api.get('/my-donations');
+      const response = await api.get(`/my-donations?lang=${encodeURIComponent(i18n.language || 'en')}`);
       setData(response.data);
       setError(null);
     } catch (historyError) {
@@ -83,7 +83,7 @@ export function DonationHistoryScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [t]);
+  }, [i18n.language, t]);
 
   useEffect(() => {
     fetchHistory();

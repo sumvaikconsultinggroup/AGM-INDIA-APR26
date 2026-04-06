@@ -28,6 +28,7 @@ interface Event {
 }
 
 interface LocalizedText {
+  [key: string]: string | undefined;
   en?: string;
   hi?: string;
 }
@@ -101,7 +102,24 @@ export function ScheduleScreen() {
   const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
   const [requestForm, setRequestForm] = useState<RequestForm>(EMPTY_FORM);
 
-  const locale = i18n.language?.startsWith('hi') ? 'hi-IN' : 'en-IN';
+  const locale = useMemo(() => {
+    const language = i18n.language?.split('-')[0] || 'en';
+    const localeMap: Record<string, string> = {
+      hi: 'hi-IN',
+      bn: 'bn-BD',
+      ta: 'ta-IN',
+      te: 'te-IN',
+      mr: 'mr-IN',
+      gu: 'gu-IN',
+      kn: 'kn-IN',
+      ml: 'ml-IN',
+      pa: 'pa-IN',
+      or: 'or-IN',
+      as: 'as-IN',
+      en: 'en-IN',
+    };
+    return localeMap[language] || 'en-IN';
+  }, [i18n.language]);
   const purposeOptions = useMemo(
     () => [
       t('schedule.purposeOptions.personalGuidance'),
@@ -127,10 +145,8 @@ export function ScheduleScreen() {
   );
 
   const pickLocalizedText = (localized?: LocalizedText, fallback?: string) => {
-    if (i18n.language?.startsWith('hi')) {
-      return localized?.hi || localized?.en || fallback || '';
-    }
-    return localized?.en || localized?.hi || fallback || '';
+    const language = i18n.language?.split('-')[0] || 'en';
+    return localized?.[language] || localized?.en || localized?.hi || fallback || '';
   };
 
   const fetchData = useCallback(async () => {

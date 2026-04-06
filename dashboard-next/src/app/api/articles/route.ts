@@ -12,15 +12,62 @@ type ApiResponse = {
   error?: string;
 };
 
-// First, add this interface above the POST function:
+const CONTENT_LANGUAGES = ['en', 'hi', 'bn', 'ta', 'te', 'mr', 'gu', 'kn', 'ml', 'pa', 'or', 'as'] as const;
+type LocalizedInput = Partial<Record<(typeof CONTENT_LANGUAGES)[number], string>>;
+
 interface ArticleData {
   title: string;
   description: string;
+  titleTranslations?: LocalizedInput;
+  descriptionTranslations?: LocalizedInput;
+  categoryTranslations?: LocalizedInput;
   category?: string;
   link?: string;
   readTime?: number;
   publishedDate: Date;
   coverImage?: string;
+}
+
+function normalizeLocalizedText(input?: LocalizedInput | null) {
+  if (!input || typeof input !== 'object') return undefined;
+
+  const normalized = CONTENT_LANGUAGES.reduce<LocalizedInput>((acc, language) => {
+    const value = input[language];
+    if (typeof value === 'string' && value.trim()) {
+      acc[language] = value.trim();
+    }
+    return acc;
+  }, {});
+
+  return Object.keys(normalized).length ? normalized : undefined;
+}
+
+function parseLocalizedJson(value: FormDataEntryValue | null): LocalizedInput | undefined {
+  if (!value || typeof value !== 'string') return undefined;
+  try {
+    return normalizeLocalizedText(JSON.parse(value));
+  } catch {
+    return undefined;
+  }
+}
+
+function getPrimaryLocalizedValue(localized?: LocalizedInput, fallback?: string) {
+  return (
+    localized?.en ||
+    localized?.hi ||
+    localized?.bn ||
+    localized?.ta ||
+    localized?.te ||
+    localized?.mr ||
+    localized?.gu ||
+    localized?.kn ||
+    localized?.ml ||
+    localized?.pa ||
+    localized?.or ||
+    localized?.as ||
+    fallback ||
+    ''
+  );
 }
 
 // GET all articles (with optional pagination)
@@ -37,9 +84,24 @@ export async function GET(req: Request): Promise<NextResponse<ApiResponse>> {
     const filter: Record<string, unknown> = { isDeleted: { $ne: true } };
     if (search) {
       const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-      filter.$or = [{ title: regex }, { description: regex }];
+      filter.$or = [
+        { title: regex },
+        { description: regex },
+        { 'titleTranslations.en': regex },
+        { 'titleTranslations.hi': regex },
+        { 'descriptionTranslations.en': regex },
+        { 'descriptionTranslations.hi': regex },
+      ];
     }
-    if (category) filter.category = category;
+    if (category) {
+      const categoryRegex = new RegExp(category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      filter.$or = [
+        ...(Array.isArray(filter.$or) ? filter.$or : []),
+        { category: categoryRegex },
+        { 'categoryTranslations.en': categoryRegex },
+        { 'categoryTranslations.hi': categoryRegex },
+      ];
+    }
 
     // Paginated response
     if (page > 0 && limit > 0) {
@@ -108,6 +170,9 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
       title: form.get('title') as string,
       description: form.get('description') as string,
       category: form.get('category') as string,
+      titleTranslations: parseLocalizedJson(form.get('titleTranslations')),
+      descriptionTranslations: parseLocalizedJson(form.get('descriptionTranslations')),
+      categoryTranslations: parseLocalizedJson(form.get('categoryTranslations')),
       link: form.get('link') as string,
       readTime: (Number(form.get('readTime')) as number) || undefined,
       publishedDate: form.get('publishedDate')
@@ -129,9 +194,12 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
 
     // Handle optional fields
     const articleData: ArticleData = {
-      title: data.title,
-      description: data.description,
-      category: data.category || undefined,
+      title: getPrimaryLocalizedValue(data.titleTranslations, data.title),
+      description: getPrimaryLocalizedValue(data.descriptionTranslations, data.description),
+      titleTranslations: data.titleTranslations,
+      descriptionTranslations: data.descriptionTranslations,
+      categoryTranslations: data.categoryTranslations,
+      category: getPrimaryLocalizedValue(data.categoryTranslations, data.category) || undefined,
       link: data.link || undefined,
       readTime: data.readTime || undefined,
       publishedDate: data.publishedDate,

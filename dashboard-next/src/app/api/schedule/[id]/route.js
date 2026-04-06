@@ -6,6 +6,8 @@ import { connectDB } from '@/lib/mongodb';
 import { sendEmail } from '@/utils/sendEmail';
 import { notifyApprovedDevoteesOfScheduleUpdate } from '@/lib/scheduleNotifications';
 
+const CONTENT_LANGUAGES = ['en', 'hi', 'bn', 'ta', 'te', 'mr', 'gu', 'kn', 'ml', 'pa', 'or', 'as'];
+
 function formatDate(date) {
   if (!date) return 'N/A';
   return new Date(date).toLocaleDateString('en-US', {
@@ -17,12 +19,17 @@ function formatDate(date) {
 }
 
 function normalizeLocalizedText(value) {
-  const normalized = {
-    en: value?.en?.trim() || undefined,
-    hi: value?.hi?.trim() || undefined,
-  };
+  if (!value || typeof value !== 'object') return undefined;
 
-  return normalized.en || normalized.hi ? normalized : undefined;
+  const normalized = {};
+  for (const language of CONTENT_LANGUAGES) {
+    const entry = value?.[language];
+    if (typeof entry === 'string' && entry.trim()) {
+      normalized[language] = entry.trim();
+    }
+  }
+
+  return Object.keys(normalized).length ? normalized : undefined;
 }
 
 function getEarliestDate(timeSlots) {

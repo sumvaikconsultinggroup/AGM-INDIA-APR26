@@ -5,13 +5,27 @@ import Donation from '@/models/Donations';
 import Donate from '@/models/Donate';
 import User from '@/models/User';
 
+type LocalizedText = Record<string, string | undefined>;
+
 function formatAmount(amountPaise: number) {
   return amountPaise / 100;
+}
+
+function resolveLocalizedText(language: string | null, localized?: LocalizedText | null, fallback?: string | null) {
+  const code = (language || 'en').split('-')[0];
+  return (
+    localized?.[code] ||
+    localized?.en ||
+    localized?.hi ||
+    fallback ||
+    ''
+  );
 }
 
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
+    const requestedLanguage = req.nextUrl.searchParams.get('lang');
 
     const authHeader = req.headers.get('authorization');
     const bearerToken = authHeader?.startsWith('Bearer ')
@@ -65,7 +79,12 @@ export async function GET(req: NextRequest) {
       .filter(Boolean);
 
     const campaigns = campaignIds.length
-      ? await (Donate as any).find({ _id: { $in: campaignIds } }, 'title backgroundImage').lean()
+      ? await (Donate as any)
+          .find(
+            { _id: { $in: campaignIds } },
+            'title titleTranslations backgroundImage'
+          )
+          .lean()
       : [];
     const campaignMap = new Map<string, any>(
       campaigns.map((item: any) => [String(item._id), item])
@@ -97,7 +116,9 @@ export async function GET(req: NextRequest) {
             paymentStatus: item.paymentStatus,
             paymentMethod: item.paymentMethod || null,
             donationType: item.donationType || 'one_time',
-            campaignTitle: campaign?.title || 'General Donation',
+            campaignTitle:
+              resolveLocalizedText(requestedLanguage, campaign?.titleTranslations, campaign?.title) ||
+              'General Donation',
             campaignImage: campaign?.backgroundImage || null,
             receiptNumber: item.receiptNumber || null,
             hasReceipt: Boolean(item.receiptNumber),

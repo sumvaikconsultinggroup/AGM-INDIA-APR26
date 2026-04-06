@@ -13,10 +13,8 @@ type ApiResponse<T> = {
   error?: string;
 };
 
-type LocalizedInput = {
-  en?: string;
-  hi?: string;
-};
+const CONTENT_LANGUAGES = ['en', 'hi', 'bn', 'ta', 'te', 'mr', 'gu', 'kn', 'ml', 'pa', 'or', 'as'] as const;
+type LocalizedInput = Partial<Record<(typeof CONTENT_LANGUAGES)[number], string>>;
 
 type TimeSlot = {
   period?: string;
@@ -121,12 +119,17 @@ function formatDate(date: Date | null): string {
 }
 
 function normalizeLocalizedText(value?: LocalizedInput) {
-  const normalized = {
-    en: value?.en?.trim() || undefined,
-    hi: value?.hi?.trim() || undefined,
-  };
+  if (!value) return undefined;
 
-  return normalized.en || normalized.hi ? normalized : undefined;
+  const normalized = CONTENT_LANGUAGES.reduce<LocalizedInput>((acc, language) => {
+    const entry = value?.[language];
+    if (typeof entry === 'string' && entry.trim()) {
+      acc[language] = entry.trim();
+    }
+    return acc;
+  }, {});
+
+  return Object.keys(normalized).length ? normalized : undefined;
 }
 
 function getSlotDateKey(value?: string | Date | null): string | null {

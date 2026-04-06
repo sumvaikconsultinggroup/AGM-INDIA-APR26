@@ -42,7 +42,13 @@
     "podcasts": "पॉडकास्ट",
     "gallery": "गैलरी",
     "events": "कार्यक्रम",
-    "noResults": "कोई परिणाम नहीं मिला"
+    "noResults": "कोई परिणाम नहीं मिला",
+    "searchPlaceholder": "{{category}} खोजें...",
+    "videoSeriesFallback": "वीडियो श्रृंखला",
+    "byAuthor": "{{author}} द्वारा",
+    "noItemsTitle": "कोई {{category}} नहीं मिला",
+    "searchTryDifferent": "कोई दूसरा खोज शब्द आज़माएँ",
+    "checkBackLater": "नए कंटेंट के लिए बाद में देखें"
   },
   "schedule": {
     "title": "कार्यक्रम",

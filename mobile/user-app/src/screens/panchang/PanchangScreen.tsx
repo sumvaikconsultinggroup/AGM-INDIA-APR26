@@ -240,7 +240,7 @@ function MuhurtaRow({ label, start, end, variant, note }: {
   );
 }
 
-function DayQualityBadge({ quality }: { quality?: DayQualityInfo }) {
+function DayQualityBadge({ quality, showHindiMeta }: { quality?: DayQualityInfo; showHindiMeta: boolean }) {
   if (!quality?.score) return null;
   const dots = Array.from({ length: 10 }, (_, i) => i < (quality.score || 0));
   return (
@@ -252,7 +252,7 @@ function DayQualityBadge({ quality }: { quality?: DayQualityInfo }) {
       </View>
       <Text style={[styles.dayQualityScore, { color: quality.color || '#CA8A04' }]}>{quality.score}/10</Text>
       <Text style={styles.dayQualityLabel}>{quality.label}</Text>
-      {quality.labelHindi && <Text style={styles.dayQualityLabelHindi}>({quality.labelHindi})</Text>}
+      {showHindiMeta && quality.labelHindi && <Text style={styles.dayQualityLabelHindi}>({quality.labelHindi})</Text>}
     </View>
   );
 }
@@ -272,6 +272,8 @@ export default function PanchangScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation();
+  const resolvedLanguage = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
+  const showHindiMeta = resolvedLanguage === 'hi';
 
   const [selectedCity, setSelectedCity] = useState<City>(DEFAULT_CITY);
   const [cityPickerVisible, setCityPickerVisible] = useState(false);
@@ -359,8 +361,8 @@ export default function PanchangScreen() {
 
   const isEkadashi = (panchang?.tithi?.number === 11 || panchang?.tithi?.number === 26);
   const primaryFestival = panchang?.festival || panchang?.festivals?.[0];
-  const displayDate = formatDisplayDate(panchang?.date, i18n.language === 'en' ? 'en-IN' : `${i18n.language}-IN`);
-  const displayDay = panchang?.dayNameHindi || panchang?.dayName || '';
+  const displayDate = formatDisplayDate(panchang?.date, resolvedLanguage === 'en' ? 'en-IN' : `${resolvedLanguage}-IN`);
+  const displayDay = showHindiMeta ? (panchang?.dayNameHindi || panchang?.dayName || '') : (panchang?.dayName || panchang?.dayNameHindi || '');
   const displayLocation = [selectedCity.name, selectedCity.timezone].filter(Boolean).join(' • ');
 
   if (loading && !refreshing) {
@@ -411,9 +413,9 @@ export default function PanchangScreen() {
             {/* ═══ DAY QUALITY BANNER ═══ */}
             {panchang.dayQuality && (
               <View style={styles.dayQualityBanner}>
-                <DayQualityBadge quality={panchang.dayQuality} />
+                <DayQualityBadge quality={panchang.dayQuality} showHindiMeta={showHindiMeta} />
                 <Text style={styles.dayInfoText}>
-                  {panchang.dayNameHindi || panchang.dayName || ''} {panchang.hinduMonth ? `\u00B7 ${panchang.hinduMonth}` : ''}
+                  {showHindiMeta ? (panchang.dayNameHindi || panchang.dayName || '') : (panchang.dayName || panchang.dayNameHindi || '')} {panchang.hinduMonth ? `\u00B7 ${panchang.hinduMonth}` : ''}
                   {panchang.samvatName ? ` \u00B7 ${panchang.samvatName}` : ''}
                 </Text>
               </View>
@@ -513,7 +515,7 @@ export default function PanchangScreen() {
                       <Icon name="moon-waxing-crescent" size={22} color="#60A5FA" />
                       <Text style={styles.rashiCardLabel}>{t('panchang.moonRashi')}</Text>
                       <Text style={styles.rashiCardValue}>{panchang.moonRashi.name || '--'}</Text>
-                      {panchang.moonRashi.nameHindi && <Text style={styles.rashiCardHindi}>{panchang.moonRashi.nameHindi}</Text>}
+                      {showHindiMeta && panchang.moonRashi.nameHindi && <Text style={styles.rashiCardHindi}>{panchang.moonRashi.nameHindi}</Text>}
                       {panchang.moonRashi.lord && <Text style={styles.rashiCardSub}>{t('panchang.lordLabel')}: {panchang.moonRashi.lord}</Text>}
                       {panchang.moonRashi.degree !== undefined && <Text style={styles.rashiCardDegree}>{panchang.moonRashi.degree}°</Text>}
                     </View>
@@ -524,7 +526,7 @@ export default function PanchangScreen() {
                       <Icon name="white-balance-sunny" size={22} color="#FB923C" />
                       <Text style={styles.rashiCardLabel}>{t('panchang.sunRashi')}</Text>
                       <Text style={styles.rashiCardValue}>{panchang.sunRashi.name || '--'}</Text>
-                      {panchang.sunRashi.nameHindi && <Text style={styles.rashiCardHindi}>{panchang.sunRashi.nameHindi}</Text>}
+                      {showHindiMeta && panchang.sunRashi.nameHindi && <Text style={styles.rashiCardHindi}>{panchang.sunRashi.nameHindi}</Text>}
                       {panchang.sunRashi.lord && <Text style={styles.rashiCardSub}>{t('panchang.lordLabel')}: {panchang.sunRashi.lord}</Text>}
                     </View>
                   )}
@@ -540,7 +542,7 @@ export default function PanchangScreen() {
                         <Text style={[styles.horaNatureText, panchang.hora.nature === 'shubh' ? { color: '#16A34A' } : panchang.hora.nature === 'ashubh' ? { color: '#DC2626' } : { color: '#CA8A04' }]}>{panchang.hora.nature}</Text>
                       </View>
                     </View>
-                    <Text style={styles.horaPlanet}>{panchang.hora.planet}{panchang.hora.planetHindi ? ` (${panchang.hora.planetHindi})` : ''}</Text>
+                    <Text style={styles.horaPlanet}>{panchang.hora.planet}{showHindiMeta && panchang.hora.planetHindi ? ` (${panchang.hora.planetHindi})` : ''}</Text>
                     {panchang.hora.suitableFor && <Text style={styles.horaSuitable}>{panchang.hora.suitableFor}</Text>}
                   </View>
                 )}
@@ -599,7 +601,7 @@ export default function PanchangScreen() {
                     <View style={styles.dishaShoolInfo}>
                       <Text style={styles.dishaShoolDirection}>
                         {panchang.dishaShool.direction}
-                        {panchang.dishaShool.directionHindi ? ` (${panchang.dishaShool.directionHindi})` : ''}
+                        {showHindiMeta && panchang.dishaShool.directionHindi ? ` (${panchang.dishaShool.directionHindi})` : ''}
                       </Text>
                       <Text style={styles.dishaShoolWarning}>{panchang.dishaShool.avoidTravel}</Text>
                     </View>
@@ -623,7 +625,7 @@ export default function PanchangScreen() {
                     <Icon name={act.suitable ? 'check-circle' : 'close-circle'} size={20} color={act.suitable ? '#16A34A' : '#DC2626'} />
                     <View style={styles.activityInfo}>
                       <Text style={styles.activityName}>
-                        {act.activity}{act.activityHindi ? ` (${act.activityHindi})` : ''}
+                        {act.activity}{showHindiMeta && act.activityHindi ? ` (${act.activityHindi})` : ''}
                       </Text>
                       <Text style={styles.activityReason}>{act.reason}</Text>
                     </View>

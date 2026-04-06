@@ -17,7 +17,7 @@ import {
 import { Card, FAB, ActivityIndicator, Chip, IconButton } from 'react-native-paper';
 import { colors, spacing, borderRadius } from '../../theme';
 import api from '../../services/api';
-import { Schedule } from '../../types';
+import { Schedule, LocalizedText } from '../../types';
 
 interface ScheduleSection {
   title: string;
@@ -45,6 +45,40 @@ const BASE_LOCATIONS: Array<Schedule['baseLocation']> = [
   'Other',
 ];
 
+const CONTENT_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'hi', label: 'Hindi' },
+  { code: 'bn', label: 'Bangla' },
+  { code: 'ta', label: 'Tamil' },
+  { code: 'te', label: 'Telugu' },
+  { code: 'mr', label: 'Marathi' },
+  { code: 'gu', label: 'Gujarati' },
+  { code: 'kn', label: 'Kannada' },
+  { code: 'ml', label: 'Malayalam' },
+  { code: 'pa', label: 'Punjabi' },
+  { code: 'or', label: 'Odia' },
+  { code: 'as', label: 'Assamese' },
+] as const;
+
+const createEmptyLocalizedText = (): LocalizedText =>
+  CONTENT_LANGUAGES.reduce<LocalizedText>((acc, { code }) => {
+    acc[code] = '';
+    return acc;
+  }, {});
+
+const normalizeLocalizedText = (localized: LocalizedText): LocalizedText =>
+  CONTENT_LANGUAGES.reduce<LocalizedText>((acc, { code }) => {
+    const value = localized[code]?.trim();
+    if (value) acc[code] = value;
+    return acc;
+  }, {});
+
+const getPrimaryLocalizedValue = (localized?: LocalizedText, fallback = '') =>
+  localized?.en?.trim() ||
+  localized?.hi?.trim() ||
+  Object.values(localized || {}).find((value) => value?.trim()) ||
+  fallback;
+
 interface ScheduleFormData {
   month: string;
   locations: string;
@@ -55,12 +89,9 @@ interface ScheduleFormData {
   maxPeople: string;
   slotCapacity: string;
   appointment: boolean;
-  publicTitleEn: string;
-  publicTitleHi: string;
-  publicLocationEn: string;
-  publicLocationHi: string;
-  publicNotesEn: string;
-  publicNotesHi: string;
+  publicTitle: LocalizedText;
+  publicLocation: LocalizedText;
+  publicNotes: LocalizedText;
   changeNote: string;
   isLastMinuteUpdate: boolean;
 }
@@ -75,12 +106,9 @@ const EMPTY_FORM: ScheduleFormData = {
   maxPeople: '',
   slotCapacity: '',
   appointment: false,
-  publicTitleEn: '',
-  publicTitleHi: '',
-  publicLocationEn: '',
-  publicLocationHi: '',
-  publicNotesEn: '',
-  publicNotesHi: '',
+  publicTitle: createEmptyLocalizedText(),
+  publicLocation: createEmptyLocalizedText(),
+  publicNotes: createEmptyLocalizedText(),
   changeNote: '',
   isLastMinuteUpdate: false,
 };
@@ -167,12 +195,9 @@ export function ScheduleScreen() {
       maxPeople: schedule.maxPeople != null ? String(schedule.maxPeople) : '',
       slotCapacity: firstSlot?.slotCapacity != null ? String(firstSlot.slotCapacity) : '',
       appointment: schedule.appointment ?? false,
-      publicTitleEn: schedule.publicTitle?.en || '',
-      publicTitleHi: schedule.publicTitle?.hi || '',
-      publicLocationEn: schedule.publicLocation?.en || '',
-      publicLocationHi: schedule.publicLocation?.hi || '',
-      publicNotesEn: schedule.publicNotes?.en || '',
-      publicNotesHi: schedule.publicNotes?.hi || '',
+      publicTitle: { ...createEmptyLocalizedText(), ...(schedule.publicTitle || {}) },
+      publicLocation: { ...createEmptyLocalizedText(), ...(schedule.publicLocation || {}) },
+      publicNotes: { ...createEmptyLocalizedText(), ...(schedule.publicNotes || {}) },
       changeNote: schedule.changeNote || '',
       isLastMinuteUpdate: Boolean(schedule.isLastMinuteUpdate),
     });
@@ -232,18 +257,9 @@ export function ScheduleScreen() {
       ],
       appointment: formData.appointment,
       maxPeople,
-      publicTitle: {
-        en: formData.publicTitleEn.trim() || undefined,
-        hi: formData.publicTitleHi.trim() || undefined,
-      },
-      publicLocation: {
-        en: formData.publicLocationEn.trim() || undefined,
-        hi: formData.publicLocationHi.trim() || undefined,
-      },
-      publicNotes: {
-        en: formData.publicNotesEn.trim() || undefined,
-        hi: formData.publicNotesHi.trim() || undefined,
-      },
+      publicTitle: normalizeLocalizedText(formData.publicTitle),
+      publicLocation: normalizeLocalizedText(formData.publicLocation),
+      publicNotes: normalizeLocalizedText(formData.publicNotes),
       changeNote: formData.changeNote.trim() || undefined,
       isLastMinuteUpdate: formData.isLastMinuteUpdate,
     };
@@ -328,7 +344,7 @@ export function ScheduleScreen() {
           <View style={styles.leftStripe} />
           <View style={styles.detailsSection}>
             <Text style={styles.locationText} numberOfLines={2}>
-              {item.publicTitle?.en || item.publicTitle?.hi || item.locations}
+              {getPrimaryLocalizedValue(item.publicTitle, item.locations)}
             </Text>
             <Text style={styles.secondaryText}>
               {item.baseLocation || 'Ashram schedule'}
@@ -496,41 +512,39 @@ export function ScheduleScreen() {
               numberOfLines={2}
             />
 
-            <Text style={styles.inputLabel}>Public Title (English)</Text>
-            <TextInput
-              style={styles.textInput}
-              value={formData.publicTitleEn}
-              onChangeText={(value) => setFormData((prev) => ({ ...prev, publicTitleEn: value }))}
-              placeholder="Delhi Ashram darshan and meetings"
-              placeholderTextColor={colors.text.secondary}
-            />
+            <Text style={styles.translationSectionTitle}>Localized Public Titles</Text>
+            {CONTENT_LANGUAGES.map(({ code, label }) => (
+              <TextInput
+                key={`schedule-title-${code}`}
+                style={styles.textInput}
+                value={formData.publicTitle[code] || ''}
+                onChangeText={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    publicTitle: { ...prev.publicTitle, [code]: value },
+                  }))
+                }
+                placeholder={`Public title (${label})`}
+                placeholderTextColor={colors.text.secondary}
+              />
+            ))}
 
-            <Text style={styles.inputLabel}>Public Title (Hindi)</Text>
-            <TextInput
-              style={styles.textInput}
-              value={formData.publicTitleHi}
-              onChangeText={(value) => setFormData((prev) => ({ ...prev, publicTitleHi: value }))}
-              placeholder="दिल्ली आश्रम दर्शन एवं मुलाकात"
-              placeholderTextColor={colors.text.secondary}
-            />
-
-            <Text style={styles.inputLabel}>Public Location (English)</Text>
-            <TextInput
-              style={styles.textInput}
-              value={formData.publicLocationEn}
-              onChangeText={(value) => setFormData((prev) => ({ ...prev, publicLocationEn: value }))}
-              placeholder="Delhi Ashram, New Delhi"
-              placeholderTextColor={colors.text.secondary}
-            />
-
-            <Text style={styles.inputLabel}>Public Location (Hindi)</Text>
-            <TextInput
-              style={styles.textInput}
-              value={formData.publicLocationHi}
-              onChangeText={(value) => setFormData((prev) => ({ ...prev, publicLocationHi: value }))}
-              placeholder="दिल्ली आश्रम, नई दिल्ली"
-              placeholderTextColor={colors.text.secondary}
-            />
+            <Text style={styles.translationSectionTitle}>Localized Public Locations</Text>
+            {CONTENT_LANGUAGES.map(({ code, label }) => (
+              <TextInput
+                key={`schedule-location-${code}`}
+                style={styles.textInput}
+                value={formData.publicLocation[code] || ''}
+                onChangeText={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    publicLocation: { ...prev.publicLocation, [code]: value },
+                  }))
+                }
+                placeholder={`Public location (${label})`}
+                placeholderTextColor={colors.text.secondary}
+              />
+            ))}
 
             <Text style={styles.inputLabel}>Start Date * (YYYY-MM-DD)</Text>
             <TextInput
@@ -579,27 +593,24 @@ export function ScheduleScreen() {
               keyboardType="numeric"
             />
 
-            <Text style={styles.inputLabel}>Public Notes (English)</Text>
-            <TextInput
-              style={[styles.textInput, styles.textArea]}
-              value={formData.publicNotesEn}
-              onChangeText={(value) => setFormData((prev) => ({ ...prev, publicNotesEn: value }))}
-              placeholder="Instructions for visitors"
-              placeholderTextColor={colors.text.secondary}
-              multiline
-              numberOfLines={3}
-            />
-
-            <Text style={styles.inputLabel}>Public Notes (Hindi)</Text>
-            <TextInput
-              style={[styles.textInput, styles.textArea]}
-              value={formData.publicNotesHi}
-              onChangeText={(value) => setFormData((prev) => ({ ...prev, publicNotesHi: value }))}
-              placeholder="आगंतुकों के लिए निर्देश"
-              placeholderTextColor={colors.text.secondary}
-              multiline
-              numberOfLines={3}
-            />
+            <Text style={styles.translationSectionTitle}>Localized Public Notes</Text>
+            {CONTENT_LANGUAGES.map(({ code, label }) => (
+              <TextInput
+                key={`schedule-notes-${code}`}
+                style={[styles.textInput, styles.textArea]}
+                value={formData.publicNotes[code] || ''}
+                onChangeText={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    publicNotes: { ...prev.publicNotes, [code]: value },
+                  }))
+                }
+                placeholder={`Public notes (${label})`}
+                placeholderTextColor={colors.text.secondary}
+                multiline
+                numberOfLines={3}
+              />
+            ))}
 
             <Text style={styles.inputLabel}>Change Note</Text>
             <TextInput
@@ -922,6 +933,13 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     marginBottom: spacing.xs,
     marginTop: spacing.md,
+  },
+  translationSectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.primary.maroon,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
   textInput: {
     backgroundColor: colors.background.parchment,

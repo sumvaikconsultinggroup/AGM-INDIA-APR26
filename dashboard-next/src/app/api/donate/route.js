@@ -3,6 +3,50 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import getCloudinary from '@/utils/cloudinary';
 
+const CONTENT_LANGUAGES = ['en', 'hi', 'bn', 'ta', 'te', 'mr', 'gu', 'kn', 'ml', 'pa', 'or', 'as'];
+
+function normalizeLocalizedText(input) {
+  if (!input || typeof input !== 'object') return undefined;
+
+  const normalized = {};
+  for (const language of CONTENT_LANGUAGES) {
+    const value = input[language];
+    if (typeof value === 'string' && value.trim()) {
+      normalized[language] = value.trim();
+    }
+  }
+
+  return Object.keys(normalized).length ? normalized : undefined;
+}
+
+function parseLocalizedJson(value) {
+  if (!value || typeof value !== 'string') return undefined;
+  try {
+    return normalizeLocalizedText(JSON.parse(value));
+  } catch {
+    return undefined;
+  }
+}
+
+function getPrimaryLocalizedValue(localized, fallback) {
+  return (
+    localized?.en ||
+    localized?.hi ||
+    localized?.bn ||
+    localized?.ta ||
+    localized?.te ||
+    localized?.mr ||
+    localized?.gu ||
+    localized?.kn ||
+    localized?.ml ||
+    localized?.pa ||
+    localized?.or ||
+    localized?.as ||
+    fallback ||
+    ''
+  );
+}
+
 export async function GET() {
   try {
     await connectDB();
@@ -49,6 +93,9 @@ export async function POST(req) {
     const title = formData.get('title');
     const description = formData.get('description');
     const additionalText = formData.get('additionalText');
+    const titleTranslations = parseLocalizedJson(formData.get('titleTranslations'));
+    const descriptionTranslations = parseLocalizedJson(formData.get('descriptionTranslations'));
+    const additionalTextTranslations = parseLocalizedJson(formData.get('additionalTextTranslations'));
     const goal = Number(formData.get('goal'));
     const achieved = Number(formData.get('achieved') || 0);
     const donors = Number(formData.get('donors') || 0);
@@ -94,10 +141,13 @@ export async function POST(req) {
     }
 
     const newDonation = new Donate({
-      title,
-      description,
+      title: getPrimaryLocalizedValue(titleTranslations, title),
+      description: getPrimaryLocalizedValue(descriptionTranslations, description),
       goal,
-      additionalText,
+      titleTranslations,
+      descriptionTranslations,
+      additionalText: getPrimaryLocalizedValue(additionalTextTranslations, additionalText) || undefined,
+      additionalTextTranslations,
       achieved,
       donors,
       totalDays,

@@ -18,7 +18,7 @@ export default function DailyVicharCard() {
   const [vichar, setVichar] = useState<Vichar | null>(null);
 
   const preferredLanguage = useMemo<"hindi" | "english">(() => {
-    return i18n.language === "en" ? "english" : "hindi";
+    return i18n.language?.startsWith("hi") ? "hindi" : "english";
   }, [i18n.language]);
 
   useEffect(() => {

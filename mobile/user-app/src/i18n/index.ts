@@ -69,7 +69,7 @@ i18n
       if (!code) return ['en'];
       if (code.startsWith('en')) return ['en'];
       if (code.startsWith('hi')) return ['hi', 'en'];
-      return ['hi', 'en'];
+      return ['en'];
     },
     supportedLngs: SUPPORTED_LANGUAGES as unknown as string[],
     interpolation: {

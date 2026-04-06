@@ -25,12 +25,46 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, borderRadius } from '../../theme';
 import api from '../../services/api';
-import { Article } from '../../types';
+import { Article, LocalizedText } from '../../types';
+
+const CONTENT_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'hi', label: 'Hindi' },
+  { code: 'bn', label: 'Bangla' },
+  { code: 'ta', label: 'Tamil' },
+  { code: 'te', label: 'Telugu' },
+  { code: 'mr', label: 'Marathi' },
+  { code: 'gu', label: 'Gujarati' },
+  { code: 'kn', label: 'Kannada' },
+  { code: 'ml', label: 'Malayalam' },
+  { code: 'pa', label: 'Punjabi' },
+  { code: 'or', label: 'Odia' },
+  { code: 'as', label: 'Assamese' },
+] as const;
+
+const createEmptyLocalizedText = (): LocalizedText =>
+  CONTENT_LANGUAGES.reduce<LocalizedText>((acc, { code }) => {
+    acc[code] = '';
+    return acc;
+  }, {});
+
+const normalizeLocalizedText = (localized: LocalizedText): LocalizedText =>
+  CONTENT_LANGUAGES.reduce<LocalizedText>((acc, { code }) => {
+    const value = localized[code]?.trim();
+    if (value) acc[code] = value;
+    return acc;
+  }, {});
+
+const getPrimaryLocalizedValue = (localized?: LocalizedText, fallback = '') =>
+  localized?.en?.trim() ||
+  localized?.hi?.trim() ||
+  Object.values(localized || {}).find((value) => value?.trim()) ||
+  fallback;
 
 interface ArticleFormData {
-  title: string;
-  description: string;
-  category: string;
+  titleTranslations: LocalizedText;
+  descriptionTranslations: LocalizedText;
+  categoryTranslations: LocalizedText;
   link: string;
   readTime: string;
   publishedDate: string;
@@ -39,9 +73,9 @@ interface ArticleFormData {
 }
 
 const emptyForm: ArticleFormData = {
-  title: '',
-  description: '',
-  category: '',
+  titleTranslations: createEmptyLocalizedText(),
+  descriptionTranslations: createEmptyLocalizedText(),
+  categoryTranslations: createEmptyLocalizedText(),
   link: '',
   readTime: '',
   publishedDate: '',
@@ -150,9 +184,21 @@ export function ArticlesScreen() {
   const openEditModal = (article: Article) => {
     setEditingArticle(article);
     setForm({
-      title: article.title,
-      description: article.description || '',
-      category: article.category || '',
+      titleTranslations: {
+        ...createEmptyLocalizedText(),
+        ...(article.titleTranslations || {}),
+        en: article.titleTranslations?.en || article.title || '',
+      },
+      descriptionTranslations: {
+        ...createEmptyLocalizedText(),
+        ...(article.descriptionTranslations || {}),
+        en: article.descriptionTranslations?.en || article.description || '',
+      },
+      categoryTranslations: {
+        ...createEmptyLocalizedText(),
+        ...(article.categoryTranslations || {}),
+        en: article.categoryTranslations?.en || article.category || '',
+      },
       link: article.link || '',
       readTime: article.readTime != null ? String(article.readTime) : '',
       publishedDate: article.publishedDate ? article.publishedDate.split('T')[0] : '',
@@ -164,9 +210,18 @@ export function ArticlesScreen() {
 
   const buildFormData = (): FormData => {
     const fd = new FormData();
-    fd.append('title', form.title);
-    fd.append('description', form.description);
-    fd.append('category', form.category);
+    fd.append('title', getPrimaryLocalizedValue(form.titleTranslations));
+    fd.append('description', getPrimaryLocalizedValue(form.descriptionTranslations));
+    fd.append('category', getPrimaryLocalizedValue(form.categoryTranslations));
+    fd.append('titleTranslations', JSON.stringify(normalizeLocalizedText(form.titleTranslations)));
+    fd.append(
+      'descriptionTranslations',
+      JSON.stringify(normalizeLocalizedText(form.descriptionTranslations))
+    );
+    fd.append(
+      'categoryTranslations',
+      JSON.stringify(normalizeLocalizedText(form.categoryTranslations))
+    );
     fd.append('link', form.link);
     fd.append('readTime', form.readTime);
     fd.append('publishedDate', form.publishedDate);
@@ -185,11 +240,11 @@ export function ArticlesScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!form.title.trim()) {
+    if (!getPrimaryLocalizedValue(form.titleTranslations).trim()) {
       Alert.alert('Validation', 'Title is required.');
       return;
     }
-    if (!form.description.trim()) {
+    if (!getPrimaryLocalizedValue(form.descriptionTranslations).trim()) {
       Alert.alert('Validation', 'Description is required.');
       return;
     }
@@ -265,7 +320,7 @@ export function ArticlesScreen() {
         <Card.Content style={styles.cardContent}>
           <View style={styles.titleRow}>
             <Text style={styles.articleTitle} numberOfLines={2}>
-              {item.title}
+              {getPrimaryLocalizedValue(item.titleTranslations, item.title)}
             </Text>
             <View style={styles.cardActions}>
               <IconButton
@@ -284,18 +339,18 @@ export function ArticlesScreen() {
           </View>
 
           <Text style={styles.excerpt} numberOfLines={3}>
-            {getExcerpt(item.description)}
+            {getExcerpt(getPrimaryLocalizedValue(item.descriptionTranslations, item.description))}
           </Text>
 
           <View style={styles.metaRow}>
             <View style={styles.metaLeft}>
-              {item.category ? (
+              {item.category || item.categoryTranslations ? (
                 <Chip
                   style={styles.categoryChip}
                   textStyle={styles.categoryChipText}
                   compact
                 >
-                  {item.category}
+                  {getPrimaryLocalizedValue(item.categoryTranslations, item.category)}
                 </Chip>
               ) : null}
               {item.readTime != null ? (
@@ -390,37 +445,64 @@ export function ArticlesScreen() {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              <TextInput
-                label="Title *"
-                value={form.title}
-                onChangeText={(v) => setForm((p) => ({ ...p, title: v }))}
-                mode="outlined"
-                style={styles.input}
-                outlineColor={colors.border.gold}
-                activeOutlineColor={colors.primary.saffron}
-              />
+              <Text style={styles.translationSectionTitle}>Localized Titles</Text>
+              {CONTENT_LANGUAGES.map(({ code, label }) => (
+                <TextInput
+                  key={`title-${code}`}
+                  label={`Title (${label})${code === 'en' ? ' *' : ''}`}
+                  value={form.titleTranslations[code] || ''}
+                  onChangeText={(v) =>
+                    setForm((p) => ({
+                      ...p,
+                      titleTranslations: { ...p.titleTranslations, [code]: v },
+                    }))
+                  }
+                  mode="outlined"
+                  style={styles.input}
+                  outlineColor={colors.border.gold}
+                  activeOutlineColor={colors.primary.saffron}
+                />
+              ))}
 
-              <TextInput
-                label="Description *"
-                value={form.description}
-                onChangeText={(v) => setForm((p) => ({ ...p, description: v }))}
-                mode="outlined"
-                multiline
-                numberOfLines={5}
-                style={[styles.input, styles.multilineInput]}
-                outlineColor={colors.border.gold}
-                activeOutlineColor={colors.primary.saffron}
-              />
+              <Text style={styles.translationSectionTitle}>Localized Descriptions</Text>
+              {CONTENT_LANGUAGES.map(({ code, label }) => (
+                <TextInput
+                  key={`description-${code}`}
+                  label={`Description (${label})${code === 'en' ? ' *' : ''}`}
+                  value={form.descriptionTranslations[code] || ''}
+                  onChangeText={(v) =>
+                    setForm((p) => ({
+                      ...p,
+                      descriptionTranslations: { ...p.descriptionTranslations, [code]: v },
+                    }))
+                  }
+                  mode="outlined"
+                  multiline
+                  numberOfLines={3}
+                  style={[styles.input, styles.multilineInput]}
+                  outlineColor={colors.border.gold}
+                  activeOutlineColor={colors.primary.saffron}
+                />
+              ))}
 
-              <TextInput
-                label="Category"
-                value={form.category}
-                onChangeText={(v) => setForm((p) => ({ ...p, category: v }))}
-                mode="outlined"
-                style={styles.input}
-                outlineColor={colors.border.gold}
-                activeOutlineColor={colors.primary.saffron}
-              />
+              <Text style={styles.translationSectionTitle}>Localized Categories</Text>
+              {CONTENT_LANGUAGES.map(({ code, label }) => (
+                <TextInput
+                  key={`category-${code}`}
+                  label={`Category (${label})`}
+                  value={form.categoryTranslations[code] || ''}
+                  onChangeText={(v) =>
+                    setForm((p) => ({
+                      ...p,
+                      categoryTranslations: { ...p.categoryTranslations, [code]: v },
+                    }))
+                  }
+                  mode="outlined"
+                  style={styles.input}
+                  outlineColor={colors.border.gold}
+                  activeOutlineColor={colors.primary.saffron}
+                />
+              ))}
 
               <TextInput
                 label="Link"
@@ -688,6 +770,13 @@ const styles = StyleSheet.create({
   input: {
     marginBottom: spacing.md,
     backgroundColor: colors.background.warmWhite,
+  },
+  translationSectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.primary.maroon,
+    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
   },
   multilineInput: {
     minHeight: 120,

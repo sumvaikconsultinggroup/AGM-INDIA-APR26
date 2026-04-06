@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { colors, spacing, borderRadius, shadows } from '../../theme';
 
@@ -20,12 +21,16 @@ const { width } = Dimensions.get('window');
 const GALLERY_ITEM_WIDTH = (width - spacing.lg * 2 - spacing.sm) / 2;
 
 type Category = 'Articles' | 'Videos' | 'Books' | 'Podcasts' | 'Gallery';
+type LocalizedText = Record<string, string | undefined>;
 
 interface Article {
   _id: string;
   title: string;
+  titleTranslations?: LocalizedText;
   description?: string;
+  descriptionTranslations?: LocalizedText;
   category?: string;
+  categoryTranslations?: LocalizedText;
   publishedDate: string;
   coverImage?: string;
   link?: string;
@@ -35,13 +40,16 @@ interface Article {
 interface Video {
   _id: string;
   title: string;
+  titleTranslations?: LocalizedText;
   description?: string;
+  descriptionTranslations?: LocalizedText;
   thumbnail?: string;
 }
 
 interface Book {
   _id: string;
   title: string;
+  titleTranslations?: LocalizedText;
   author?: string;
   price?: number;
   coverImage?: string;
@@ -50,7 +58,9 @@ interface Book {
 interface Podcast {
   _id: string;
   title: string;
+  titleTranslations?: LocalizedText;
   description?: string;
+  descriptionTranslations?: LocalizedText;
   duration?: string;
   coverImage?: string;
   videoUrl?: string;
@@ -60,6 +70,7 @@ interface GalleryItem {
   _id: string;
   image: string;
   title?: string;
+  titleTranslations?: LocalizedText;
 }
 
 const categories: { key: Category; icon: 'file-document' | 'video' | 'book-open-variant' | 'podcast' | 'image-multiple' }[] = [
@@ -81,6 +92,7 @@ const apiEndpoints: Record<Category, string> = {
 export function ExploreScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
+  const { t, i18n } = useTranslation();
   const initialCategory = route.params?.category || 'Articles';
   
   const [selectedCategory, setSelectedCategory] = useState<Category>(initialCategory);
@@ -89,6 +101,41 @@ export function ExploreScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const dateLocale = useCallback(() => {
+    const language = i18n.language?.split('-')[0] || 'en';
+    const localeMap: Record<string, string> = {
+      hi: 'hi-IN',
+      bn: 'bn-BD',
+      ta: 'ta-IN',
+      te: 'te-IN',
+      mr: 'mr-IN',
+      gu: 'gu-IN',
+      kn: 'kn-IN',
+      ml: 'ml-IN',
+      pa: 'pa-IN',
+      or: 'or-IN',
+      as: 'as-IN',
+      en: 'en-IN',
+    };
+    return localeMap[language] || 'en-IN';
+  }, [i18n.language]);
+
+  const categoryLabels: Record<Category, string> = {
+    Articles: t('explore.articles'),
+    Videos: t('explore.videos'),
+    Books: t('explore.books'),
+    Podcasts: t('explore.podcasts'),
+    Gallery: t('explore.gallery'),
+  };
+
+  const resolveLocalizedText = useCallback(
+    (localized?: LocalizedText, fallback?: string) => {
+      const language = i18n.language?.split('-')[0] || 'en';
+      return localized?.[language] || localized?.en || localized?.hi || fallback || '';
+    },
+    [i18n.language]
+  );
 
   useEffect(() => {
     const routeCategory = route.params?.category;
@@ -104,7 +151,7 @@ export function ExploreScreen() {
   const fetchData = useCallback(async () => {
     try {
       const endpoint = apiEndpoints[selectedCategory];
-      const response = await api.get(endpoint);
+      const response = await api.get(`${endpoint}?lang=${encodeURIComponent(i18n.language || 'en')}`);
       const items = response.data || [];
       setData(items);
       setFilteredData(items);
@@ -115,7 +162,7 @@ export function ExploreScreen() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory]);
+  }, [i18n.language, selectedCategory]);
 
   useEffect(() => {
     setLoading(true);
@@ -129,8 +176,9 @@ export function ExploreScreen() {
     } else {
       const query = searchQuery.toLowerCase();
       const filtered = data.filter((item) => {
-        const title = item.title || item.eventName || '';
-        const description = item.description || item.excerpt || '';
+        const title = resolveLocalizedText(item.titleTranslations, item.title || item.eventName || '');
+        const description =
+          resolveLocalizedText(item.descriptionTranslations, item.description || item.excerpt || '');
         const author = item.author || '';
         return (
           title.toLowerCase().includes(query) ||
@@ -150,7 +198,7 @@ export function ExploreScreen() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', {
+    return date.toLocaleDateString(dateLocale(), {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
@@ -172,13 +220,17 @@ export function ExploreScreen() {
         )}
       </View>
       <View style={styles.itemContent}>
-        <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
+        <Text style={styles.itemTitle} numberOfLines={2}>
+          {resolveLocalizedText(item.titleTranslations, item.title)}
+        </Text>
         <Text style={styles.itemDescription} numberOfLines={2}>
-          {item.description || ''}
+          {resolveLocalizedText(item.descriptionTranslations, item.description || '')}
         </Text>
         <View style={styles.itemMeta}>
-          {item.category && (
-            <Text style={styles.itemMetaText}>{item.category}</Text>
+        {(item.category || item.categoryTranslations) && (
+            <Text style={styles.itemMetaText}>
+              {resolveLocalizedText(item.categoryTranslations, item.category)}
+            </Text>
           )}
           <Text style={styles.itemDate}>{formatDate(item.publishedDate)}</Text>
         </View>
@@ -204,9 +256,11 @@ export function ExploreScreen() {
         </View>
       </View>
       <View style={styles.itemContent}>
-        <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
+        <Text style={styles.itemTitle} numberOfLines={2}>
+          {resolveLocalizedText(item.titleTranslations, item.title)}
+        </Text>
         <Text style={styles.itemDescription} numberOfLines={3}>
-          {item.description || 'Video series'}
+          {resolveLocalizedText(item.descriptionTranslations, item.description) || t('explore.videoSeriesFallback')}
         </Text>
       </View>
     </TouchableOpacity>
@@ -227,9 +281,13 @@ export function ExploreScreen() {
         )}
       </View>
       <View style={styles.itemContent}>
-        <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
+        <Text style={styles.itemTitle} numberOfLines={2}>
+          {resolveLocalizedText(item.titleTranslations, item.title)}
+        </Text>
         {item.author && (
-          <Text style={styles.itemDescription}>By {item.author}</Text>
+          <Text style={styles.itemDescription}>
+            {t('explore.byAuthor', { author: item.author })}
+          </Text>
         )}
         {item.price !== undefined && (
           <Text style={styles.bookPrice}>₹{item.price.toLocaleString('en-IN')}</Text>
@@ -251,9 +309,13 @@ export function ExploreScreen() {
         )}
       </View>
       <View style={styles.itemContent}>
-        <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
+        <Text style={styles.itemTitle} numberOfLines={2}>
+          {resolveLocalizedText(item.titleTranslations, item.title)}
+        </Text>
         {item.description && (
-          <Text style={styles.itemDescription} numberOfLines={2}>{item.description}</Text>
+          <Text style={styles.itemDescription} numberOfLines={2}>
+            {resolveLocalizedText(item.descriptionTranslations, item.description)}
+          </Text>
         )}
         {item.duration && (
           <View style={styles.durationBadge}>
@@ -272,8 +334,10 @@ export function ExploreScreen() {
       onPress={() => navigation.navigate('GalleryFull')}
     >
       <Image source={{ uri: item.image }} style={styles.galleryImage} />
-      {item.title && (
-        <Text style={styles.galleryTitle} numberOfLines={1}>{item.title}</Text>
+      {(item.title || item.titleTranslations) && (
+        <Text style={styles.galleryTitle} numberOfLines={1}>
+          {resolveLocalizedText(item.titleTranslations, item.title)}
+        </Text>
       )}
     </TouchableOpacity>
   );
@@ -302,11 +366,13 @@ export function ExploreScreen() {
         size={48}
         color={colors.text.secondary}
       />
-      <Text style={styles.emptyTitle}>No {selectedCategory} Found</Text>
+      <Text style={styles.emptyTitle}>
+        {t('explore.noItemsTitle', { category: categoryLabels[selectedCategory] })}
+      </Text>
       <Text style={styles.emptySubtitle}>
         {searchQuery
-          ? 'Try a different search term'
-          : 'Check back later for new content'}
+          ? t('explore.searchTryDifferent')
+          : t('explore.checkBackLater')}
       </Text>
     </View>
   );
@@ -344,7 +410,7 @@ export function ExploreScreen() {
                   selectedCategory === item.key && styles.categoryTextActive,
                 ]}
               >
-                {item.key}
+                {categoryLabels[item.key]}
               </Text>
             </TouchableOpacity>
           )}
@@ -357,7 +423,9 @@ export function ExploreScreen() {
           <Icon name="magnify" size={20} color={colors.text.secondary} />
           <TextInput
             style={styles.searchInput}
-            placeholder={`Search ${selectedCategory.toLowerCase()}...`}
+            placeholder={t('explore.searchPlaceholder', {
+              category: categoryLabels[selectedCategory].toLowerCase(),
+            })}
             placeholderTextColor={colors.text.secondary}
             value={searchQuery}
             onChangeText={setSearchQuery}

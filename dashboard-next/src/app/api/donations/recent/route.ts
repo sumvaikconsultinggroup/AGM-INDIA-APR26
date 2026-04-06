@@ -3,6 +3,8 @@ import { connectDB } from '@/lib/mongodb';
 import Donation from '@/models/Donations';
 import Donate from '@/models/Donate';
 
+type LocalizedText = Record<string, string | undefined>;
+
 function maskName(name?: string, anonymous?: boolean) {
   if (anonymous) return 'Anonymous Devotee';
   const trimmed = (name || '').trim();
@@ -11,9 +13,15 @@ function maskName(name?: string, anonymous?: boolean) {
   return firstWord;
 }
 
+function resolveLocalizedText(language: string | null, localized?: LocalizedText | null, fallback?: string | null) {
+  const code = (language || 'en').split('-')[0];
+  return localized?.[code] || localized?.en || localized?.hi || fallback || '';
+}
+
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
+    const requestedLanguage = req.nextUrl.searchParams.get('lang');
 
     const limitParam = Number(req.nextUrl.searchParams.get('limit') || 8);
     const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 20) : 8;
@@ -29,9 +37,14 @@ export async function GET(req: NextRequest) {
 
     const campaignIds = donations.map((item: any) => item.campaignId).filter(Boolean);
     const campaigns = campaignIds.length
-      ? await (Donate as any).find({ _id: { $in: campaignIds } }, 'title').lean()
+      ? await (Donate as any).find({ _id: { $in: campaignIds } }, 'title titleTranslations').lean()
       : [];
-    const campaignMap = new Map(campaigns.map((item: any) => [String(item._id), item.title]));
+    const campaignMap = new Map(
+      campaigns.map((item: any) => [
+        String(item._id),
+        resolveLocalizedText(requestedLanguage, item.titleTranslations, item.title),
+      ])
+    );
 
     return NextResponse.json({
       success: true,

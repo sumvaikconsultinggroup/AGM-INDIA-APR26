@@ -11,6 +11,16 @@ export interface ITimeSlot extends Document {
 export interface ILocalizedText {
   en?: string;
   hi?: string;
+  bn?: string;
+  ta?: string;
+  te?: string;
+  mr?: string;
+  gu?: string;
+  kn?: string;
+  ml?: string;
+  pa?: string;
+  or?: string;
+  as?: string;
 }
 
 // Define TimeSlot schema
@@ -39,6 +49,16 @@ const localizedTextSchema = new Schema<ILocalizedText>(
   {
     en: { type: String, trim: true },
     hi: { type: String, trim: true },
+    bn: { type: String, trim: true },
+    ta: { type: String, trim: true },
+    te: { type: String, trim: true },
+    mr: { type: String, trim: true },
+    gu: { type: String, trim: true },
+    kn: { type: String, trim: true },
+    ml: { type: String, trim: true },
+    pa: { type: String, trim: true },
+    or: { type: String, trim: true },
+    as: { type: String, trim: true },
   },
   { _id: false }
 );

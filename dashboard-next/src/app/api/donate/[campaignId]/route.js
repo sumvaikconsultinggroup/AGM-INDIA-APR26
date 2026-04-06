@@ -3,6 +3,41 @@ import { connectDB } from '@/lib/mongodb';
 import Donate from '@/models/Donate';
 import mongoose from 'mongoose';
 
+const CONTENT_LANGUAGES = ['en', 'hi', 'bn', 'ta', 'te', 'mr', 'gu', 'kn', 'ml', 'pa', 'or', 'as'];
+
+function normalizeLocalizedText(input) {
+  if (!input || typeof input !== 'object') return undefined;
+
+  const normalized = {};
+  for (const language of CONTENT_LANGUAGES) {
+    const value = input[language];
+    if (typeof value === 'string' && value.trim()) {
+      normalized[language] = value.trim();
+    }
+  }
+
+  return Object.keys(normalized).length ? normalized : undefined;
+}
+
+function getPrimaryLocalizedValue(localized, fallback) {
+  return (
+    localized?.en ||
+    localized?.hi ||
+    localized?.bn ||
+    localized?.ta ||
+    localized?.te ||
+    localized?.mr ||
+    localized?.gu ||
+    localized?.kn ||
+    localized?.ml ||
+    localized?.pa ||
+    localized?.or ||
+    localized?.as ||
+    fallback ||
+    ''
+  );
+}
+
 export async function GET(req, { params }) {
   try {
     await connectDB();
@@ -105,6 +140,9 @@ export async function PUT(req, { params }) {
       title,
       description,
       additionalText,
+      titleTranslations,
+      descriptionTranslations,
+      additionalTextTranslations,
       goal,
       achieved,
       donors,
@@ -114,9 +152,28 @@ export async function PUT(req, { params }) {
     } = body;
 
     const updateData = {};
-    if (title !== undefined) updateData.title = title;
-    if (description !== undefined) updateData.description = description;
-    if (additionalText !== undefined) updateData.additionalText = additionalText;
+    if (titleTranslations !== undefined) updateData.titleTranslations = normalizeLocalizedText(titleTranslations) || {};
+    if (descriptionTranslations !== undefined) updateData.descriptionTranslations = normalizeLocalizedText(descriptionTranslations) || {};
+    if (additionalTextTranslations !== undefined) updateData.additionalTextTranslations = normalizeLocalizedText(additionalTextTranslations) || {};
+    if (title !== undefined || titleTranslations !== undefined) {
+      updateData.title = getPrimaryLocalizedValue(
+        normalizeLocalizedText(titleTranslations),
+        title
+      );
+    }
+    if (description !== undefined || descriptionTranslations !== undefined) {
+      updateData.description = getPrimaryLocalizedValue(
+        normalizeLocalizedText(descriptionTranslations),
+        description
+      );
+    }
+    if (additionalText !== undefined || additionalTextTranslations !== undefined) {
+      updateData.additionalText =
+        getPrimaryLocalizedValue(
+          normalizeLocalizedText(additionalTextTranslations),
+          additionalText
+        ) || undefined;
+    }
     if (goal !== undefined) updateData.goal = goal;
     if (achieved !== undefined) updateData.achieved = achieved;
     if (donors !== undefined) updateData.donors = donors;

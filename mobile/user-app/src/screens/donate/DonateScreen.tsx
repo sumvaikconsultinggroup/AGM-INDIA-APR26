@@ -23,14 +23,18 @@ import api from '../../services/api';
 import { colors, spacing, borderRadius, shadows } from '../../theme';
 
 const { width } = Dimensions.get('window');
+type LocalizedText = Record<string, string | undefined>;
 
 type DonateMode = 'one_time' | 'subscription';
 
 interface Campaign {
   _id: string;
   title: string;
+  titleTranslations?: LocalizedText;
   description?: string;
+  descriptionTranslations?: LocalizedText;
   additionalText?: string;
+  additionalTextTranslations?: LocalizedText;
   goal: number;
   achieved: number;
   donors?: number;
@@ -213,7 +217,7 @@ function buildCheckoutHtml({
 }
 
 export function DonateScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [recentDonations, setRecentDonations] = useState<RecentDonation[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
@@ -235,11 +239,21 @@ export function DonateScreen() {
     [campaigns, selectedCampaignId]
   );
 
+  const resolveLocalizedText = useCallback(
+    (localized?: LocalizedText, fallback?: string) => {
+      const language = i18n.language?.split('-')[0] || 'en';
+      return localized?.[language] || localized?.en || localized?.hi || fallback || '';
+    },
+    [i18n.language]
+  );
+
   const fetchData = useCallback(async () => {
     try {
       const [campaignResponse, recentResponse] = await Promise.all([
         api.get('/donate'),
-        api.get('/donations/recent?limit=6').catch(() => ({ data: [] })),
+        api
+          .get(`/donations/recent?limit=6&lang=${encodeURIComponent(i18n.language || 'en')}`)
+          .catch(() => ({ data: [] })),
       ]);
 
       const campaignData = campaignResponse.data || [];
@@ -254,7 +268,7 @@ export function DonateScreen() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCampaignId, t]);
+  }, [i18n.language, selectedCampaignId, t]);
 
   useEffect(() => {
     fetchData();
@@ -323,7 +337,9 @@ export function DonateScreen() {
           orderId: data.orderId,
           subscriptionId: data.subscriptionId,
           form,
-          campaignTitle: selectedCampaign?.title || t('donate.generalDonation'),
+          campaignTitle:
+            resolveLocalizedText(selectedCampaign?.titleTranslations, selectedCampaign?.title) ||
+            t('donate.generalDonation'),
         })
       );
     } catch (checkoutError) {
@@ -361,7 +377,9 @@ export function DonateScreen() {
         setSuccessState({
           paymentId: message.payload.razorpay_payment_id,
           amount: Number(form.amount),
-          campaignTitle: selectedCampaign?.title || t('donate.generalDonation'),
+          campaignTitle:
+            resolveLocalizedText(selectedCampaign?.titleTranslations, selectedCampaign?.title) ||
+            t('donate.generalDonation'),
         });
         setCheckoutHtml(null);
         setSubmitting(false);
@@ -710,15 +728,23 @@ export function DonateScreen() {
                         </View>
                       )}
                     </View>
-                    <Text style={styles.campaignTitle}>{campaign.title}</Text>
+                    <Text style={styles.campaignTitle}>
+                      {resolveLocalizedText(campaign.titleTranslations, campaign.title)}
+                    </Text>
                     <Text style={styles.campaignSubtitle} numberOfLines={2}>
-                      {campaign.additionalText || campaign.description}
+                      {resolveLocalizedText(
+                        campaign.additionalTextTranslations,
+                        campaign.additionalText
+                      ) ||
+                        resolveLocalizedText(campaign.descriptionTranslations, campaign.description)}
                     </Text>
                   </LinearGradient>
                 </ImageBackground>
 
                 <View style={styles.campaignBody}>
-                  <Text style={styles.campaignDescription}>{campaign.description}</Text>
+                  <Text style={styles.campaignDescription}>
+                    {resolveLocalizedText(campaign.descriptionTranslations, campaign.description)}
+                  </Text>
                   <View style={styles.progressBar}>
                     <LinearGradient
                       colors={[colors.gold.light, colors.gold.main]}

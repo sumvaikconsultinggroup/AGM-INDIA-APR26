@@ -7,6 +7,22 @@ export interface DashboardStats {
   totalArticles: number;
 }
 
+export interface LocalizedText {
+  [key: string]: string | undefined;
+  en?: string;
+  hi?: string;
+  bn?: string;
+  ta?: string;
+  te?: string;
+  mr?: string;
+  gu?: string;
+  kn?: string;
+  ml?: string;
+  pa?: string;
+  or?: string;
+  as?: string;
+}
+
 export interface AdminUser {
   _id: string;
   username: string;
@@ -41,8 +57,11 @@ export interface Event {
 export interface DonationCampaign {
   _id: string;
   title: string;
+  titleTranslations?: LocalizedText;
   description: string;
+  descriptionTranslations?: LocalizedText;
   additionalText?: string;
+  additionalTextTranslations?: LocalizedText;
   goal: number;
   achieved: number;
   donors: number;
@@ -104,18 +123,9 @@ export interface Schedule {
   month: string;
   locations: string;
   baseLocation?: 'Haridwar Ashram' | 'Delhi Ashram' | 'Other';
-  publicTitle?: {
-    en?: string;
-    hi?: string;
-  };
-  publicLocation?: {
-    en?: string;
-    hi?: string;
-  };
-  publicNotes?: {
-    en?: string;
-    hi?: string;
-  };
+  publicTitle?: LocalizedText;
+  publicLocation?: LocalizedText;
+  publicNotes?: LocalizedText;
   internalNotes?: string;
   changeNote?: string;
   isLastMinuteUpdate?: boolean;
@@ -179,9 +189,12 @@ export interface ScheduleRegistration {
 export interface Article {
   _id: string;
   title: string;
+  titleTranslations?: LocalizedText;
   description: string;
+  descriptionTranslations?: LocalizedText;
   coverImage?: string;
   category?: string;
+  categoryTranslations?: LocalizedText;
   link?: string;
   readTime?: number;
   publishedDate: string;

@@ -8,6 +8,7 @@ import { fetchData } from '@/lib/api';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 
 type LocalizedText = {
+  [key: string]: string | undefined;
   en?: string;
   hi?: string;
 };
@@ -45,10 +46,8 @@ function pickLocalizedText(
   localized?: LocalizedText,
   fallback?: string
 ) {
-  if (language?.startsWith('hi')) {
-    return localized?.hi || localized?.en || fallback || '';
-  }
-  return localized?.en || localized?.hi || fallback || '';
+  const code = language?.split('-')[0] || 'en';
+  return localized?.[code] || localized?.en || localized?.hi || fallback || '';
 }
 
 export function ScheduleBoard() {

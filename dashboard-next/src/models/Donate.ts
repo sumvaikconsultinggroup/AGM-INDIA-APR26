@@ -1,9 +1,27 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
+export interface ILocalizedText {
+  en?: string;
+  hi?: string;
+  bn?: string;
+  ta?: string;
+  te?: string;
+  mr?: string;
+  gu?: string;
+  kn?: string;
+  ml?: string;
+  pa?: string;
+  or?: string;
+  as?: string;
+}
+
 export interface IDonate extends Document {
   title: string;
   description: string;
   additionalText?: string;
+  titleTranslations?: ILocalizedText;
+  descriptionTranslations?: ILocalizedText;
+  additionalTextTranslations?: ILocalizedText;
   achieved: number;
   goal: number;
   donors: number;
@@ -14,6 +32,24 @@ export interface IDonate extends Document {
   createdAt: Date; // Automatically added by timestamps
   updatedAt: Date;
 }
+
+const localizedTextSchema = new Schema<ILocalizedText>(
+  {
+    en: { type: String, trim: true },
+    hi: { type: String, trim: true },
+    bn: { type: String, trim: true },
+    ta: { type: String, trim: true },
+    te: { type: String, trim: true },
+    mr: { type: String, trim: true },
+    gu: { type: String, trim: true },
+    kn: { type: String, trim: true },
+    ml: { type: String, trim: true },
+    pa: { type: String, trim: true },
+    or: { type: String, trim: true },
+    as: { type: String, trim: true },
+  },
+  { _id: false }
+);
 
 const DonateSchema = new Schema<IDonate>(
   {
@@ -29,10 +65,22 @@ const DonateSchema = new Schema<IDonate>(
       trim: true,
       maxlength: [200, 'Campaign description cannot be more than 200 characters'],
     },
+    titleTranslations: {
+      type: localizedTextSchema,
+      default: {},
+    },
+    descriptionTranslations: {
+      type: localizedTextSchema,
+      default: {},
+    },
     additionalText: {
       type: String,
       trim: true,
       maxlength: [200, 'Additional text cannot be more than 200 characters'],
+    },
+    additionalTextTranslations: {
+      type: localizedTextSchema,
+      default: {},
     },
     achieved: {
       type: Number,
