@@ -344,6 +344,54 @@
       "invalidCredentials": "Invalid credentials"
     }
   },
+  "onboarding": {
+    "brand": "AvdheshanandG Mission",
+    "brandTagline": "Towards Divinity",
+    "changeLanguage": "Change Language",
+    "languageTitle": "Choose your language",
+    "languageSubtitle": "You can change this anytime later from the app.",
+    "welcomeTitle": "Begin your spiritual journey with clarity",
+    "welcomeSubtitle": "Daily Panchang, Swami Ji's schedule, wisdom content, seva opportunities, and Ashram updates in one calm place.",
+    "getStarted": "Get Started",
+    "existingLogin": "Existing User? Login",
+    "continueAsGuest": "Continue as Guest",
+    "footer": "By continuing, you agree to receive a respectful and personalized spiritual experience from AvdheshanandG Mission.",
+    "slides": {
+      "panchangEyebrow": "Daily Guidance",
+      "panchangTitle": "Begin each day with Panchang and sacred timing",
+      "panchangDescription": "Stay aligned with tithi, nakshatra, muhurta, and city-specific spiritual timing.",
+      "scheduleEyebrow": "Stay Connected",
+      "scheduleTitle": "Follow Swami Ji's latest schedule and darshan updates",
+      "scheduleDescription": "See Ashram visits, public programmes, and approved appointment windows in one place.",
+      "wisdomEyebrow": "Listen & Learn",
+      "wisdomTitle": "Read, watch, and reflect with Swami Ji's teachings",
+      "wisdomDescription": "Access articles, books, podcasts, and video series curated for your daily sadhana.",
+      "sevaEyebrow": "Offer Seva",
+      "sevaTitle": "Support seva, volunteer, and stay part of the mission",
+      "sevaDescription": "Donate securely, explore Ashram initiatives, and stay close to the work that matters."
+    },
+    "permissionsEyebrow": "Stay Informed",
+    "notificationsTitle": "Receive sacred reminders and timely updates",
+    "notificationsSubtitle": "Let us gently remind you about daily Panchang, important darshan updates, and special satsang moments.",
+    "notificationsBenefits": {
+      "panchang": "Daily Panchang and Brahma Muhurta reminders",
+      "schedule": "Swami Ji's schedule changes and darshan alerts",
+      "satsang": "Special satsang, event, and Ashram update notifications"
+    },
+    "enableNotifications": "Yes, keep me updated",
+    "maybeLater": "Maybe later",
+    "locationEyebrow": "Make Panchang Personal",
+    "locationTitle": "Use your location for more accurate Panchang guidance",
+    "locationSubtitle": "Your city helps us show sunrise, muhurta, and festival timing with better accuracy.",
+    "locationBenefits": {
+      "panchang": "More accurate Panchang for your current city",
+      "city": "Faster city-based schedule and Ashram guidance"
+    },
+    "useMyLocation": "Use My Location",
+    "chooseLater": "Choose city later",
+    "locationErrorTitle": "Unable to detect location",
+    "locationErrorMessage": "We could not access your location right now. You can choose your city later from Panchang."
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error",

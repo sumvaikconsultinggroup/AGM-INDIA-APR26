@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import Constants from 'expo-constants';
+import { getResolvedUserApiBaseUrl, resolveUserApiBaseUrl } from './api';
 
 type Primitive = string | number | boolean | null | undefined;
 type QueryParams = Record<string, Primitive>;
@@ -8,6 +9,7 @@ const KNOWN_NON_API_BASE_URLS = new Set([
   'https://swami-g-dashboard.vercel.app',
   'https://www.avdheshanandg.org',
 ]);
+const PRODUCTION_API_FALLBACKS = ['https://admin.avdheshanandg.org'];
 
 let cachedWorkingBaseUrl: string | null = null;
 const invalidBaseUrls = new Set<string>();
@@ -33,33 +35,41 @@ function getCandidateBaseUrls(): string[] {
     __DEV__ && (!fromEnv || KNOWN_NON_API_BASE_URLS.has(fromEnv));
 
   const candidates: string[] = [];
+  const push = (value?: string | null) => {
+    const normalized = normalizeBaseUrl(value || undefined);
+    if (!normalized || invalidBaseUrls.has(normalized) || candidates.includes(normalized)) return;
+    candidates.push(normalized);
+  };
+
+  push(cachedWorkingBaseUrl);
+  push(getResolvedUserApiBaseUrl());
+
   if (shouldPreferLocalDev && expoHost) {
-    candidates.push(`http://${expoHost}:3000`);
-    candidates.push(`http://${expoHost}:4010`);
+    push(`http://${expoHost}:3000`);
+    push(`http://${expoHost}:4010`);
   }
   if (shouldPreferLocalDev) {
-    candidates.push('http://localhost:3000');
-    candidates.push('http://localhost:4010');
-    candidates.push('http://127.0.0.1:3000');
-    candidates.push('http://127.0.0.1:4010');
+    push('http://localhost:3000');
+    push('http://localhost:4010');
+    push('http://127.0.0.1:3000');
+    push('http://127.0.0.1:4010');
   }
   if (fromEnv && !KNOWN_NON_API_BASE_URLS.has(fromEnv)) {
-    candidates.push(fromEnv);
+    push(fromEnv);
   }
+  PRODUCTION_API_FALLBACKS.forEach(push);
   if (!shouldPreferLocalDev && __DEV__ && expoHost) {
-    candidates.push(`http://${expoHost}:3000`);
-    candidates.push(`http://${expoHost}:4010`);
+    push(`http://${expoHost}:3000`);
+    push(`http://${expoHost}:4010`);
   }
   if (!shouldPreferLocalDev && __DEV__) {
-    candidates.push('http://localhost:3000');
-    candidates.push('http://localhost:4010');
-    candidates.push('http://127.0.0.1:3000');
-    candidates.push('http://127.0.0.1:4010');
+    push('http://localhost:3000');
+    push('http://localhost:4010');
+    push('http://127.0.0.1:3000');
+    push('http://127.0.0.1:4010');
   }
 
-  return Array.from(
-    new Set(candidates.map((u) => normalizeBaseUrl(u)).filter(Boolean))
-  ).filter((url) => !invalidBaseUrls.has(url));
+  return candidates;
 }
 
 function isHtmlResponse(data: unknown): boolean {
@@ -80,6 +90,15 @@ async function requestPanchangApi<T>(
   path: string,
   params?: QueryParams,
 ): Promise<T> {
+  try {
+    const resolvedUserApi = await resolveUserApiBaseUrl();
+    if (resolvedUserApi && !invalidBaseUrls.has(resolvedUserApi)) {
+      cachedWorkingBaseUrl = resolvedUserApi;
+    }
+  } catch {
+    // We'll continue through the panchang-specific candidate list below.
+  }
+
   const candidates = getCandidateBaseUrls();
   const ordered = cachedWorkingBaseUrl
     ? [cachedWorkingBaseUrl, ...candidates.filter((url) => url !== cachedWorkingBaseUrl)]

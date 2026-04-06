@@ -235,7 +235,15 @@ export default function DailySchedulePage() {
   const handleImportLatestPoster = async () => {
     try {
       setIsImportingPoster(true);
-      const response = await fetch('/api/schedule/import-latest', { method: 'POST' });
+      const confirmed = window.confirm(
+        'This will replace the current schedule database with the poster dataset. Continue only if you want to overwrite the live schedule.'
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      const response = await fetch('/api/schedule/import-latest?replace=1', { method: 'POST' });
       const data = await response.json();
 
       if (!response.ok || !data?.success) {
@@ -279,7 +287,7 @@ export default function DailySchedulePage() {
               disabled={isImportingPoster}
             >
               <Download className="mr-2 h-4 w-4" />
-              <span>{isImportingPoster ? 'Importing...' : 'Import Poster'}</span>
+              <span>{isImportingPoster ? 'Replacing...' : 'Replace With Poster'}</span>
             </Button>
             <Button variant="outline" onClick={handleExportPDF} className="w-full sm:w-auto">
               <Download className="mr-2 h-4 w-4" />

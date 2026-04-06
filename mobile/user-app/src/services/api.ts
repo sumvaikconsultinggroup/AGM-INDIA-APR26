@@ -1,19 +1,126 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 
-const API_BASE_URL =
-  (process.env.EXPO_PUBLIC_API_URL || '').trim().replace(/\/+$/, '') || 'http://localhost:3000';
+const KNOWN_STALE_OR_NON_API_BASE_URLS = new Set([
+  'https://swami-g-dashboard.vercel.app',
+  'https://www.avdheshanandg.org',
+]);
+
+const PRODUCTION_API_FALLBACKS = ['https://admin.avdheshanandg.org'];
+
+let cachedWorkingBaseUrl: string | null = null;
+const invalidBaseUrls = new Set<string>();
+
+function normalizeBaseUrl(url?: string | null): string | null {
+  if (!url) return null;
+  const normalized = url.trim().replace(/\/+$/, '');
+  return normalized || null;
+}
+
+function getExpoDevHost(): string | null {
+  const hostUri =
+    Constants.expoConfig?.hostUri ||
+    (Constants as any).manifest2?.extra?.expoGo?.debuggerHost ||
+    (Constants as any).manifest?.debuggerHost;
+
+  if (!hostUri) return null;
+  return String(hostUri).split(':')[0] || null;
+}
+
+function getCandidateBaseUrls(): string[] {
+  const fromEnv = normalizeBaseUrl(process.env.EXPO_PUBLIC_API_URL);
+  const expoHost = getExpoDevHost();
+  const shouldPreferLocalDev =
+    __DEV__ && (!fromEnv || KNOWN_STALE_OR_NON_API_BASE_URLS.has(fromEnv));
+
+  const candidates: string[] = [];
+  const push = (value?: string | null) => {
+    const normalized = normalizeBaseUrl(value);
+    if (!normalized || invalidBaseUrls.has(normalized) || candidates.includes(normalized)) return;
+    candidates.push(normalized);
+  };
+
+  push(cachedWorkingBaseUrl);
+
+  if (shouldPreferLocalDev) {
+    push(expoHost ? `http://${expoHost}:3001` : null);
+    push(expoHost ? `http://${expoHost}:3000` : null);
+    push('http://localhost:3001');
+    push('http://localhost:3000');
+    push('http://127.0.0.1:3001');
+    push('http://127.0.0.1:3000');
+  }
+
+  if (fromEnv && !KNOWN_STALE_OR_NON_API_BASE_URLS.has(fromEnv)) {
+    push(fromEnv);
+  }
+
+  PRODUCTION_API_FALLBACKS.forEach(push);
+
+  if (!shouldPreferLocalDev && __DEV__) {
+    push(expoHost ? `http://${expoHost}:3001` : null);
+    push(expoHost ? `http://${expoHost}:3000` : null);
+    push('http://localhost:3001');
+    push('http://localhost:3000');
+    push('http://127.0.0.1:3001');
+    push('http://127.0.0.1:3000');
+  }
+
+  return candidates;
+}
+
+function isHtmlPayload(data: unknown): boolean {
+  return typeof data === 'string' && /<!doctype html|<html/i.test(data);
+}
+
+async function probeBaseUrl(baseUrl: string): Promise<boolean> {
+  try {
+    const response = await axios.get(`${baseUrl}/api/health`, {
+      timeout: 5000,
+      headers: { Accept: 'application/json' },
+    });
+
+    if (isHtmlPayload(response.data)) {
+      invalidBaseUrls.add(baseUrl);
+      return false;
+    }
+
+    cachedWorkingBaseUrl = baseUrl;
+    return true;
+  } catch {
+    invalidBaseUrls.add(baseUrl);
+    return false;
+  }
+}
+
+export async function resolveUserApiBaseUrl(): Promise<string> {
+  if (cachedWorkingBaseUrl) return cachedWorkingBaseUrl;
+
+  const candidates = getCandidateBaseUrls();
+  for (const candidate of candidates) {
+    const ok = await probeBaseUrl(candidate);
+    if (ok) return candidate;
+  }
+
+  throw new Error(
+    'User API unavailable. Start the dashboard backend or set EXPO_PUBLIC_API_URL to a working API.'
+  );
+}
 
 const api = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
+    Accept: 'application/json',
   },
 });
 
 // Request interceptor for auth token
 api.interceptors.request.use(async (config) => {
+  const baseUrl = await resolveUserApiBaseUrl();
+  config.baseURL = `${baseUrl}/api`;
+
   const token = await SecureStore.getItemAsync('auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -37,12 +144,16 @@ api.interceptors.response.use(
     }
     return response;
   },
-  (error) => {
+  (error: AxiosError) => {
     if (error.response?.status === 401) {
       SecureStore.deleteItemAsync('auth_token');
     }
     return Promise.reject(error);
   }
 );
+
+export function getResolvedUserApiBaseUrl() {
+  return cachedWorkingBaseUrl;
+}
 
 export default api;

@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import * as Linking from 'expo-linking';
 import { useAuth } from '../context/AuthContext';
+import { useOnboarding } from '../context/OnboardingContext';
 import { colors } from '../theme';
 
 // Auth screens
@@ -18,6 +19,11 @@ import {
   ForgotPasswordScreen,
   ResetPasswordScreen,
 } from '../screens/auth';
+import {
+  OnboardingLocationScreen,
+  OnboardingNotificationsScreen,
+  OnboardingWelcomeScreen,
+} from '../screens/onboarding';
 
 // Tab screens
 import { HomeScreen } from '../screens/home';
@@ -60,6 +66,9 @@ export type RootStackParamList = {
   PanchangCalendar: { lat?: number; lng?: number; cityName?: string; timezone?: string };
   NotificationPreferences: undefined;
   DonationHistory: undefined;
+  OnboardingWelcome: undefined;
+  OnboardingNotifications: undefined;
+  OnboardingLocation: undefined;
 };
 
 export type MainTabParamList = {
@@ -197,10 +206,11 @@ function MainTabs() {
 }
 
 export function AppNavigator() {
-  const { isLoading } = useAuth();
+  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading: onboardingLoading, hasCompletedOnboarding } = useOnboarding();
   const { t } = useTranslation();
 
-  if (isLoading) {
+  if (isLoading || onboardingLoading) {
     return (
       <View
         style={{
@@ -215,6 +225,8 @@ export function AppNavigator() {
     );
   }
 
+  const showOnboarding = !hasCompletedOnboarding && !isAuthenticated;
+
   return (
     <NavigationContainer linking={linking}>
       <Stack.Navigator
@@ -222,8 +234,23 @@ export function AppNavigator() {
           headerShown: false,
         }}
       >
-        {/* Main app tabs - always accessible */}
-        <Stack.Screen name="Main" component={MainTabs} />
+        {showOnboarding ? (
+          <>
+            <Stack.Screen name="OnboardingWelcome" component={OnboardingWelcomeScreen} />
+            <Stack.Screen
+              name="OnboardingNotifications"
+              component={OnboardingNotificationsScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="OnboardingLocation"
+              component={OnboardingLocationScreen}
+              options={{ animation: 'slide_from_right' }}
+            />
+          </>
+        ) : (
+          <Stack.Screen name="Main" component={MainTabs} />
+        )}
 
         {/* Auth screens as modals */}
         <Stack.Screen
