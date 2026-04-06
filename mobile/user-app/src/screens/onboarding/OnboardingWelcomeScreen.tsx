@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
   Image,
+  ImageBackground,
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
@@ -19,7 +20,8 @@ import { colors, borderRadius, spacing, shadows } from '../../theme';
 
 const { width } = Dimensions.get('window');
 const SLIDE_WIDTH = width - spacing.lg * 2;
-const LOGO_SOURCE = require('../../../assets/images/avdheshanandg-mission-logo.jpg');
+const LOGO_SOURCE = require('../../../assets/images/avdheshanandg-mission-logo.png');
+const SWAMIJI_SOURCE = require('../../../assets/images/swamiji-onboarding.jpg');
 
 type Slide = {
   icon: React.ComponentProps<typeof Icon>['name'];
@@ -30,7 +32,7 @@ type Slide = {
 
 export function OnboardingWelcomeScreen({ navigation }: any) {
   const { t } = useTranslation();
-  const { updateState, completeOnboarding } = useOnboarding();
+  const { updateState } = useOnboarding();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [languageVisible, setLanguageVisible] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -101,23 +103,46 @@ export function OnboardingWelcomeScreen({ navigation }: any) {
       >
         {slides.map((slide, index) => (
           <View key={slide.title} style={styles.slide}>
-            <LinearGradient
-              colors={index % 2 === 0 ? ['#FFF4D8', '#FFE7B6'] : ['#FFE8D7', '#FFD2B2']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.visualCard}
-            >
-              <View style={styles.visualHalo} />
-              <View style={styles.visualTopRow}>
-                <View style={styles.visualIconWrap}>
-                  <Icon name={slide.icon} size={46} color={colors.primary.maroon} />
+            {index === 0 ? (
+              <ImageBackground source={SWAMIJI_SOURCE} style={styles.heroPhotoCard} imageStyle={styles.heroPhotoImage}>
+                <LinearGradient
+                  colors={['rgba(55,28,10,0.02)', 'rgba(55,28,10,0.55)', 'rgba(55,28,10,0.88)']}
+                  start={{ x: 0.5, y: 0.05 }}
+                  end={{ x: 0.5, y: 1 }}
+                  style={styles.heroPhotoOverlay}
+                >
+                  <View style={styles.visualBrandChip}>
+                    <Image source={LOGO_SOURCE} style={styles.visualBrandLogo} />
+                    <Text style={styles.visualBrandText}>{t('onboarding.brand')}</Text>
+                  </View>
+                  <View style={styles.heroBottomCopy}>
+                    <Text style={styles.heroPhotoEyebrow}>{slide.eyebrow}</Text>
+                    <Text style={styles.heroPhotoTitle}>{slide.title}</Text>
+                    <Text style={styles.heroPhotoDescription}>{slide.description}</Text>
+                  </View>
+                </LinearGradient>
+              </ImageBackground>
+            ) : (
+              <LinearGradient
+                colors={index % 2 === 0 ? ['#FFF4D8', '#FFE7B6'] : ['#FFE8D7', '#FFD2B2']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.visualCard}
+              >
+                <View style={styles.visualHalo} />
+                <View style={styles.visualTopRow}>
+                  <View style={styles.visualIconWrap}>
+                    <Icon name={slide.icon} size={46} color={colors.primary.maroon} />
+                  </View>
+                  <View style={styles.visualSealWrap}>
+                    <Image source={LOGO_SOURCE} style={styles.visualSeal} />
+                  </View>
                 </View>
-                <Image source={LOGO_SOURCE} style={styles.visualLogo} />
-              </View>
-              <Text style={styles.visualEyebrow}>{slide.eyebrow}</Text>
-              <Text style={styles.visualTitle}>{slide.title}</Text>
-              <Text style={styles.visualDescription}>{slide.description}</Text>
-            </LinearGradient>
+                <Text style={styles.visualEyebrow}>{slide.eyebrow}</Text>
+                <Text style={styles.visualTitle}>{slide.title}</Text>
+                <Text style={styles.visualDescription}>{slide.description}</Text>
+              </LinearGradient>
+            )}
           </View>
         ))}
       </ScrollView>
@@ -146,14 +171,6 @@ export function OnboardingWelcomeScreen({ navigation }: any) {
           activeOpacity={0.8}
         >
           <Text style={styles.secondaryButtonText}>{t('onboarding.existingLogin')}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.ghostButton}
-          onPress={() => completeOnboarding()}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.ghostButtonText}>{t('onboarding.continueAsGuest')}</Text>
         </TouchableOpacity>
 
         <Text style={styles.footerText}>{t('onboarding.footer')}</Text>
@@ -189,10 +206,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   brandLogo: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: '#FFF9EF',
+    borderWidth: 1,
+    borderColor: '#F1DEC0',
   },
   brandTextWrap: {
     flex: 1,
@@ -224,6 +243,67 @@ const styles = StyleSheet.create({
   slide: {
     width: SLIDE_WIDTH,
     marginRight: spacing.md,
+  },
+  heroPhotoCard: {
+    minHeight: 420,
+    borderRadius: 28,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#EBCB8F',
+    ...shadows.temple,
+  },
+  heroPhotoImage: {
+    borderRadius: 28,
+    resizeMode: 'cover',
+  },
+  heroPhotoOverlay: {
+    flex: 1,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.xl,
+    justifyContent: 'space-between',
+  },
+  visualBrandChip: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: 'rgba(255,249,239,0.88)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 999,
+  },
+  visualBrandLogo: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+  },
+  visualBrandText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary.maroon,
+  },
+  heroBottomCopy: {
+    paddingTop: spacing.xxl,
+  },
+  heroPhotoEyebrow: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#FFE7B0',
+    marginBottom: spacing.sm,
+  },
+  heroPhotoTitle: {
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: '800',
+    color: colors.text.white,
+  },
+  heroPhotoDescription: {
+    marginTop: spacing.md,
+    fontSize: 16,
+    lineHeight: 24,
+    color: 'rgba(255,249,239,0.92)',
   },
   visualCard: {
     borderRadius: 28,
@@ -259,11 +339,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  visualLogo: {
+  visualSealWrap: {
     width: 74,
     height: 74,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.72)',
+    borderRadius: 37,
+    backgroundColor: 'rgba(255,252,246,0.72)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(240,214,162,0.65)',
+  },
+  visualSeal: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
   },
   visualEyebrow: {
     fontSize: 12,
@@ -343,16 +432,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: colors.primary.maroon,
-  },
-  ghostButton: {
-    marginTop: spacing.xs,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-  },
-  ghostButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.text.secondary,
   },
   footerText: {
     marginTop: spacing.md,

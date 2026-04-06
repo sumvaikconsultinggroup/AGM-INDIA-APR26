@@ -16,7 +16,7 @@ import { useOnboarding } from '../../context/OnboardingContext';
 import { colors, spacing, shadows } from '../../theme';
 
 const STORAGE_KEY_CITY = '@panchang_selected_city';
-const LOGO_SOURCE = require('../../../assets/images/avdheshanandg-mission-logo.jpg');
+const LOGO_SOURCE = require('../../../assets/images/avdheshanandg-mission-logo.png');
 
 export function OnboardingLocationScreen() {
   const { t } = useTranslation();

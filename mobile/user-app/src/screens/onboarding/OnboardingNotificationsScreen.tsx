@@ -13,7 +13,7 @@ import { registerForPushNotifications } from '../../services/notifications';
 import { useOnboarding } from '../../context/OnboardingContext';
 import { colors, spacing, shadows } from '../../theme';
 
-const LOGO_SOURCE = require('../../../assets/images/avdheshanandg-mission-logo.jpg');
+const LOGO_SOURCE = require('../../../assets/images/avdheshanandg-mission-logo.png');
 
 export function OnboardingNotificationsScreen({ navigation }: any) {
   const { t } = useTranslation();
