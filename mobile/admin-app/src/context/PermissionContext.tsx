@@ -36,6 +36,8 @@ export type ModuleId =
   | 'dailyVichar'
   | 'chatbot'
   | 'notifications'
+  | 'sevaBoard'
+  | 'smartNotes'
   | 'website'
   | 'services';
 
@@ -76,7 +78,7 @@ const ALL_MODULES: ModuleId[] = [
   'dashboard', 'events', 'donations', 'donationsRecord', 'schedule', 'users',
   'books', 'articles', 'videos', 'podcasts', 'rooms', 'volunteers', 'messages',
   'glimpse', 'imagelibrary', 'printMedia', 'mantraDiksha', 'dailySchedule',
-  'livestream', 'tvSchedule', 'dailyVichar', 'chatbot', 'notifications', 'website', 'services',
+  'livestream', 'tvSchedule', 'dailyVichar', 'chatbot', 'notifications', 'sevaBoard', 'smartNotes', 'website', 'services',
 ];
 
 const CONTENT_MODULES: ModuleId[] = [
@@ -101,7 +103,7 @@ export const ROLE_TEMPLATES: Record<RoleName, PermissionMap> = {
 
   moderator: Object.fromEntries(
     ALL_MODULES.map(m => {
-      if (['volunteers', 'messages', 'rooms'].includes(m)) return [m, { ...MODERATE }];
+      if (['volunteers', 'messages', 'rooms', 'sevaBoard', 'mantraDiksha'].includes(m)) return [m, { ...MODERATE }];
       if (m === 'dashboard') return [m, { ...VIEW_ONLY }];
       return [m, { ...VIEW_ONLY }];
     })

@@ -14,6 +14,7 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { colors, spacing, borderRadius, shadows } from '../../theme';
 import { Podcast } from '../../types';
@@ -25,6 +26,7 @@ interface RouteParams {
 export function PodcastDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const { podcastId } = route.params as RouteParams;
 
   const [podcast, setPodcast] = useState<Podcast | null>(null);
@@ -50,7 +52,7 @@ export function PodcastDetailScreen() {
       setRelatedEpisodes(episodes.slice(0, 5));
     } catch (error) {
       console.error('Error fetching podcast details:', error);
-      Alert.alert('Error', 'Failed to load podcast details');
+      Alert.alert(t('common.error'), t('details.podcast.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -64,11 +66,11 @@ export function PodcastDetailScreen() {
         await Linking.openURL(url);
         setTimeout(() => setPlaying(false), 1000);
       } else {
-        Alert.alert('Unable to Play', 'Cannot open this URL');
+        Alert.alert(t('details.podcast.unableToPlayTitle'), t('details.podcast.unableToPlayMessage'));
       }
     } catch (error) {
       console.error('Error playing:', error);
-      Alert.alert('Error', 'Failed to open link');
+      Alert.alert(t('common.error'), t('details.podcast.openFailed'));
       setPlaying(false);
     }
   }, []);
@@ -112,7 +114,7 @@ export function PodcastDetailScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary.saffron} />
-        <Text style={styles.loadingText}>Loading podcast...</Text>
+        <Text style={styles.loadingText}>{t('details.podcast.loading')}</Text>
       </View>
     );
   }
@@ -121,9 +123,9 @@ export function PodcastDetailScreen() {
     return (
       <View style={styles.errorContainer}>
         <Icon name="podcast" size={64} color={colors.text.secondary} />
-        <Text style={styles.errorText}>Podcast not found</Text>
+        <Text style={styles.errorText}>{t('details.podcast.notFound')}</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+          <Text style={styles.backButtonText}>{t('common.goBack')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -139,7 +141,7 @@ export function PodcastDetailScreen() {
         >
           <Icon name="arrow-left" size={24} color={colors.primary.maroon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Podcast</Text>
+        <Text style={styles.headerTitle}>{t('details.podcast.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -216,7 +218,7 @@ export function PodcastDetailScreen() {
               ) : (
                 <>
                   <Icon name="play" size={32} color={colors.text.white} />
-                  <Text style={styles.playButtonText}>Listen Now</Text>
+                  <Text style={styles.playButtonText}>{t('details.podcast.listenNow')}</Text>
                 </>
               )}
             </LinearGradient>
@@ -227,7 +229,7 @@ export function PodcastDetailScreen() {
             <View style={styles.descriptionSection}>
               <View style={styles.sectionTitleContainer}>
                 <View style={styles.goldAccent} />
-                <Text style={styles.sectionTitle}>About This Episode</Text>
+                <Text style={styles.sectionTitle}>{t('details.podcast.aboutThisEpisode')}</Text>
               </View>
               <View style={styles.descriptionCard}>
                 <Text style={styles.descriptionText}>{podcast.description}</Text>
@@ -241,7 +243,7 @@ export function PodcastDetailScreen() {
           <View style={styles.relatedSection}>
             <View style={styles.sectionTitleContainer}>
               <View style={styles.goldAccent} />
-              <Text style={styles.sectionTitle}>More Episodes</Text>
+              <Text style={styles.sectionTitle}>{t('details.podcast.moreEpisodes')}</Text>
             </View>
             <FlatList
               data={relatedEpisodes}
@@ -255,9 +257,7 @@ export function PodcastDetailScreen() {
         {/* Spiritual Quote */}
         <View style={styles.quoteSection}>
           <Icon name="headphones" size={28} color={colors.gold.main} />
-          <Text style={styles.quoteText}>
-            "Listen with your heart, for wisdom speaks in whispers."
-          </Text>
+          <Text style={styles.quoteText}>{t('details.podcast.quote')}</Text>
         </View>
       </ScrollView>
     </View>

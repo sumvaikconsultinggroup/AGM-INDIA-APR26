@@ -15,6 +15,10 @@ export async function POST(req) {
       donationType,
       panNumber,
       taxBenefitOptIn,
+      isAnonymous,
+      dedicationType,
+      dedicatedTo,
+      dedicationMessage,
       source,
     } = body;
 
@@ -47,13 +51,23 @@ export async function POST(req) {
         donation_type: donationType || 'one_time',
         pan_number: panNumber || '',
         tax_benefit_opt_in: taxBenefitOptIn ? 'true' : 'false',
+        is_anonymous: isAnonymous ? 'true' : 'false',
+        dedication_type: dedicationType || 'general',
+        dedicated_to: dedicatedTo || '',
+        dedication_message: dedicationMessage || '',
         source: source || 'website',
       },
     };
 
     const order = await razorpay.orders.create(options);
 
-    return new Response(JSON.stringify({ orderId: order.id }), {
+    return new Response(JSON.stringify({
+      success: true,
+      orderId: order.id,
+      key: process.env.RAZORPAY_KEY_ID,
+      amount: order.amount / 100,
+      currency: order.currency,
+    }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

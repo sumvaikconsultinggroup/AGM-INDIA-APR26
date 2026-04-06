@@ -13,6 +13,7 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { colors, spacing, borderRadius, shadows } from '../../theme';
 import { Book } from '../../types';
@@ -31,6 +32,7 @@ interface ExtendedBook extends Book {
 export function BookDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const { bookId } = route.params as RouteParams;
 
   const [book, setBook] = useState<ExtendedBook | null>(null);
@@ -46,7 +48,7 @@ export function BookDetailScreen() {
       setBook(response.data);
     } catch (error) {
       console.error('Error fetching book details:', error);
-      Alert.alert('Error', 'Failed to load book details');
+      Alert.alert(t('common.error'), t('details.book.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -54,9 +56,9 @@ export function BookDetailScreen() {
 
   const handlePurchase = () => {
     Alert.alert(
-      'Purchase Request',
-      `Thank you for your interest in "${book?.title}".\n\nOur team will contact you shortly to complete your purchase. May this sacred knowledge illuminate your path.`,
-      [{ text: 'Hari Om', style: 'default' }]
+      t('details.book.purchaseRequestTitle'),
+      t('details.book.purchaseRequestMessage', { title: book?.title }),
+      [{ text: t('home.welcome'), style: 'default' }]
     );
   };
 
@@ -66,7 +68,7 @@ export function BookDetailScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary.saffron} />
-        <Text style={styles.loadingText}>Loading book...</Text>
+        <Text style={styles.loadingText}>{t('details.book.loading')}</Text>
       </View>
     );
   }
@@ -75,9 +77,9 @@ export function BookDetailScreen() {
     return (
       <View style={styles.errorContainer}>
         <Icon name="book-alert" size={64} color={colors.text.secondary} />
-        <Text style={styles.errorText}>Book not found</Text>
+        <Text style={styles.errorText}>{t('details.book.notFound')}</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+          <Text style={styles.backButtonText}>{t('common.goBack')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -93,7 +95,7 @@ export function BookDetailScreen() {
         >
           <Icon name="arrow-left" size={24} color={colors.primary.maroon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Book Details</Text>
+        <Text style={styles.headerTitle}>{t('details.book.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -130,7 +132,7 @@ export function BookDetailScreen() {
               color={colors.text.white}
             />
             <Text style={styles.stockText}>
-              {isInStock ? 'In Stock' : 'Out of Stock'}
+              {isInStock ? t('details.book.inStock') : t('details.book.outOfStock')}
             </Text>
           </View>
         </View>
@@ -138,11 +140,11 @@ export function BookDetailScreen() {
         {/* Book Info Card */}
         <View style={styles.infoCard}>
           <Text style={styles.bookTitle}>{book.title}</Text>
-          <Text style={styles.bookAuthor}>By {book.author}</Text>
+          <Text style={styles.bookAuthor}>{t('details.book.by', { author: book.author })}</Text>
 
           {/* Price */}
           <View style={styles.priceContainer}>
-            <Text style={styles.priceLabel}>Price</Text>
+            <Text style={styles.priceLabel}>{t('details.book.price')}</Text>
             <Text style={styles.priceValue}>
               ₹{book.price.toLocaleString('en-IN')}
             </Text>
@@ -153,28 +155,28 @@ export function BookDetailScreen() {
             {book.isbn && (
               <View style={styles.detailItem}>
                 <Icon name="barcode" size={20} color={colors.gold.main} />
-                <Text style={styles.detailLabel}>ISBN</Text>
+                <Text style={styles.detailLabel}>{t('details.book.isbn')}</Text>
                 <Text style={styles.detailValue}>{book.isbn}</Text>
               </View>
             )}
             {book.pages && (
               <View style={styles.detailItem}>
                 <Icon name="book-open-page-variant" size={20} color={colors.gold.main} />
-                <Text style={styles.detailLabel}>Pages</Text>
+                <Text style={styles.detailLabel}>{t('details.book.pages')}</Text>
                 <Text style={styles.detailValue}>{book.pages}</Text>
               </View>
             )}
             {book.language && (
               <View style={styles.detailItem}>
                 <Icon name="translate" size={20} color={colors.gold.main} />
-                <Text style={styles.detailLabel}>Language</Text>
+                <Text style={styles.detailLabel}>{t('details.book.language')}</Text>
                 <Text style={styles.detailValue}>{book.language}</Text>
               </View>
             )}
             {book.genre && (
               <View style={styles.detailItem}>
                 <Icon name="tag" size={20} color={colors.gold.main} />
-                <Text style={styles.detailLabel}>Genre</Text>
+                <Text style={styles.detailLabel}>{t('details.book.genre')}</Text>
                 <Text style={styles.detailValue}>{book.genre}</Text>
               </View>
             )}
@@ -186,7 +188,7 @@ export function BookDetailScreen() {
           <View style={styles.descriptionSection}>
             <View style={styles.sectionTitleContainer}>
               <View style={styles.goldAccent} />
-              <Text style={styles.sectionTitle}>About This Book</Text>
+              <Text style={styles.sectionTitle}>{t('details.book.aboutThisBook')}</Text>
             </View>
             <View style={styles.descriptionCard}>
               <Text style={styles.descriptionText}>{book.description}</Text>
@@ -197,9 +199,7 @@ export function BookDetailScreen() {
         {/* Spiritual Quote */}
         <View style={styles.quoteSection}>
           <Icon name="book-heart" size={28} color={colors.gold.main} />
-          <Text style={styles.quoteText}>
-            "Books are the carriers of civilization. Without books, history is silent."
-          </Text>
+          <Text style={styles.quoteText}>{t('details.book.quote')}</Text>
         </View>
       </ScrollView>
 
@@ -226,7 +226,7 @@ export function BookDetailScreen() {
               color={colors.text.white}
             />
             <Text style={styles.purchaseButtonText}>
-              {isInStock ? 'Purchase Book' : 'Currently Unavailable'}
+              {isInStock ? t('details.book.purchaseBook') : t('details.book.currentlyUnavailable')}
             </Text>
           </LinearGradient>
         </TouchableOpacity>

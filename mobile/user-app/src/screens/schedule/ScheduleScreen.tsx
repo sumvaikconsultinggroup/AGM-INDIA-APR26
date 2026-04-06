@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -78,26 +78,12 @@ type RequestForm = {
   additionalInfo: string;
 };
 
-const PURPOSE_OPTIONS = [
-  'Personal Guidance',
-  'Spiritual Discussion',
-  'Community Event',
-  'Organization Collaboration',
-  'Media Interview',
-  'Educational Institution Visit',
-  'Cultural Program',
-  'Charitable Work Discussion',
-  'Other',
-];
-
-const PREFERRED_TIMES = ['Morning', 'Afternoon', 'Evening', 'Whole Day'];
-
 const EMPTY_FORM: RequestForm = {
   name: '',
   email: '',
   phone: '',
-  purpose: 'Personal Guidance',
-  preferredTime: 'Morning',
+  purpose: '',
+  preferredTime: '',
   additionalInfo: '',
 };
 
@@ -116,6 +102,29 @@ export function ScheduleScreen() {
   const [requestForm, setRequestForm] = useState<RequestForm>(EMPTY_FORM);
 
   const locale = i18n.language?.startsWith('hi') ? 'hi-IN' : 'en-IN';
+  const purposeOptions = useMemo(
+    () => [
+      t('schedule.purposeOptions.personalGuidance'),
+      t('schedule.purposeOptions.spiritualDiscussion'),
+      t('schedule.purposeOptions.communityEvent'),
+      t('schedule.purposeOptions.organizationCollaboration'),
+      t('schedule.purposeOptions.mediaInterview'),
+      t('schedule.purposeOptions.educationalVisit'),
+      t('schedule.purposeOptions.culturalProgram'),
+      t('schedule.purposeOptions.charitableDiscussion'),
+      t('schedule.purposeOptions.other'),
+    ],
+    [t]
+  );
+  const preferredTimes = useMemo(
+    () => [
+      t('schedule.preferredTimes.morning'),
+      t('schedule.preferredTimes.afternoon'),
+      t('schedule.preferredTimes.evening'),
+      t('schedule.preferredTimes.wholeDay'),
+    ],
+    [t]
+  );
 
   const pickLocalizedText = (localized?: LocalizedText, fallback?: string) => {
     if (i18n.language?.startsWith('hi')) {
@@ -219,7 +228,7 @@ export function ScheduleScreen() {
 
   const openRequestModal = (schedule: Schedule) => {
     if (!isAuthenticated) {
-      Alert.alert('Sign In Required', 'Please sign in to request an appointment with Swami Ji.');
+      Alert.alert(t('schedule.alerts.signInRequiredTitle'), t('schedule.alerts.signInRequiredMessage'));
       return;
     }
 
@@ -230,6 +239,8 @@ export function ScheduleScreen() {
       name: user?.name || '',
       email: user?.email || '',
       phone: user?.phone || '',
+      purpose: t('schedule.purposeOptions.personalGuidance'),
+      preferredTime: t('schedule.preferredTimes.morning'),
     });
     setRequestModalVisible(true);
   };
@@ -243,12 +254,12 @@ export function ScheduleScreen() {
     const selectedSlot = activeSlots[selectedSlotIndex];
 
     if (!selectedSlot?.startDate) {
-      Alert.alert('Unavailable', 'This schedule does not have a requestable date right now.');
+      Alert.alert(t('schedule.alerts.unavailableTitle'), t('schedule.alerts.unavailableMessage'));
       return;
     }
 
     if (!requestForm.name || !requestForm.email || !requestForm.phone) {
-      Alert.alert('Missing Details', 'Please fill in your name, email, and phone.');
+      Alert.alert(t('schedule.alerts.missingDetailsTitle'), t('schedule.alerts.missingDetailsMessage'));
       return;
     }
 
@@ -278,13 +289,13 @@ export function ScheduleScreen() {
       setRequestModalVisible(false);
       await fetchData();
       Alert.alert(
-        'Request Sent',
-        'Your appointment request has been shared with the seva team. You will receive confirmation after approval.'
+        t('schedule.alerts.requestSentTitle'),
+        t('schedule.alerts.requestSentMessage')
       );
     } catch (error: any) {
       Alert.alert(
-        'Registration Failed',
-        error.response?.data?.message || error.message || 'Please try again later.'
+        t('schedule.alerts.requestFailedTitle'),
+        error.response?.data?.message || error.message || t('schedule.alerts.requestFailedMessage')
       );
     } finally {
       setRegistering(null);
@@ -347,18 +358,21 @@ export function ScheduleScreen() {
         <View style={styles.scheduleContent}>
           <Text style={styles.scheduleTitle}>{title}</Text>
           <Text style={styles.scheduleLocation}>
-            {item.baseLocation || 'Ashram'} • {location}
+            {item.baseLocation || t('schedule.ashram')} • {location}
           </Text>
           {item.dateRange ? <Text style={styles.scheduleTime}>{item.dateRange}</Text> : null}
           {item.changeNote ? <Text style={styles.changeNote}>{item.changeNote}</Text> : null}
 
           <View style={styles.capacityRow}>
             <Text style={styles.capacityText}>
-              {`Open ${item.remainingCapacity ?? item.maxPeople ?? 0} / ${item.totalCapacity ?? item.maxPeople ?? 0}`}
+              {t('schedule.capacityOpen', {
+                open: item.remainingCapacity ?? item.maxPeople ?? 0,
+                total: item.totalCapacity ?? item.maxPeople ?? 0,
+              })}
             </Text>
             {item.isLastMinuteUpdate ? (
               <View style={styles.lastMinuteBadge}>
-                <Text style={styles.lastMinuteBadgeText}>Updated</Text>
+                <Text style={styles.lastMinuteBadgeText}>{t('schedule.updated')}</Text>
               </View>
             ) : null}
           </View>
@@ -378,7 +392,7 @@ export function ScheduleScreen() {
                 <>
                   <Icon name="account-check" size={14} color={colors.text.white} />
                   <Text style={styles.registerButtonText}>
-                    {item.isBlocked ? 'Fully Booked' : 'Request Appointment'}
+                    {item.isBlocked ? t('schedule.fullyBooked') : t('schedule.requestAppointment')}
                   </Text>
                 </>
               )}
@@ -401,7 +415,7 @@ export function ScheduleScreen() {
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Request Appointment</Text>
+              <Text style={styles.modalTitle}>{t('schedule.requestAppointment')}</Text>
               <TouchableOpacity onPress={() => setRequestModalVisible(false)}>
                 <Icon name="close" size={24} color={colors.text.primary} />
               </TouchableOpacity>
@@ -412,11 +426,11 @@ export function ScheduleScreen() {
                 {pickLocalizedText(schedule.publicTitle, schedule.locations)}
               </Text>
               <Text style={styles.modalMetaText}>
-                {schedule.baseLocation || 'Ashram'} •{' '}
+                {schedule.baseLocation || t('schedule.ashram')} •{' '}
                 {pickLocalizedText(schedule.publicLocation, schedule.locations)}
               </Text>
 
-              <Text style={styles.inputLabel}>Choose Schedule Date</Text>
+              <Text style={styles.inputLabel}>{t('schedule.chooseScheduleDate')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.slotScroller}>
                 {activeSlots.map((slot, index) => (
                   <TouchableOpacity
@@ -444,8 +458,11 @@ export function ScheduleScreen() {
                       ]}
                     >
                       {slot.isBlocked
-                        ? 'Full'
-                        : `${slot.remainingCapacity ?? slot.slotCapacity ?? schedule.maxPeople ?? 0} open`}
+                        ? t('schedule.full')
+                        : t('schedule.openCount', {
+                            count:
+                              slot.remainingCapacity ?? slot.slotCapacity ?? schedule.maxPeople ?? 0,
+                          })}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -453,7 +470,7 @@ export function ScheduleScreen() {
 
               {selectedSlot?.startDate ? (
                 <View style={styles.summaryCard}>
-                  <Text style={styles.summaryTitle}>Selected Day</Text>
+                  <Text style={styles.summaryTitle}>{t('schedule.selectedDay')}</Text>
                   <Text style={styles.summaryText}>{formatLongDate(selectedSlot.startDate)}</Text>
                   <Text style={styles.summaryText}>
                     {selectedSlot.period || requestForm.preferredTime} •{' '}
@@ -462,36 +479,36 @@ export function ScheduleScreen() {
                 </View>
               ) : null}
 
-              <Text style={styles.inputLabel}>Full Name</Text>
+              <Text style={styles.inputLabel}>{t('schedule.fullName')}</Text>
               <TextInput
                 style={styles.input}
                 value={requestForm.name}
                 onChangeText={(value) => setRequestForm((prev) => ({ ...prev, name: value }))}
-                placeholder="Your name"
+                placeholder={t('schedule.placeholders.name')}
               />
 
-              <Text style={styles.inputLabel}>Email</Text>
+              <Text style={styles.inputLabel}>{t('schedule.email')}</Text>
               <TextInput
                 style={styles.input}
                 value={requestForm.email}
                 onChangeText={(value) => setRequestForm((prev) => ({ ...prev, email: value }))}
-                placeholder="you@example.com"
+                placeholder={t('schedule.placeholders.email')}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
 
-              <Text style={styles.inputLabel}>Phone</Text>
+              <Text style={styles.inputLabel}>{t('schedule.phone')}</Text>
               <TextInput
                 style={styles.input}
                 value={requestForm.phone}
                 onChangeText={(value) => setRequestForm((prev) => ({ ...prev, phone: value }))}
-                placeholder="+91"
+                placeholder={t('schedule.placeholders.phone')}
                 keyboardType="phone-pad"
               />
 
-              <Text style={styles.inputLabel}>Meeting Purpose</Text>
+              <Text style={styles.inputLabel}>{t('schedule.meetingPurpose')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.optionScroller}>
-                {PURPOSE_OPTIONS.map((option) => (
+                {purposeOptions.map((option) => (
                   <TouchableOpacity
                     key={option}
                     style={[
@@ -512,9 +529,9 @@ export function ScheduleScreen() {
                 ))}
               </ScrollView>
 
-              <Text style={styles.inputLabel}>Preferred Time</Text>
+              <Text style={styles.inputLabel}>{t('schedule.preferredTime')}</Text>
               <View style={styles.inlineOptions}>
-                {PREFERRED_TIMES.map((option) => (
+                {preferredTimes.map((option) => (
                   <TouchableOpacity
                     key={option}
                     style={[
@@ -537,14 +554,14 @@ export function ScheduleScreen() {
                 ))}
               </View>
 
-              <Text style={styles.inputLabel}>Additional Info</Text>
+              <Text style={styles.inputLabel}>{t('schedule.additionalInfo')}</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
                 value={requestForm.additionalInfo}
                 onChangeText={(value) =>
                   setRequestForm((prev) => ({ ...prev, additionalInfo: value }))
                 }
-                placeholder="Tell the seva team why you want to meet Swami Ji"
+                placeholder={t('schedule.placeholders.additionalInfo')}
                 multiline
                 numberOfLines={4}
               />
@@ -561,7 +578,7 @@ export function ScheduleScreen() {
                 {registering === schedule._id ? (
                   <ActivityIndicator size="small" color={colors.text.white} />
                 ) : (
-                  <Text style={styles.submitButtonText}>Submit Appointment Request</Text>
+                  <Text style={styles.submitButtonText}>{t('schedule.submitAppointmentRequest')}</Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
@@ -593,7 +610,7 @@ export function ScheduleScreen() {
             color={activeTab === 'schedules' ? colors.text.white : colors.text.primary}
           />
           <Text style={[styles.tabText, activeTab === 'schedules' && styles.tabTextActive]}>
-            Schedule
+            {t('schedule.title')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -606,7 +623,7 @@ export function ScheduleScreen() {
             color={activeTab === 'events' ? colors.text.white : colors.text.primary}
           />
           <Text style={[styles.tabText, activeTab === 'events' && styles.tabTextActive]}>
-            Events
+            {t('explore.events')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -634,7 +651,7 @@ export function ScheduleScreen() {
             <View style={styles.emptyState}>
               <Icon name="calendar-blank" size={48} color={colors.text.secondary} />
               <Text style={styles.emptyTitle}>{t('schedule.noEvents')}</Text>
-              <Text style={styles.emptySubtitle}>Check back later for new events</Text>
+              <Text style={styles.emptySubtitle}>{t('schedule.emptyEventsSubtitle')}</Text>
             </View>
           )}
           <View style={{ height: spacing.xxl }} />
@@ -662,8 +679,8 @@ export function ScheduleScreen() {
           ListEmptyComponent={() => (
             <View style={styles.emptyState}>
               <Icon name="calendar-clock" size={48} color={colors.text.secondary} />
-              <Text style={styles.emptyTitle}>No Schedules Available</Text>
-              <Text style={styles.emptySubtitle}>Check back later for updates</Text>
+              <Text style={styles.emptyTitle}>{t('schedule.noSchedulesAvailable')}</Text>
+              <Text style={styles.emptySubtitle}>{t('schedule.emptySchedulesSubtitle')}</Text>
             </View>
           )}
         />

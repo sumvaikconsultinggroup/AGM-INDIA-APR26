@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Sunrise, Sunset, Moon, Sun, Star, Sparkles } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '@/lib/api';
 
 interface PanchangData {
@@ -73,6 +74,7 @@ function SkeletonCard() {
 }
 
 export default function TodayPanchang({ lat, lng, cityName }: TodayPanchangProps) {
+  const { t, i18n } = useTranslation('panchang');
   const [panchang, setPanchang] = useState<PanchangData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -124,8 +126,8 @@ export default function TodayPanchang({ lat, lng, cityName }: TodayPanchangProps
           <SkeletonCard />
         ) : !panchang ? (
           <div className="text-center py-8 text-spiritual-warmGray">
-            <p className="font-spiritual text-lg">Unable to load Panchang data</p>
-            <p className="text-sm mt-1">Please try again later</p>
+            <p className="font-spiritual text-lg">{t('error')}</p>
+            <p className="text-sm mt-1">{t('retry')}</p>
           </div>
         ) : (
           <>
@@ -133,7 +135,7 @@ export default function TodayPanchang({ lat, lng, cityName }: TodayPanchangProps
             <div className="text-center mb-6">
               <p className="text-xs text-spiritual-warmGray uppercase tracking-widest font-body mb-1">
                 {cityName} &middot;{' '}
-                {new Date().toLocaleDateString('en-IN', {
+                {new Date().toLocaleDateString(i18n.language === 'en' ? 'en-IN' : `${i18n.language}-IN`, {
                   weekday: 'long',
                   day: 'numeric',
                   month: 'long',
@@ -146,7 +148,7 @@ export default function TodayPanchang({ lat, lng, cityName }: TodayPanchangProps
                 <p className="text-sm text-spiritual-saffron font-spiritual mt-1">
                   {panchang.hinduMonth && <span>{panchang.hinduMonth}</span>}
                   {(panchang.samvatYear || panchang.samvat) && (
-                    <span> &middot; {panchang.samvat || `विक्रम संवत ${panchang.samvatYear}`}</span>
+                    <span> &middot; {panchang.samvat || `${t('vikramSamvat')} ${panchang.samvatYear}`}</span>
                   )}
                 </p>
               )}
@@ -163,17 +165,17 @@ export default function TodayPanchang({ lat, lng, cityName }: TodayPanchangProps
                         : 'bg-spiritual-maroon/10 text-spiritual-maroon'
                     }`}
                   >
-                    {panchang.tithi.paksha} पक्ष
+                    {panchang.tithi.paksha} {t('paksha')}
                   </span>
                 )}
               </div>
               <h2 className="text-3xl md:text-4xl font-display text-spiritual-maroon font-bold">
-                {panchang.tithi?.name || 'Tithi'}
+                {panchang.tithi?.name || t('tithi')}
               </h2>
               <p className="text-sm text-spiritual-warmGray mt-1 font-body">
-                तिथि (Tithi)
+                {t('tithi')}
                 {panchang.tithi?.endTime && (
-                  <span> &middot; ends {formatTime12h(panchang.tithi.endTime)}</span>
+                  <span> &middot; {t('ends')} {formatTime12h(panchang.tithi.endTime)}</span>
                 )}
               </p>
             </div>
@@ -183,13 +185,13 @@ export default function TodayPanchang({ lat, lng, cityName }: TodayPanchangProps
               {/* Nakshatra */}
               <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 text-center border border-gold-100/50">
                 <Star className="w-5 h-5 text-spiritual-saffron mx-auto mb-1.5" />
-                <p className="text-xs text-spiritual-warmGray mb-0.5">नक्षत्र (Nakshatra)</p>
+                <p className="text-xs text-spiritual-warmGray mb-0.5">{t('nakshatra')}</p>
                 <p className="font-display text-spiritual-maroon font-semibold text-lg">
                   {panchang.nakshatra?.name || '--'}
                 </p>
                 {panchang.nakshatra?.deity && (
                   <p className="text-xs text-spiritual-warmGray/70 mt-0.5">
-                    Deity: {panchang.nakshatra.deity}
+                    {t('deity')}: {panchang.nakshatra.deity}
                   </p>
                 )}
               </div>
@@ -197,7 +199,7 @@ export default function TodayPanchang({ lat, lng, cityName }: TodayPanchangProps
               {/* Yoga */}
               <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 text-center border border-gold-100/50">
                 <Sparkles className="w-5 h-5 text-gold-400 mx-auto mb-1.5" />
-                <p className="text-xs text-spiritual-warmGray mb-0.5">योग (Yoga)</p>
+                <p className="text-xs text-spiritual-warmGray mb-0.5">{t('yoga')}</p>
                 <p className="font-display text-spiritual-maroon font-semibold text-lg">
                   {panchang.yoga?.name || '--'}
                 </p>
@@ -206,7 +208,7 @@ export default function TodayPanchang({ lat, lng, cityName }: TodayPanchangProps
               {/* Karana */}
               <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 text-center border border-gold-100/50">
                 <Moon className="w-5 h-5 text-spiritual-maroon/60 mx-auto mb-1.5" />
-                <p className="text-xs text-spiritual-warmGray mb-0.5">करण (Karana)</p>
+                <p className="text-xs text-spiritual-warmGray mb-0.5">{t('karana')}</p>
                 <p className="font-display text-spiritual-maroon font-semibold text-lg">
                   {panchang.karana?.name || '--'}
                 </p>
@@ -218,28 +220,28 @@ export default function TodayPanchang({ lat, lng, cityName }: TodayPanchangProps
               <div className="flex items-center gap-2 bg-white/50 rounded-lg px-3 py-2.5 border border-gold-100/30">
                 <Sunrise className="w-4 h-4 text-orange-400 flex-shrink-0" />
                 <div>
-                  <p className="text-[10px] text-spiritual-warmGray uppercase tracking-wider">Sunrise</p>
+                  <p className="text-[10px] text-spiritual-warmGray uppercase tracking-wider">{t('sunrise')}</p>
                   <p className="font-semibold text-spiritual-maroon text-sm">{formatTime12h(panchang.sunrise)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 bg-white/50 rounded-lg px-3 py-2.5 border border-gold-100/30">
                 <Sunset className="w-4 h-4 text-orange-500 flex-shrink-0" />
                 <div>
-                  <p className="text-[10px] text-spiritual-warmGray uppercase tracking-wider">Sunset</p>
+                  <p className="text-[10px] text-spiritual-warmGray uppercase tracking-wider">{t('sunset')}</p>
                   <p className="font-semibold text-spiritual-maroon text-sm">{formatTime12h(panchang.sunset)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 bg-white/50 rounded-lg px-3 py-2.5 border border-gold-100/30">
                 <Moon className="w-4 h-4 text-blue-300 flex-shrink-0" />
                 <div>
-                  <p className="text-[10px] text-spiritual-warmGray uppercase tracking-wider">Moonrise</p>
+                  <p className="text-[10px] text-spiritual-warmGray uppercase tracking-wider">{t('moonrise')}</p>
                   <p className="font-semibold text-spiritual-maroon text-sm">{formatTime12h(panchang.moonrise)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 bg-white/50 rounded-lg px-3 py-2.5 border border-gold-100/30">
                 <Sun className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 <div>
-                  <p className="text-[10px] text-spiritual-warmGray uppercase tracking-wider">Moonset</p>
+                  <p className="text-[10px] text-spiritual-warmGray uppercase tracking-wider">{t('moonset')}</p>
                   <p className="font-semibold text-spiritual-maroon text-sm">{formatTime12h(panchang.moonset)}</p>
                 </div>
               </div>
@@ -249,7 +251,7 @@ export default function TodayPanchang({ lat, lng, cityName }: TodayPanchangProps
             {panchang.festivals && panchang.festivals.length > 0 && (
               <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-gold-200/50">
                 <p className="text-xs text-spiritual-saffron uppercase tracking-widest font-semibold mb-2">
-                  Today&apos;s Festivals
+                  {t('todaysFestivals')}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {panchang.festivals.map((festival, i) => (

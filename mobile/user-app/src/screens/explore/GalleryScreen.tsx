@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { colors, spacing, borderRadius, shadows } from '../../theme';
 import { GlimpseImage } from '../../types';
@@ -24,6 +25,7 @@ const ITEM_WIDTH = (width - spacing.md * 2 - GAP) / COLUMN_COUNT;
 
 export function GalleryScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const [images, setImages] = useState<GlimpseImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -115,7 +117,7 @@ export function GalleryScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary.saffron} />
-        <Text style={styles.loadingText}>Loading gallery...</Text>
+        <Text style={styles.loadingText}>{t('details.gallery.loading')}</Text>
       </View>
     );
   }
@@ -130,14 +132,14 @@ export function GalleryScreen() {
         >
           <Icon name="arrow-left" size={24} color={colors.primary.maroon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Divine Gallery</Text>
+        <Text style={styles.headerTitle}>{t('details.gallery.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       {/* Gallery Info */}
       <View style={styles.infoBar}>
         <Icon name="image-multiple" size={18} color={colors.gold.dark} />
-        <Text style={styles.infoText}>{images.length} Sacred Images</Text>
+        <Text style={styles.infoText}>{t('details.gallery.sacredImagesCount', { count: images.length })}</Text>
       </View>
 
       {/* Image Grid */}
@@ -154,7 +156,7 @@ export function GalleryScreen() {
         ListEmptyComponent={() => (
           <View style={styles.emptyState}>
             <Icon name="image-off" size={64} color={colors.text.secondary} />
-            <Text style={styles.emptyText}>No images in gallery</Text>
+            <Text style={styles.emptyText}>{t('details.gallery.empty')}</Text>
           </View>
         )}
       />

@@ -15,8 +15,11 @@ const publicApiEndpoints: { path: string; methods?: string[] }[] = [
   { path: "/api/creduser" },
   { path: "/api/connect", methods: ["POST"] },
   { path: "/api/volunteer", methods: ["POST"] },
+  { path: "/api/mantra-diksha", methods: ["POST"] },
   { path: "/api/webhook" },
   { path: "/api/donate", methods: ["GET"] },
+  { path: "/api/create-checkout-session", methods: ["POST"] },
+  { path: "/api/create-custom-subs", methods: ["POST"] },
   { path: "/api/events", methods: ["GET"] },
   { path: "/api/schedule", methods: ["GET"] },
   { path: "/api/articles", methods: ["GET"] },
@@ -40,20 +43,29 @@ const publicApiEndpoints: { path: string; methods?: string[] }[] = [
   { path: "/api/panchang/month", methods: ["GET"] },
   { path: "/api/panchang/festivals", methods: ["GET"] },
   { path: "/api/panchang/cities", methods: ["GET"] },
+  { path: "/api/notifications/preferences" },
   { path: "/api/health", methods: ["GET"] },
   { path: "/api/dashboard/stats", methods: ["GET"] },
   { path: "/api/donation-receipt", methods: ["GET"] },
+  { path: "/api/donations/recent", methods: ["GET"] },
 ];
 
 const adminOnlyApiPrefixes: string[] = [
   "/api/users",
+  "/api/admin/team",
+  "/api/connect",
   "/api/notifications/send",
+  "/api/notifications/broadcast",
   "/api/sendemail",
   "/api/images",
   "/api/userphotos",
   "/api/scheduleRegistration",
   "/api/donationsRecord",
   "/api/donations",
+  "/api/volunteer",
+  "/api/mantra-diksha",
+  "/api/seva-tasks",
+  "/api/smart-notes",
 ];
 
 const adminOnlyMutationPrefixes: string[] = [

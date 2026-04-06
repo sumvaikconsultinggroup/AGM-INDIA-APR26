@@ -13,13 +13,12 @@ import {
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { getPanchangMonth, getPanchangToday } from '../../services/panchangApi';
 import { colors, spacing, borderRadius, shadows } from '../../theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DAY_SIZE = Math.floor((SCREEN_WIDTH - spacing.lg * 2 - 6) / 7);
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
 interface DayData {
   date: number;
   dateIso?: string;
@@ -126,6 +125,7 @@ export default function PanchangCalendarScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const { t, i18n } = useTranslation();
 
   const lat = route.params?.lat ?? 29.9457;
   const lng = route.params?.lng ?? 78.1642;
@@ -141,6 +141,15 @@ export default function PanchangCalendarScreen() {
   const [dayDetailLoading, setDayDetailLoading] = useState(false);
   const [detailVisible, setDetailVisible] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const weekdays = [
+    t('panchang.calendar.weekdays.sun'),
+    t('panchang.calendar.weekdays.mon'),
+    t('panchang.calendar.weekdays.tue'),
+    t('panchang.calendar.weekdays.wed'),
+    t('panchang.calendar.weekdays.thu'),
+    t('panchang.calendar.weekdays.fri'),
+    t('panchang.calendar.weekdays.sat'),
+  ];
 
   useEffect(() => {
     fetchMonthData();
@@ -179,7 +188,7 @@ export default function PanchangCalendarScreen() {
         console.warn('Panchang month API unavailable:', error.message);
       }
       setMonthData({ days: [] });
-      setFetchError('Unable to load live monthly Panchang data. Check backend connection.');
+      setFetchError(t('panchang.calendar.errors.monthLoadFailed'));
     } finally {
       setLoading(false);
     }
@@ -203,7 +212,7 @@ export default function PanchangCalendarScreen() {
     }
   };
 
-  const monthName = new Date(year, month - 1).toLocaleString('en-IN', { month: 'long' });
+  const monthName = new Date(year, month - 1).toLocaleString(i18n.language === 'en' ? 'en-IN' : `${i18n.language}-IN`, { month: 'long' });
 
   // Calculate the starting day of the month
   const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
@@ -264,8 +273,8 @@ export default function PanchangCalendarScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-left" size={24} color={colors.primary.maroon} />
         </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Panchang Calendar</Text>
+          <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>{t('panchang.calendar.title')}</Text>
           <Text style={styles.headerSubtitle}>{cityName}</Text>
         </View>
         <View style={{ width: 40 }} />
@@ -300,10 +309,10 @@ export default function PanchangCalendarScreen() {
 
           {/* Weekday Headers */}
           <View style={styles.weekdayRow}>
-            {WEEKDAYS.map((day) => (
+            {weekdays.map((day, weekdayIndex) => (
               <View key={day} style={styles.weekdayCell}>
                 <Text
-                  style={[styles.weekdayText, day === 'Sun' && styles.sundayText]}
+                  style={[styles.weekdayText, weekdayIndex === 0 && styles.sundayText]}
                 >
                   {day}
                 </Text>
@@ -364,7 +373,7 @@ export default function PanchangCalendarScreen() {
           {/* Festival Legend */}
           {festivalsInMonth.length > 0 && (
             <View style={styles.legendSection}>
-              <Text style={styles.legendTitle}>Festivals This Month</Text>
+              <Text style={styles.legendTitle}>{t('panchang.calendar.festivalsThisMonth')}</Text>
               {festivalsInMonth.map((f, i) => (
                 <View key={i} style={styles.legendRow}>
                   <View style={styles.festivalDotLegend} />
@@ -380,8 +389,8 @@ export default function PanchangCalendarScreen() {
           {!fetchError && (!monthData?.days || monthData.days.length === 0) && (
             <View style={styles.emptyState}>
               <Icon name="calendar-blank-outline" size={40} color={colors.text.secondary} />
-              <Text style={styles.emptyStateTitle}>No monthly Panchang data available</Text>
-              <Text style={styles.emptyStateSubtitle}>Try another month or retry after the API is available.</Text>
+              <Text style={styles.emptyStateTitle}>{t('panchang.calendar.emptyTitle')}</Text>
+              <Text style={styles.emptyStateSubtitle}>{t('panchang.calendar.emptySubtitle')}</Text>
             </View>
           )}
 
@@ -409,62 +418,62 @@ export default function PanchangCalendarScreen() {
           {dayDetailLoading ? (
             <View style={styles.dayDetailLoadingContainer}>
               <ActivityIndicator size="large" color={colors.primary.saffron} />
-              <Text style={styles.dayDetailLoadingText}>Loading full Panchang...</Text>
+              <Text style={styles.dayDetailLoadingText}>{t('panchang.calendar.loadingFull')}</Text>
             </View>
           ) : selectedDay ? (
             <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
               {/* Tithi */}
-              <DetailRow label="तिथि (Tithi)" value={selectedDay.tithi || 'N/A'} />
+              <DetailRow label={t('panchang.tithi')} value={selectedDay.tithi || t('panchang.notAvailable')} />
               {selectedDay.tithiEndTime && (
-                <DetailRow label="तिथि समाप्ति (Ends)" value={selectedDay.tithiEndTime} />
+                <DetailRow label={t('panchang.endsLabel')} value={selectedDay.tithiEndTime} />
               )}
               {selectedDay.paksha && (
-                <DetailRow label="पक्ष (Paksha)" value={selectedDay.paksha} />
+                <DetailRow label={t('panchang.paksha')} value={selectedDay.paksha} />
               )}
-              <DetailRow label="नक्षत्र (Nakshatra)" value={selectedDay.nakshatra || 'N/A'} />
+              <DetailRow label={t('panchang.nakshatra')} value={selectedDay.nakshatra || t('panchang.notAvailable')} />
               {selectedDay.nakshatraDeity && (
-                <DetailRow label="देवता (Deity)" value={selectedDay.nakshatraDeity} />
+                <DetailRow label={t('panchang.deity')} value={selectedDay.nakshatraDeity} />
               )}
-              <DetailRow label="योग (Yoga)" value={selectedDay.yoga || 'N/A'} />
-              <DetailRow label="करण (Karana)" value={selectedDay.karana || 'N/A'} />
+              <DetailRow label={t('panchang.yoga')} value={selectedDay.yoga || t('panchang.notAvailable')} />
+              <DetailRow label={t('panchang.karana')} value={selectedDay.karana || t('panchang.notAvailable')} />
 
               {selectedDay.hinduMonth && (
-                <DetailRow label="हिंदू महीना (Hindu Month)" value={selectedDay.hinduMonth} />
+                <DetailRow label={t('panchang.hinduMonth')} value={selectedDay.hinduMonth} />
               )}
               {selectedDay.vikramSamvat && (
-                <DetailRow label="विक्रम संवत (Vikram Samvat)" value={String(selectedDay.vikramSamvat)} />
+                <DetailRow label={t('panchang.vikramSamvat')} value={String(selectedDay.vikramSamvat)} />
               )}
 
               {selectedDay.sunrise && (
-                <DetailRow label="Sunrise" value={selectedDay.sunrise} />
+                <DetailRow label={t('panchang.sunrise')} value={selectedDay.sunrise} />
               )}
               {selectedDay.sunset && (
-                <DetailRow label="Sunset" value={selectedDay.sunset} />
+                <DetailRow label={t('panchang.sunset')} value={selectedDay.sunset} />
               )}
               {selectedDay.moonrise && (
-                <DetailRow label="Moonrise" value={selectedDay.moonrise} />
+                <DetailRow label={t('panchang.moonrise')} value={selectedDay.moonrise} />
               )}
               {selectedDay.moonset && (
-                <DetailRow label="Moonset" value={selectedDay.moonset} />
+                <DetailRow label={t('panchang.moonset')} value={selectedDay.moonset} />
               )}
               {selectedDay.brahmaMuhurta && (
-                <DetailRow label="ब्रह्म मुहूर्त (Brahma Muhurta)" value={selectedDay.brahmaMuhurta} />
+                <DetailRow label={t('panchang.brahmaMuhurta')} value={selectedDay.brahmaMuhurta} />
               )}
               {selectedDay.abhijitMuhurta && (
-                <DetailRow label="अभिजीत मुहूर्त (Abhijit Muhurta)" value={selectedDay.abhijitMuhurta} />
+                <DetailRow label={t('panchang.abhijitMuhurta')} value={selectedDay.abhijitMuhurta} />
               )}
               {selectedDay.rahuKaal && (
                 <DetailRow
-                  label="राहु काल (Rahu Kaal)"
+                  label={t('panchang.rahuKaal')}
                   value={selectedDay.rahuKaal}
                   variant="warning"
                 />
               )}
               {selectedDay.yamaghanda && (
-                <DetailRow label="यमघण्ड (Yamaghanda)" value={selectedDay.yamaghanda} variant="warning" />
+                <DetailRow label={t('panchang.yamaghanda')} value={selectedDay.yamaghanda} variant="warning" />
               )}
               {selectedDay.gulikaKaal && (
-                <DetailRow label="गुलिक काल (Gulika Kaal)" value={selectedDay.gulikaKaal} variant="warning" />
+                <DetailRow label={t('panchang.gulikaKaal')} value={selectedDay.gulikaKaal} variant="warning" />
               )}
 
               {selectedDay.festival && (
@@ -477,14 +486,14 @@ export default function PanchangCalendarScreen() {
               {selectedDay.isPurnima && (
                 <View style={styles.moonBanner}>
                   <Icon name="moon-full" size={18} color={colors.gold.main} />
-                  <Text style={styles.moonBannerText}>Purnima (Full Moon)</Text>
+                  <Text style={styles.moonBannerText}>{t('panchang.purnima')}</Text>
                 </View>
               )}
               {selectedDay.isAmavasya && (
                 <View style={[styles.moonBanner, styles.moonBannerDark]}>
                   <Icon name="moon-new" size={18} color={colors.primary.maroon} />
                   <Text style={[styles.moonBannerText, { color: colors.primary.maroon }]}>
-                    Amavasya (New Moon)
+                    {t('panchang.amavasya')}
                   </Text>
                 </View>
               )}

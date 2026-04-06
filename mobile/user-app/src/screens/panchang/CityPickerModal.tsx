@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import { useTranslation } from 'react-i18next';
 import { getPanchangCities } from '../../services/panchangApi';
 import { colors, spacing, borderRadius, shadows } from '../../theme';
 
@@ -39,6 +40,7 @@ export default function CityPickerModal({
   onSelectCity,
   onUseGPS,
 }: CityPickerModalProps) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState(false);
@@ -80,7 +82,7 @@ export default function CityPickerModal({
         console.warn('Cities API unavailable:', error.message);
       }
       setCities([]);
-      setFetchError('Unable to load live city data. Check Panchang API connection.');
+      setFetchError(t('panchang.cityPicker.errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -92,8 +94,8 @@ export default function CityPickerModal({
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(
-          'Location Permission',
-          'Please enable location access to detect your city automatically.',
+          t('panchang.cityPicker.permissionTitle'),
+          t('panchang.cityPicker.permissionMessage'),
         );
         return;
       }
@@ -103,7 +105,7 @@ export default function CityPickerModal({
       onUseGPS(location.coords.latitude, location.coords.longitude);
       onClose();
     } catch (error) {
-      Alert.alert('Location Error', 'Unable to get your current location. Please select a city manually.');
+      Alert.alert(t('panchang.cityPicker.locationErrorTitle'), t('panchang.cityPicker.locationErrorMessage'));
     } finally {
       setGpsLoading(false);
     }
@@ -146,11 +148,11 @@ export default function CityPickerModal({
 
   const sections = [
     ...(indianCities.length > 0
-      ? [{ type: 'header' as const, title: 'India', key: 'header-india' }]
+      ? [{ type: 'header' as const, title: t('panchang.cityPicker.indiaSection'), key: 'header-india' }]
       : []),
     ...indianCities.map((c) => ({ type: 'city' as const, city: c, key: c._id })),
     ...(internationalCities.length > 0
-      ? [{ type: 'header' as const, title: 'International', key: 'header-intl' }]
+      ? [{ type: 'header' as const, title: t('panchang.cityPicker.internationalSection'), key: 'header-intl' }]
       : []),
     ...internationalCities.map((c) => ({ type: 'city' as const, city: c, key: c._id })),
   ];
@@ -165,7 +167,7 @@ export default function CityPickerModal({
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Select City</Text>
+          <Text style={styles.headerTitle}>{t('panchang.cityPicker.title')}</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Icon name="close" size={24} color={colors.text.primary} />
           </TouchableOpacity>
@@ -184,7 +186,7 @@ export default function CityPickerModal({
             <Icon name="crosshairs-gps" size={20} color={colors.primary.saffron} />
           )}
           <Text style={styles.gpsButtonText}>
-            {gpsLoading ? 'Detecting location...' : 'Use My Location'}
+            {gpsLoading ? t('panchang.cityPicker.detectingLocation') : t('panchang.cityPicker.useMyLocation')}
           </Text>
         </TouchableOpacity>
 
@@ -193,7 +195,7 @@ export default function CityPickerModal({
           <Icon name="magnify" size={20} color={colors.text.secondary} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search city or state..."
+            placeholder={t('panchang.cityPicker.searchPlaceholder')}
             placeholderTextColor={colors.text.secondary}
             value={search}
             onChangeText={setSearch}
@@ -215,10 +217,10 @@ export default function CityPickerModal({
         ) : fetchError ? (
           <View style={styles.loadingContainer}>
             <Icon name="alert-circle-outline" size={28} color={colors.primary.vermillion} />
-            <Text style={styles.errorTitle}>City list unavailable</Text>
+            <Text style={styles.errorTitle}>{t('panchang.cityPicker.unavailableTitle')}</Text>
             <Text style={styles.errorMessage}>{fetchError}</Text>
             <TouchableOpacity style={styles.retryButton} onPress={fetchCities} activeOpacity={0.8}>
-              <Text style={styles.retryButtonText}>Retry</Text>
+              <Text style={styles.retryButtonText}>{t('common.retry')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -240,7 +242,7 @@ export default function CityPickerModal({
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Icon name="map-marker-off" size={40} color={colors.text.secondary} />
-                <Text style={styles.emptyText}>No cities found</Text>
+                <Text style={styles.emptyText}>{t('panchang.cityPicker.noCitiesFound')}</Text>
               </View>
             }
           />

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { useTranslation } from "react-i18next";
 import { colors } from "../../theme";
 import api from "../../services/api";
 
@@ -13,8 +14,12 @@ interface Vichar {
 }
 
 export default function DailyVicharCard() {
+  const { t, i18n } = useTranslation();
   const [vichar, setVichar] = useState<Vichar | null>(null);
-  const [lang, setLang] = useState<"hindi" | "english">("hindi");
+
+  const preferredLanguage = useMemo<"hindi" | "english">(() => {
+    return i18n.language === "en" ? "english" : "hindi";
+  }, [i18n.language]);
 
   useEffect(() => {
     const fetchVichar = async () => {
@@ -33,42 +38,17 @@ export default function DailyVicharCard() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.label}>{"\u0906\u091C \u0915\u093E \u0935\u093F\u091A\u093E\u0930"}</Text>
-        <View style={styles.langToggle}>
-          <TouchableOpacity
-            onPress={() => setLang("hindi")}
-            style={[styles.langBtn, lang === "hindi" && styles.langBtnActive]}
-          >
-            <Text
-              style={[
-                styles.langText,
-                lang === "hindi" && styles.langTextActive,
-              ]}
-            >
-              {"\u0939\u093F\u0902"}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setLang("english")}
-            style={[styles.langBtn, lang === "english" && styles.langBtnActive]}
-          >
-            <Text
-              style={[
-                styles.langText,
-                lang === "english" && styles.langTextActive,
-              ]}
-            >
-              En
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.label}>{t("home.dailyVicharLabel")}</Text>
+        <Text style={styles.languageTag}>
+          {preferredLanguage === "english" ? t("home.languageEnglish") : t("home.languageHindi")}
+        </Text>
       </View>
 
       <Text style={styles.title}>
-        {lang === "hindi" ? vichar.titleHindi : vichar.titleEnglish}
+        {preferredLanguage === "hindi" ? vichar.titleHindi : vichar.titleEnglish}
       </Text>
       <Text style={styles.content}>
-        {"\u201C"}{lang === "hindi" ? vichar.contentHindi : vichar.contentEnglish}
+        {"\u201C"}{preferredLanguage === "hindi" ? vichar.contentHindi : vichar.contentEnglish}
         {"\u201D"}
       </Text>
       {vichar.source && <Text style={styles.source}>{"\u2014"} {vichar.source}</Text>}
@@ -104,16 +84,15 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1,
   },
-  langToggle: { flexDirection: "row", gap: 4 },
-  langBtn: {
+  languageTag: {
+    fontSize: 11,
+    color: colors.gold.dark,
+    fontWeight: "600",
+    backgroundColor: "#F9F0D8",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: "#F5E6CC",
   },
-  langBtnActive: { backgroundColor: colors.primary.saffron },
-  langText: { fontSize: 11, color: "#666" },
-  langTextActive: { color: "#FFF" },
   title: {
     fontSize: 18,
     fontWeight: "700",

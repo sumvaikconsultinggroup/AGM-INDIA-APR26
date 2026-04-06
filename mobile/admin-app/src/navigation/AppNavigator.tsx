@@ -26,6 +26,10 @@ import { RoomBookingScreen } from '../screens/rooms/RoomBookingScreen';
 import { VolunteersScreen } from '../screens/volunteers/VolunteersScreen';
 import { MessagesScreen } from '../screens/messages/MessagesScreen';
 import { TeamManagementScreen } from '../screens/team/TeamManagementScreen';
+import { NotificationBroadcasterScreen } from '../screens/notifications/NotificationBroadcasterScreen';
+import { MantraDikshaScreen } from '../screens/diksha/MantraDikshaScreen';
+import { SevaBoardScreen } from '../screens/seva/SevaBoardScreen';
+import { SmartNotesScreen } from '../screens/notes/SmartNotesScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -53,6 +57,10 @@ const linking: LinkingOptions<any> = {
       UsersStack: 'users',
       VolunteersStack: 'volunteers',
       MessagesStack: 'messages',
+      BroadcasterStack: 'broadcaster',
+      MantraDikshaStack: 'mantra-diksha',
+      SevaBoardStack: 'seva-board',
+      SmartNotesStack: 'smart-notes',
       AdminLogin: 'login',
     },
   },
@@ -81,6 +89,10 @@ const MODULE_ICONS: Record<string, React.ComponentProps<typeof Icon>['name']> = 
   UsersStack: 'account-group-outline',
   VolunteersStack: 'hand-heart-outline',
   MessagesStack: 'message-text-outline',
+  BroadcasterStack: 'bullhorn-outline',
+  MantraDikshaStack: 'meditation',
+  SevaBoardStack: 'clipboard-check-outline',
+  SmartNotesStack: 'note-text-outline',
   TeamStack: 'shield-account-outline',
 };
 
@@ -96,6 +108,10 @@ const SCREEN_TO_MODULE: Record<string, ModuleId> = {
   UsersStack: 'users',
   VolunteersStack: 'volunteers',
   MessagesStack: 'messages',
+  BroadcasterStack: 'notifications',
+  MantraDikshaStack: 'mantraDiksha',
+  SevaBoardStack: 'sevaBoard',
+  SmartNotesStack: 'smartNotes',
   TeamStack: 'users',
 };
 
@@ -114,7 +130,11 @@ function MoreScreen({ navigation }: any) {
     { label: t('admin.rooms'), screen: 'RoomsStack' },
     { label: t('admin.users'), screen: 'UsersStack' },
     { label: t('admin.volunteers'), screen: 'VolunteersStack' },
-    { label: t('admin.messages'), screen: 'MessagesStack' },
+    { label: t('admin.prayerInbox'), screen: 'MessagesStack' },
+    { label: t('admin.broadcaster'), screen: 'BroadcasterStack' },
+    { label: t('admin.mantraDiksha'), screen: 'MantraDikshaStack' },
+    { label: t('admin.sevaBoard'), screen: 'SevaBoardStack' },
+    { label: t('admin.smartNotes'), screen: 'SmartNotesStack' },
     { label: 'Team', screen: 'TeamStack' },
   ];
 
@@ -221,7 +241,11 @@ const BooksStack = makeStack('Books', BooksScreen, 'admin.books');
 const RoomsStack = makeStack('Rooms', RoomBookingScreen, 'admin.rooms');
 const UsersStack = makeStack('Users', UsersScreen, 'admin.users');
 const VolunteersStack = makeStack('Volunteers', VolunteersScreen, 'admin.volunteers');
-const MessagesStack = makeStack('Messages', MessagesScreen, 'admin.messages');
+const MessagesStack = makeStack('Messages', MessagesScreen, 'admin.prayerInbox');
+const BroadcasterStack = makeStack('Broadcaster', NotificationBroadcasterScreen, 'admin.broadcaster');
+const MantraDikshaStack = makeStack('MantraDiksha', MantraDikshaScreen, 'admin.mantraDiksha');
+const SevaBoardStack = makeStack('SevaBoard', SevaBoardScreen, 'admin.sevaBoard');
+const SmartNotesStack = makeStack('SmartNotes', SmartNotesScreen, 'admin.smartNotes');
 const TeamStack = makeStack('Team', TeamManagementScreen, 'admin.users');
 
 function AdminTabs() {
@@ -286,6 +310,10 @@ export function AppNavigator() {
             <Stack.Screen name="UsersStack" component={UsersStack} />
             <Stack.Screen name="VolunteersStack" component={VolunteersStack} />
             <Stack.Screen name="MessagesStack" component={MessagesStack} />
+            <Stack.Screen name="BroadcasterStack" component={BroadcasterStack} />
+            <Stack.Screen name="MantraDikshaStack" component={MantraDikshaStack} />
+            <Stack.Screen name="SevaBoardStack" component={SevaBoardStack} />
+            <Stack.Screen name="SmartNotesStack" component={SmartNotesStack} />
             <Stack.Screen name="TeamStack" component={TeamStack} />
           </>
         ) : (

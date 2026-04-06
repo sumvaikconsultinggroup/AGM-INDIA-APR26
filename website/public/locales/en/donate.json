@@ -1,40 +1,101 @@
 {
   "hero": {
+    "eyebrow": "Offer Seva",
     "title": "Donate with",
     "titleHighlight": "Love",
-    "subtitle": "Your generous contribution helps sustain Swami Ji's mission of spreading spiritual wisdom and serving humanity."
-  },
-  "causes": {
-    "sanskritTitle": "सेवा",
-    "title": "Support Our",
-    "titleHighlight": "Causes",
-    "subtitle": "Choose a cause close to your heart and make a meaningful contribution"
-  },
-  "noCauses": {
-    "title": "No Causes Found",
-    "subtitle": "Check back later for donation opportunities."
-  },
-  "labels": {
-    "raised": "raised",
-    "goal": "Goal"
-  },
-  "custom": {
-    "title": "Custom Donation Amount",
-    "subtitle": "Every contribution, no matter the size, brings blessings",
-    "placeholder": "Enter amount"
+    "subtitle": "A calmer, complete donation journey with secure checkout, instant acknowledgement, and deeper trust."
   },
   "handoff": {
     "message": "You opened donation checkout from the mobile app.",
     "returnToApp": "Return to App"
   },
-  "impact": {
-    "title": "Your Impact",
-    "subtitle": "See how your donations have helped spread light and love",
-    "stats": {
-      "mealsServed": "Meals Served",
-      "studentsEducated": "Students Educated",
-      "healthcareCamps": "Healthcare Camps"
-    }
+  "overview": {
+    "eyebrow": "Giving",
+    "title": "A donation experience built with trust, clarity, and gratitude",
+    "subtitle": "Choose a cause, complete your donor details once, and offer seva through secure Razorpay checkout without leaving the experience."
+  },
+  "socialProof": {
+    "item": "{{name}} offered {{amount}} towards {{campaign}}"
+  },
+  "labels": {
+    "raised": "raised",
+    "daysLeft": "{{count}} days left",
+    "raisedValue": "Raised {{amount}}",
+    "goalValue": "Goal {{amount}}",
+    "donorCount": "{{count}} donors"
+  },
+  "form": {
+    "eyebrow": "Donor Form",
+    "title": "Complete your offering",
+    "subtitle": "Fill your details once, choose one-time or monthly seva, and receive your acknowledgement instantly.",
+    "oneTime": "One-Time",
+    "monthly": "Monthly Seva",
+    "amountLabel": "Amount",
+    "amountPlaceholder": "Enter amount",
+    "fullNameLabel": "Full name",
+    "fullNamePlaceholder": "Enter your full name",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "Enter your email address",
+    "mobileLabel": "Mobile number",
+    "mobilePlaceholder": "Enter your mobile number",
+    "nationalityLabel": "Nationality",
+    "nationalityIndian": "Indian",
+    "nationalityForeign": "Foreign national",
+    "panLabel": "PAN (for 80G receipt)",
+    "panPlaceholder": "Enter PAN",
+    "addressLabel": "Address",
+    "addressPlaceholder": "Enter your address",
+    "dedicationTypeLabel": "Dedication type",
+    "dedicationGeneral": "General offering",
+    "dedicationMemory": "In memory of",
+    "dedicationHonor": "In honour of",
+    "dedicationOccasion": "For an occasion",
+    "dedicatedToLabel": "Dedicated to",
+    "dedicatedToPlaceholder": "Name or occasion",
+    "messageLabel": "Message or sankalp",
+    "messagePlaceholder": "Add a short message if you wish",
+    "taxBenefitOptIn": "I would like an 80G-ready receipt for this donation",
+    "anonymous": "Keep this donation anonymous"
+  },
+  "validation": {
+    "amountMin": "Please enter at least Rs. 100.",
+    "fullNameRequired": "Please enter your full name.",
+    "emailRequired": "Please enter your email address.",
+    "mobileRequired": "Please enter your mobile number.",
+    "nationalityRequired": "Please enter your nationality.",
+    "checkoutUnavailable": "Secure checkout could not be loaded right now. Please refresh the page."
+  },
+  "checkout": {
+    "oneTimeDescription": "One-Time Donation",
+    "subscriptionDescription": "Monthly Seva Donation",
+    "payButton": "Offer {{amount}}",
+    "monthlyButton": "Begin Monthly Seva {{amount}}"
+  },
+  "summary": {
+    "generalDonation": "General Donation"
+  },
+  "states": {
+    "loadError": "Unable to load donation data right now.",
+    "checkoutError": "We could not start the payment flow. Please try again.",
+    "verifyError": "Payment was initiated but confirmation could not be verified. Please contact the Ashram office if money was debited.",
+    "processing": "Preparing secure checkout..."
+  },
+  "success": {
+    "title": "Donation received with gratitude",
+    "subtitle": "Your offering has been recorded. Receipt details will reach you by email and WhatsApp.",
+    "amount": "Amount",
+    "campaign": "Campaign",
+    "reference": "Payment reference",
+    "share": "Share this seva",
+    "shareTitle": "I just supported AvdheshanandG Mission",
+    "shareText": "I just offered {{amount}} towards {{campaign}} through AvdheshanandG Mission.",
+    "returnToApp": "Return to App"
+  },
+  "trust": {
+    "secureTitle": "Protected by Razorpay",
+    "secureSubtitle": "Your payment happens through a secure Razorpay checkout with verified backend order creation.",
+    "receiptTitle": "Receipt on email and WhatsApp",
+    "receiptSubtitle": "Eligible donations receive an acknowledgement and 80G-ready receipt immediately after capture."
   },
   "donateNow": "Donate Now",
   "donateWithLove": "Donate with Love"

@@ -52,7 +52,7 @@ interface Campaign {
 
 export function HomeScreen() {
   const navigation = useNavigation<any>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -95,7 +95,7 @@ export function HomeScreen() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', {
+    return date.toLocaleDateString(i18n.language === 'en' ? 'en-IN' : `${i18n.language}-IN`, {
       day: 'numeric',
       month: 'short',
       year: 'numeric',

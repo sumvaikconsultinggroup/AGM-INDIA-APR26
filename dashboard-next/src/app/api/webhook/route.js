@@ -65,6 +65,10 @@ export async function POST(req) {
         const donationType = notes.donation_type === 'subscription' ? 'subscription' : 'one_time';
         const panNumber = notes.pan_number || notes.panNumber;
         const taxBenefitOptIn = notes.tax_benefit_opt_in === 'true' || notes.taxBenefitOptIn === 'true';
+        const isAnonymous = notes.is_anonymous === 'true' || notes.isAnonymous === 'true';
+        const dedicationType = notes.dedication_type || notes.dedicationType || 'general';
+        const dedicatedTo = notes.dedicated_to || notes.dedicatedTo;
+        const dedicationMessage = notes.dedication_message || notes.dedicationMessage;
         const amount = payment.amount; // in paise
 
         let donationConfirmation = null;
@@ -99,6 +103,10 @@ export async function POST(req) {
               donationType,
               panNumber,
               taxBenefitOptIn,
+              isAnonymous,
+              dedicationType,
+              dedicatedTo,
+              dedicationMessage,
               receiptNumber,
               receiptAccessToken,
               receiptIssuedAt: new Date(),

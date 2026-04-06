@@ -65,11 +65,17 @@ i18n
       or: { translation: odia },
       as: { translation: assamese },
     },
-    fallbackLng: 'en',
+    fallbackLng: (code) => {
+      if (!code) return ['en'];
+      if (code.startsWith('en')) return ['en'];
+      if (code.startsWith('hi')) return ['hi', 'en'];
+      return ['hi', 'en'];
+    },
     supportedLngs: SUPPORTED_LANGUAGES as unknown as string[],
     interpolation: {
       escapeValue: false,
     },
+    returnNull: false,
     react: {
       useSuspense: false,
     },

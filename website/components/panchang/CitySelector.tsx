@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Search, Navigation, ChevronDown, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '@/lib/api';
 
 interface City {
@@ -31,6 +32,7 @@ const DEFAULT_CITY: CityLocation = {
 const STORAGE_KEY = 'panchang-city';
 
 export default function CitySelector({ onCityChange }: CitySelectorProps) {
+  const { t } = useTranslation('panchang');
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [cities, setCities] = useState<City[]>([]);
@@ -180,7 +182,7 @@ export default function CitySelector({ onCityChange }: CitySelectorProps) {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search city..."
+                  placeholder={t('searchCity')}
                   className="w-full pl-9 pr-8 py-2 rounded-lg bg-white/70 border border-gold-100 text-spiritual-maroon placeholder:text-spiritual-warmGray/50 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-200 text-sm font-body"
                 />
                 {search && (
@@ -202,7 +204,7 @@ export default function CitySelector({ onCityChange }: CitySelectorProps) {
             >
               <Navigation className={`w-4 h-4 ${isLocating ? 'animate-pulse' : ''}`} />
               <span className="font-medium">
-                {isLocating ? 'Detecting location...' : 'Near Me (Use GPS)'}
+                {isLocating ? t('detectingLocation') : t('nearMe')}
               </span>
             </button>
 
@@ -210,11 +212,11 @@ export default function CitySelector({ onCityChange }: CitySelectorProps) {
             <div className="max-h-56 overflow-y-auto">
               {isLoading ? (
                 <div className="px-4 py-6 text-center text-spiritual-warmGray text-sm">
-                  Loading cities...
+                  {t('loadingCities')}
                 </div>
               ) : filteredCities.length === 0 ? (
                 <div className="px-4 py-6 text-center text-spiritual-warmGray text-sm">
-                  No cities found
+                  {t('noCitiesFound')}
                 </div>
               ) : (
                 filteredCities.map((city) => (

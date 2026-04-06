@@ -1,41 +1,58 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  RefreshControl,
-  TouchableOpacity,
   Alert,
+  FlatList,
+  RefreshControl,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import {
-  Card,
-  ActivityIndicator,
-  Portal,
-  Modal,
-  Button,
-} from 'react-native-paper';
-import { colors, spacing, borderRadius } from '../../theme';
+import { Button, Card, Chip, Modal, Portal, ActivityIndicator } from 'react-native-paper';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import api from '../../services/api';
 import { ContactMessage } from '../../types';
+import { borderRadius, colors, spacing } from '../../theme';
+
+type MessageFilter = 'all' | 'new' | 'in_review' | 'responded' | 'archived';
+
+const FILTERS: MessageFilter[] = ['all', 'new', 'in_review', 'responded', 'archived'];
+
+const STATUS_LABELS: Record<Exclude<MessageFilter, 'all'>, string> = {
+  new: 'New',
+  in_review: 'In Review',
+  responded: 'Responded',
+  archived: 'Archived',
+};
+
+const STATUS_COLORS: Record<Exclude<MessageFilter, 'all'>, string> = {
+  new: colors.primary.saffron,
+  in_review: colors.status.info,
+  responded: colors.status.success,
+  archived: colors.text.secondary,
+};
 
 export function MessagesScreen() {
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<ContactMessage | null>(null);
+  const [filter, setFilter] = useState<MessageFilter>('all');
+  const [internalNotes, setInternalNotes] = useState('');
+  const [responseText, setResponseText] = useState('');
+  const [assignedToName, setAssignedToName] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const fetchMessages = useCallback(async () => {
     try {
-      setError(null);
       const response = await api.get('/connect');
       const data = Array.isArray(response.data) ? response.data : [];
-      setMessages(data.filter((m: ContactMessage) => !m.isDeleted));
-    } catch (err) {
-      setError('Failed to load messages');
-      console.error('Error fetching messages:', err);
+      setMessages(data.filter((item: ContactMessage) => !item.isDeleted));
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      Alert.alert('Error', 'Failed to load prayer requests.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -46,6 +63,19 @@ export function MessagesScreen() {
     fetchMessages();
   }, [fetchMessages]);
 
+  useEffect(() => {
+    if (selectedMessage) {
+      setInternalNotes(selectedMessage.internalNotes || '');
+      setResponseText(selectedMessage.responseText || '');
+      setAssignedToName(selectedMessage.assignedToName || '');
+    }
+  }, [selectedMessage]);
+
+  const filteredMessages = useMemo(() => {
+    if (filter === 'all') return messages;
+    return messages.filter((message) => (message.status || 'new') === filter);
+  }, [filter, messages]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchMessages();
@@ -53,37 +83,9 @@ export function MessagesScreen() {
 
   const formatDate = (dateString: string) => {
     try {
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffMs = now.getTime() - date.getTime();
-      const diffMins = Math.floor(diffMs / (1000 * 60));
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-      if (diffMins < 1) return 'Just now';
-      if (diffMins < 60) return `${diffMins}m ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays === 1) return 'Yesterday';
-      if (diffDays < 7) {
-        return date.toLocaleDateString('en-IN', { weekday: 'short' });
-      }
-      return date.toLocaleDateString('en-IN', {
+      return new Date(dateString).toLocaleString('en-IN', {
         day: 'numeric',
         month: 'short',
-        year: diffDays > 365 ? 'numeric' : undefined,
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
-  const formatFullDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-IN', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
       });
@@ -92,161 +94,116 @@ export function MessagesScreen() {
     }
   };
 
-  const getMessagePreview = (message: string, maxLength: number = 80) => {
-    if (!message) return '';
-    if (message.length <= maxLength) return message;
-    return message.substring(0, maxLength).trim() + '...';
+  const persistMessage = async (status?: ContactMessage['status'], sendResponse?: boolean) => {
+    if (!selectedMessage) return;
+    try {
+      setSaving(true);
+      const response = await api.put(`/connect/${selectedMessage._id}`, {
+        status: status || selectedMessage.status || 'new',
+        internalNotes,
+        responseText,
+        assignedToName,
+        sendResponse: Boolean(sendResponse && responseText.trim()),
+      });
+
+      const updated = response.data as ContactMessage;
+      setMessages((current) => current.map((item) => (item._id === updated._id ? updated : item)));
+      setSelectedMessage(updated);
+
+      if (sendResponse && responseText.trim()) {
+        Alert.alert('Sent', 'Prayer response email has been sent.');
+      } else {
+        Alert.alert('Saved', 'Prayer request updated successfully.');
+      }
+    } catch (error) {
+      console.error('Error updating prayer request:', error);
+      Alert.alert('Error', 'Unable to update this prayer request right now.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDelete = (msg: ContactMessage) => {
-    Alert.alert(
-      'Delete Message',
-      `Delete message from "${msg.fullName}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.delete(`/connect/${msg._id}`);
-              if (selectedMessage?._id === msg._id) {
-                setSelectedMessage(null);
-              }
-              fetchMessages();
-            } catch (err) {
-              console.error('Error deleting message:', err);
-              Alert.alert('Error', 'Failed to delete message.');
-            }
-          },
+  const archiveMessage = (message: ContactMessage) => {
+    Alert.alert('Archive Request', `Archive ${message.fullName}'s request?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Archive',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.delete(`/connect/${message._id}`);
+            setMessages((current) => current.filter((item) => item._id !== message._id));
+            setSelectedMessage(null);
+          } catch (error) {
+            console.error('Error archiving prayer request:', error);
+            Alert.alert('Error', 'Failed to archive the prayer request.');
+          }
         },
-      ],
+      },
+    ]);
+  };
+
+  const renderHeader = () => {
+    const counts = FILTERS.reduce<Record<string, number>>((acc, key) => {
+      acc[key] =
+        key === 'all'
+          ? messages.length
+          : messages.filter((message) => (message.status || 'new') === key).length;
+      return acc;
+    }, {});
+
+    return (
+      <View style={styles.header}>
+        <Text style={styles.title}>Prayer Requests</Text>
+        <Text style={styles.subtitle}>Read, assign, and respond from mobile.</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersRow}>
+          {FILTERS.map((item) => (
+            <Chip
+              key={item}
+              selected={filter === item}
+              onPress={() => setFilter(item)}
+              style={[styles.filterChip, filter === item && styles.filterChipActive]}
+              textStyle={[styles.filterChipText, filter === item && styles.filterChipTextActive]}
+            >
+              {item === 'all' ? `All (${counts[item]})` : `${STATUS_LABELS[item]} (${counts[item]})`}
+            </Chip>
+          ))}
+        </ScrollView>
+      </View>
     );
   };
 
-  const renderMessageCard = ({ item }: { item: ContactMessage }) => (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      onPress={() => setSelectedMessage(item)}
-    >
-      <Card style={styles.card}>
-        <Card.Content>
-          <View style={styles.cardHeader}>
-            <View style={styles.avatarContainer}>
-              <Text style={styles.avatarText}>
-                {item.fullName?.charAt(0)?.toUpperCase() || '?'}
-              </Text>
-            </View>
-            <View style={styles.messageInfo}>
-              <Text style={styles.senderName} numberOfLines={1}>
-                {item.fullName}
-              </Text>
-              <Text style={styles.senderEmail} numberOfLines={1}>
-                {item.email}
-              </Text>
-            </View>
-            <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
-          </View>
-
-          {item.subject ? (
-            <Text style={styles.subjectText} numberOfLines={1}>
-              {item.subject}
-            </Text>
-          ) : null}
-
-          <View style={styles.messageSection}>
-            <Text style={styles.messagePreview} numberOfLines={2}>
-              {getMessagePreview(item.message)}
-            </Text>
-          </View>
-
-          <View style={styles.cardActions}>
-            <TouchableOpacity
-              style={styles.deleteBtn}
-              onPress={() => handleDelete(item)}
-            >
-              <Text style={styles.deleteBtnText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        </Card.Content>
-      </Card>
-    </TouchableOpacity>
-  );
-
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Text style={styles.emptyStateIcon}>💬</Text>
-      <Text style={styles.emptyStateText}>No messages yet</Text>
-      <Text style={styles.emptyStateSubtext}>
-        Contact messages will appear here
-      </Text>
-    </View>
-  );
-
-  const renderHeader = () => (
-    <View style={styles.header}>
-      <Text style={styles.headerTitle}>Messages</Text>
-      <Text style={styles.headerSubtitle}>
-        {messages.length} {messages.length === 1 ? 'message' : 'messages'}
-      </Text>
-    </View>
-  );
-
-  const renderDetailModal = () => {
-    if (!selectedMessage) return null;
-    const msg = selectedMessage;
-
+  const renderItem = ({ item }: { item: ContactMessage }) => {
+    const status = (item.status || 'new') as Exclude<MessageFilter, 'all'>;
     return (
-      <Portal>
-        <Modal
-          visible={!!selectedMessage}
-          onDismiss={() => setSelectedMessage(null)}
-          contentContainerStyle={styles.modalContainer}
-        >
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <View style={styles.modalHeader}>
-              <View style={styles.avatarContainerLarge}>
-                <Text style={styles.avatarTextLarge}>
-                  {msg.fullName?.charAt(0)?.toUpperCase() || '?'}
-                </Text>
+      <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedMessage(item)}>
+        <Card style={styles.card}>
+          <Card.Content>
+            <View style={styles.cardHeader}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{item.fullName?.charAt(0)?.toUpperCase() || '?'}</Text>
               </View>
-              <Text style={styles.modalName}>{msg.fullName}</Text>
-              <Text style={styles.modalEmail}>{msg.email}</Text>
-              <Text style={styles.modalDate}>{formatFullDate(msg.createdAt)}</Text>
-            </View>
-
-            {msg.subject ? (
-              <View style={styles.modalField}>
-                <Text style={styles.modalFieldLabel}>Subject</Text>
-                <Text style={styles.modalSubject}>{msg.subject}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.name}>{item.fullName}</Text>
+                <Text style={styles.metaText} numberOfLines={1}>{item.email}</Text>
+                {item.subject ? <Text style={styles.subject}>{item.subject}</Text> : null}
               </View>
-            ) : null}
-
-            <View style={styles.modalField}>
-              <Text style={styles.modalFieldLabel}>Message</Text>
-              <Text style={styles.modalMessage}>{msg.message}</Text>
-            </View>
-
-            <View style={styles.modalActions}>
-              <Button
-                mode="outlined"
-                onPress={() => setSelectedMessage(null)}
-                style={styles.closeBtn}
-                textColor={colors.text.secondary}
+              <Chip
+                compact
+                style={[styles.statusChip, { backgroundColor: `${STATUS_COLORS[status]}20` }]}
+                textStyle={[styles.statusChipText, { color: STATUS_COLORS[status] }]}
               >
-                Close
-              </Button>
-              <Button
-                mode="contained"
-                onPress={() => handleDelete(msg)}
-                buttonColor={colors.status.error}
-              >
-                Delete
-              </Button>
+                {STATUS_LABELS[status]}
+              </Chip>
             </View>
-          </ScrollView>
-        </Modal>
-      </Portal>
+            <Text style={styles.preview} numberOfLines={3}>{item.message}</Text>
+            <View style={styles.cardFooter}>
+              <Text style={styles.metaText}>{formatDate(item.createdAt)}</Text>
+              {item.assignedToName ? <Text style={styles.assignee}>Assigned: {item.assignedToName}</Text> : null}
+            </View>
+          </Card.Content>
+        </Card>
+      </TouchableOpacity>
     );
   };
 
@@ -254,18 +211,7 @@ export function MessagesScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.primary.saffron} />
-        <Text style={styles.loadingText}>Loading messages...</Text>
-      </View>
-    );
-  }
-
-  if (error && messages.length === 0) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchMessages}>
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
+        <Text style={styles.loadingText}>Loading prayer requests...</Text>
       </View>
     );
   }
@@ -273,11 +219,11 @@ export function MessagesScreen() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={messages}
+        data={filteredMessages}
         keyExtractor={(item) => item._id}
-        renderItem={renderMessageCard}
+        renderItem={renderItem}
+        ListHeaderComponent={renderHeader}
         contentContainerStyle={styles.listContent}
-        ListHeaderComponent={messages.length > 0 ? renderHeader : null}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -286,229 +232,182 @@ export function MessagesScreen() {
             tintColor={colors.primary.saffron}
           />
         }
-        ListEmptyComponent={renderEmptyState}
-        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Icon name="hands-pray" size={48} color={colors.primary.saffron} />
+            <Text style={styles.emptyTitle}>No prayer requests</Text>
+            <Text style={styles.emptySubtitle}>Requests will appear here as devotees write in.</Text>
+          </View>
+        }
       />
 
-      {renderDetailModal()}
+      <Portal>
+        <Modal
+          visible={!!selectedMessage}
+          onDismiss={() => setSelectedMessage(null)}
+          contentContainerStyle={styles.modalContainer}
+        >
+          {selectedMessage && (
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalTitle}>{selectedMessage.fullName}</Text>
+              <Text style={styles.modalMeta}>{selectedMessage.email}</Text>
+              {selectedMessage.phone ? <Text style={styles.modalMeta}>{selectedMessage.phone}</Text> : null}
+              <Text style={styles.modalMeta}>{formatDate(selectedMessage.createdAt)}</Text>
+
+              {selectedMessage.subject ? (
+                <View style={styles.section}>
+                  <Text style={styles.sectionLabel}>Subject</Text>
+                  <Text style={styles.sectionValue}>{selectedMessage.subject}</Text>
+                </View>
+              ) : null}
+
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Prayer Request</Text>
+                <Text style={styles.sectionValue}>{selectedMessage.message}</Text>
+              </View>
+
+              <View style={styles.inlineStatusRow}>
+                {(['new', 'in_review', 'responded'] as const).map((item) => (
+                  <TouchableOpacity
+                    key={item}
+                    style={[
+                      styles.inlineStatusButton,
+                      (selectedMessage.status || 'new') === item && { backgroundColor: STATUS_COLORS[item] },
+                    ]}
+                    onPress={() => persistMessage(item)}
+                  >
+                    <Text
+                      style={[
+                        styles.inlineStatusButtonText,
+                        (selectedMessage.status || 'new') === item && { color: colors.text.white },
+                      ]}
+                    >
+                      {STATUS_LABELS[item]}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Assigned To</Text>
+                <TextInput
+                  value={assignedToName}
+                  onChangeText={setAssignedToName}
+                  placeholder="Enter team member name"
+                  style={styles.input}
+                  placeholderTextColor={colors.text.secondary}
+                />
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Internal Notes</Text>
+                <TextInput
+                  value={internalNotes}
+                  onChangeText={setInternalNotes}
+                  placeholder="Add context, follow-up, or next step"
+                  style={[styles.input, styles.multilineInput]}
+                  multiline
+                  placeholderTextColor={colors.text.secondary}
+                />
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>Response To Devotee</Text>
+                <TextInput
+                  value={responseText}
+                  onChangeText={setResponseText}
+                  placeholder="Type the reply that should go on email"
+                  style={[styles.input, styles.multilineInput]}
+                  multiline
+                  placeholderTextColor={colors.text.secondary}
+                />
+              </View>
+
+              <View style={styles.actionRow}>
+                <Button mode="outlined" onPress={() => persistMessage(undefined, false)} disabled={saving}>
+                  Save
+                </Button>
+                <Button mode="contained" onPress={() => persistMessage('responded', true)} loading={saving}>
+                  Send Reply
+                </Button>
+              </View>
+
+              <View style={styles.secondaryActions}>
+                <Button mode="text" textColor={colors.text.secondary} onPress={() => setSelectedMessage(null)}>
+                  Close
+                </Button>
+                <Button mode="text" textColor={colors.status.error} onPress={() => archiveMessage(selectedMessage)}>
+                  Archive
+                </Button>
+              </View>
+            </ScrollView>
+          )}
+        </Modal>
+      </Portal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background.parchment,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background.parchment,
-  },
-  loadingText: {
-    marginTop: spacing.md,
-    color: colors.text.secondary,
-    fontSize: 16,
-  },
-  errorText: {
-    color: colors.status.error,
-    fontSize: 16,
-    marginBottom: spacing.md,
-  },
-  retryButton: {
-    backgroundColor: colors.primary.saffron,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-  },
-  retryButtonText: {
-    color: colors.text.white,
-    fontWeight: '600',
-  },
-  listContent: {
-    padding: spacing.md,
-  },
-  header: {
-    marginBottom: spacing.lg,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.primary.maroon,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginTop: spacing.xs,
-  },
-  card: {
-    marginBottom: spacing.md,
-    backgroundColor: colors.background.warmWhite,
-    borderRadius: borderRadius.md,
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  avatarContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.accent.peacock,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  avatarText: {
-    color: colors.text.white,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  avatarContainerLarge: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.accent.peacock,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  avatarTextLarge: {
-    color: colors.text.white,
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  messageInfo: {
-    flex: 1,
-  },
-  senderName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text.primary,
-  },
-  senderEmail: {
-    fontSize: 12,
-    color: colors.text.secondary,
-    marginTop: 2,
-  },
-  dateText: {
-    fontSize: 12,
-    color: colors.text.secondary,
-  },
-  subjectText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.primary.maroon,
-    marginBottom: spacing.sm,
-  },
-  messageSection: {
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.border.gold as string,
-  },
-  messagePreview: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    lineHeight: 20,
-  },
-  cardActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: spacing.sm,
-  },
-  deleteBtn: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.status.error,
-  },
-  deleteBtnText: {
-    color: colors.text.white,
-    fontSize: 12,
-    fontWeight: '600',
-  },
+  container: { flex: 1, backgroundColor: colors.background.parchment },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background.parchment },
+  loadingText: { marginTop: spacing.md, color: colors.text.secondary },
+  listContent: { padding: spacing.md, paddingBottom: spacing.xl },
+  header: { marginBottom: spacing.md },
+  title: { fontSize: 24, fontWeight: '700', color: colors.primary.maroon },
+  subtitle: { marginTop: spacing.xs, color: colors.text.secondary },
+  filtersRow: { gap: spacing.sm, paddingTop: spacing.md, paddingBottom: spacing.xs },
+  filterChip: { backgroundColor: colors.background.warmWhite, borderColor: colors.border.gold as string },
+  filterChipActive: { backgroundColor: `${colors.primary.saffron}15` },
+  filterChipText: { color: colors.text.secondary },
+  filterChipTextActive: { color: colors.primary.saffron, fontWeight: '700' },
+  card: { marginBottom: spacing.md, backgroundColor: colors.background.warmWhite, borderRadius: borderRadius.lg },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent.peacock, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: colors.text.white, fontWeight: '700', fontSize: 18 },
+  name: { fontSize: 16, fontWeight: '700', color: colors.text.primary },
+  metaText: { fontSize: 12, color: colors.text.secondary },
+  subject: { marginTop: 2, color: colors.primary.maroon, fontWeight: '600' },
+  preview: { color: colors.text.primary, lineHeight: 22 },
+  cardFooter: { marginTop: spacing.sm, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  assignee: { fontSize: 12, color: colors.accent.peacock, fontWeight: '600' },
+  statusChip: { alignSelf: 'flex-start' },
+  statusChipText: { fontSize: 11, fontWeight: '700' },
+  emptyState: { alignItems: 'center', paddingVertical: spacing.xxl },
+  emptyTitle: { marginTop: spacing.md, fontSize: 18, fontWeight: '700', color: colors.primary.maroon },
+  emptySubtitle: { marginTop: spacing.xs, color: colors.text.secondary, textAlign: 'center' },
   modalContainer: {
     backgroundColor: colors.background.warmWhite,
     margin: spacing.md,
     padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    maxHeight: '80%',
+    borderRadius: borderRadius.xl,
+    maxHeight: '88%',
   },
-  modalHeader: {
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.gold as string,
-  },
-  modalName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.primary.maroon,
-  },
-  modalEmail: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginTop: spacing.xs,
-  },
-  modalDate: {
-    fontSize: 12,
-    color: colors.text.secondary,
-    marginTop: spacing.xs,
-  },
-  modalField: {
-    marginBottom: spacing.md,
-  },
-  modalFieldLabel: {
-    fontSize: 12,
-    color: colors.text.secondary,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: spacing.xs,
-  },
-  modalSubject: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary.maroon,
-  },
-  modalMessage: {
-    fontSize: 15,
+  modalTitle: { fontSize: 22, fontWeight: '700', color: colors.primary.maroon },
+  modalMeta: { marginTop: 4, color: colors.text.secondary },
+  section: { marginTop: spacing.lg },
+  sectionLabel: { fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.8, color: colors.text.secondary, marginBottom: spacing.xs },
+  sectionValue: { fontSize: 15, color: colors.text.primary, lineHeight: 23 },
+  input: {
+    backgroundColor: colors.background.parchment,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     color: colors.text.primary,
-    lineHeight: 24,
+    borderWidth: 1,
+    borderColor: colors.border.gold as string,
   },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: spacing.sm,
-    marginTop: spacing.lg,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border.gold as string,
+  multilineInput: { minHeight: 96, textAlignVertical: 'top' },
+  inlineStatusRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg, flexWrap: 'wrap' },
+  inlineStatusButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.background.parchment,
+    borderWidth: 1,
+    borderColor: colors.border.gold as string,
   },
-  closeBtn: {
-    borderColor: colors.text.secondary,
-  },
-  emptyState: {
-    padding: spacing.xxl,
-    alignItems: 'center',
-  },
-  emptyStateIcon: {
-    fontSize: 48,
-    marginBottom: spacing.md,
-  },
-  emptyStateText: {
-    color: colors.text.secondary,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  emptyStateSubtext: {
-    color: colors.text.secondary,
-    fontSize: 14,
-    marginTop: spacing.sm,
-    textAlign: 'center',
-  },
+  inlineStatusButtonText: { color: colors.text.secondary, fontWeight: '700' },
+  actionRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm, marginTop: spacing.xl },
+  secondaryActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md },
 });

@@ -14,6 +14,7 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { colors, spacing, borderRadius, shadows } from '../../theme';
 import { Article } from '../../types';
@@ -27,6 +28,7 @@ interface RouteParams {
 export function ArticleDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const { articleId } = route.params as RouteParams;
 
   const [article, setArticle] = useState<Article | null>(null);
@@ -42,7 +44,7 @@ export function ArticleDetailScreen() {
       setArticle(response.data);
     } catch (error) {
       console.error('Error fetching article details:', error);
-      Alert.alert('Error', 'Failed to load article');
+      Alert.alert(t('common.error'), t('details.article.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -53,7 +55,7 @@ export function ArticleDetailScreen() {
 
     try {
       await Share.share({
-        message: `${article.title}\n\nRead this enlightening article from AGM India.`,
+        message: `${article.title}\n\n${t('details.article.shareMessage')}`,
         title: article.title,
       });
     } catch (error) {
@@ -74,7 +76,7 @@ export function ArticleDetailScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary.saffron} />
-        <Text style={styles.loadingText}>Loading article...</Text>
+        <Text style={styles.loadingText}>{t('details.article.loading')}</Text>
       </View>
     );
   }
@@ -83,9 +85,9 @@ export function ArticleDetailScreen() {
     return (
       <View style={styles.errorContainer}>
         <Icon name="file-document-alert" size={64} color={colors.text.secondary} />
-        <Text style={styles.errorText}>Article not found</Text>
+        <Text style={styles.errorText}>{t('details.article.notFound')}</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+          <Text style={styles.backButtonText}>{t('common.goBack')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -151,7 +153,7 @@ export function ArticleDetailScreen() {
             {article.readTime && (
               <View style={styles.metaItem}>
                 <Icon name="clock-outline" size={16} color={colors.gold.dark} />
-                <Text style={styles.metaText}>{article.readTime} min read</Text>
+                <Text style={styles.metaText}>{t('details.article.minRead', { count: article.readTime })}</Text>
               </View>
             )}
           </View>
@@ -171,7 +173,7 @@ export function ArticleDetailScreen() {
           {/* Footer Decoration */}
           <View style={styles.footerDecoration}>
             <Text style={styles.omText}>ॐ</Text>
-            <Text style={styles.footerText}>Hari Om Tat Sat</Text>
+            <Text style={styles.footerText}>{t('details.article.footerBlessing')}</Text>
           </View>
         </View>
       </ScrollView>

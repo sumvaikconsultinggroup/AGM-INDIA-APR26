@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '@/lib/api';
 
 interface DayPanchang {
@@ -27,8 +28,6 @@ interface MonthlyCalendarProps {
   lat: number;
   lng: number;
 }
-
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function formatTime12h(timeStr?: string): string {
   if (!timeStr || timeStr === 'N/A') return '--:--';
@@ -60,6 +59,7 @@ function SkeletonCalendar() {
 }
 
 export default function MonthlyCalendar({ lat, lng }: MonthlyCalendarProps) {
+  const { t, i18n } = useTranslation('panchang');
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
@@ -117,6 +117,19 @@ export default function MonthlyCalendar({ lat, lng }: MonthlyCalendarProps) {
     month: 'long',
     year: 'numeric',
   });
+  const localizedMonthName = new Date(year, month - 1).toLocaleDateString(
+    i18n.language === 'en' ? 'en-IN' : `${i18n.language}-IN`,
+    { month: 'long', year: 'numeric' }
+  );
+  const weekdays = [
+    t('calendarSun'),
+    t('calendarMon'),
+    t('calendarTue'),
+    t('calendarWed'),
+    t('calendarThu'),
+    t('calendarFri'),
+    t('calendarSat'),
+  ];
 
   // Map monthData by day
   const panchangByDay: Record<number, DayPanchang> = {};
@@ -149,27 +162,27 @@ export default function MonthlyCalendar({ lat, lng }: MonthlyCalendarProps) {
         <button
           onClick={goToPrevMonth}
           className="p-2 rounded-lg hover:bg-gold-50 text-spiritual-maroon transition-colors"
-          aria-label="Previous month"
+          aria-label={t('previousMonth')}
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="text-center">
           <h3 className="font-display text-lg text-spiritual-maroon font-semibold">
-            {monthName}
+            {localizedMonthName}
           </h3>
           {!isCurrentMonth && (
             <button
               onClick={goToToday}
               className="text-xs text-spiritual-saffron hover:underline font-medium"
             >
-              Go to today
+              {t('goToToday')}
             </button>
           )}
         </div>
         <button
           onClick={goToNextMonth}
           className="p-2 rounded-lg hover:bg-gold-50 text-spiritual-maroon transition-colors"
-          aria-label="Next month"
+          aria-label={t('nextMonth')}
         >
           <ChevronRight className="w-5 h-5" />
         </button>
@@ -181,7 +194,7 @@ export default function MonthlyCalendar({ lat, lng }: MonthlyCalendarProps) {
         <div className="p-3 md:p-4">
           {/* Weekday headers */}
           <div className="grid grid-cols-7 gap-1 mb-1">
-            {WEEKDAYS.map((day) => (
+            {weekdays.map((day) => (
               <div
                 key={day}
                 className="text-center text-[10px] font-bold text-spiritual-warmGray uppercase tracking-wider py-1"
@@ -274,16 +287,16 @@ export default function MonthlyCalendar({ lat, lng }: MonthlyCalendarProps) {
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-gold-100/30 text-[10px] text-spiritual-warmGray">
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-gold-300" /> Shukla
+              <span className="w-2 h-2 rounded-full bg-gold-300" /> {t('shukla')}
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-spiritual-maroon/40" /> Krishna
+              <span className="w-2 h-2 rounded-full bg-spiritual-maroon/40" /> {t('krishna')}
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-spiritual-saffron" /> Festival
+              <span className="w-2 h-2 rounded-full bg-spiritual-saffron" /> {t('festivals')}
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-3 h-3 border-2 border-gold-300 rounded" /> Ekadashi
+              <span className="w-3 h-3 border-2 border-gold-300 rounded" /> {t('ekadashi')}
             </span>
           </div>
         </div>
@@ -323,7 +336,7 @@ export default function MonthlyCalendar({ lat, lng }: MonthlyCalendarProps) {
                   <div>
                     <p className="text-xs text-spiritual-warmGray">
                       {selectedDay.date &&
-                        new Date(selectedDay.date).toLocaleDateString('en-IN', {
+                        new Date(selectedDay.date).toLocaleDateString(i18n.language === 'en' ? 'en-IN' : `${i18n.language}-IN`, {
                           weekday: 'long',
                           day: 'numeric',
                           month: 'long',
@@ -331,7 +344,7 @@ export default function MonthlyCalendar({ lat, lng }: MonthlyCalendarProps) {
                         })}
                     </p>
                     <h4 className="font-display text-xl text-spiritual-maroon font-bold mt-1">
-                      {selectedDay.tithi?.name || 'Tithi'}
+                      {selectedDay.tithi?.name || t('tithi')}
                     </h4>
                     {selectedDay.tithi?.paksha && (
                       <span
@@ -341,7 +354,7 @@ export default function MonthlyCalendar({ lat, lng }: MonthlyCalendarProps) {
                             : 'bg-spiritual-maroon/10 text-spiritual-maroon'
                         }`}
                       >
-                        {selectedDay.tithi.paksha} Paksha
+                        {selectedDay.tithi.paksha} {t('paksha')}
                       </span>
                     )}
                   </div>
@@ -357,7 +370,7 @@ export default function MonthlyCalendar({ lat, lng }: MonthlyCalendarProps) {
                 <div className="space-y-2.5 text-sm">
                   {selectedDay.nakshatra?.name && (
                     <div className="flex justify-between items-center">
-                      <span className="text-spiritual-warmGray">नक्षत्र (Nakshatra)</span>
+                      <span className="text-spiritual-warmGray">{t('nakshatra')}</span>
                       <span className="font-semibold text-spiritual-maroon">
                         {selectedDay.nakshatra.name}
                         {selectedDay.nakshatra.deity && (
@@ -370,7 +383,7 @@ export default function MonthlyCalendar({ lat, lng }: MonthlyCalendarProps) {
                   )}
                   {selectedDay.yoga?.name && (
                     <div className="flex justify-between items-center">
-                      <span className="text-spiritual-warmGray">योग (Yoga)</span>
+                      <span className="text-spiritual-warmGray">{t('yoga')}</span>
                       <span className="font-semibold text-spiritual-maroon">
                         {selectedDay.yoga.name}
                       </span>
@@ -378,7 +391,7 @@ export default function MonthlyCalendar({ lat, lng }: MonthlyCalendarProps) {
                   )}
                   {selectedDay.karana?.name && (
                     <div className="flex justify-between items-center">
-                      <span className="text-spiritual-warmGray">करण (Karana)</span>
+                      <span className="text-spiritual-warmGray">{t('karana')}</span>
                       <span className="font-semibold text-spiritual-maroon">
                         {selectedDay.karana.name}
                       </span>
@@ -386,7 +399,7 @@ export default function MonthlyCalendar({ lat, lng }: MonthlyCalendarProps) {
                   )}
                   {selectedDay.sunrise && (
                     <div className="flex justify-between items-center">
-                      <span className="text-spiritual-warmGray">Sunrise / Sunset</span>
+                      <span className="text-spiritual-warmGray">{t('sunrise')} / {t('sunset')}</span>
                       <span className="font-semibold text-spiritual-maroon">
                         {formatTime12h(selectedDay.sunrise)} / {formatTime12h(selectedDay.sunset)}
                       </span>
@@ -398,7 +411,7 @@ export default function MonthlyCalendar({ lat, lng }: MonthlyCalendarProps) {
                 {selectedDay.festivals && selectedDay.festivals.length > 0 && (
                   <div className="mt-4 pt-3 border-t border-gold-100/50">
                     <p className="text-xs text-spiritual-saffron font-semibold uppercase tracking-wider mb-2">
-                      Festivals
+                      {t('festivals')}
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {selectedDay.festivals.map((f, i) => (

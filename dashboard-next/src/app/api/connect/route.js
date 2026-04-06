@@ -50,18 +50,41 @@ export async function POST(request) {
   try {
     await connectDB();
 
-    const formData = await request.formData();
+    const contentType = request.headers.get('content-type') || '';
+    let values = {
+      fullName: '',
+      email: '',
+      phone: '',
+      subject: '',
+      message: '',
+    };
 
-    if (!formData) {
-      return NextResponse.json({ success: false, message: 'No form data found' }, { status: 400 });
+    if (contentType.includes('application/json')) {
+      const body = await request.json();
+      values = {
+        fullName: String(body?.fullName || ''),
+        email: String(body?.email || ''),
+        phone: String(body?.phone || ''),
+        subject: String(body?.subject || ''),
+        message: String(body?.message || ''),
+      };
+    } else {
+      const formData = await request.formData();
+
+      if (!formData) {
+        return NextResponse.json({ success: false, message: 'No form data found' }, { status: 400 });
+      }
+
+      values = {
+        fullName: String(formData.get('fullName') || ''),
+        email: String(formData.get('email') || ''),
+        phone: String(formData.get('phone') || ''),
+        subject: String(formData.get('subject') || ''),
+        message: String(formData.get('message') || ''),
+      };
     }
 
-    const fullName = formData.get('fullName');
-    const email = formData.get('email');
-    const subject = formData.get('subject');
-    const message = formData.get('message');
-
-    if (!fullName || !email || !subject || !message) {
+    if (!values.fullName || !values.email || !values.subject || !values.message) {
       return NextResponse.json(
         {
           success: false,
@@ -72,10 +95,13 @@ export async function POST(request) {
     }
 
     const newSubmission = await Connect.create({
-      fullName: fullName.trim(),
-      email: email.trim().toLowerCase(),
-      subject: subject.trim(),
-      message: message.trim(),
+      fullName: values.fullName.trim(),
+      email: values.email.trim().toLowerCase(),
+      phone: values.phone?.trim() || '',
+      subject: values.subject.trim(),
+      message: values.message.trim(),
+      status: 'new',
+      lastActionAt: new Date(),
     });
 
     try {
@@ -84,14 +110,14 @@ export async function POST(request) {
 
       // Plain text version
       const confirmationEmailText = `
-        Dear ${fullName},
+        Dear ${values.fullName},
         
         Thank you for reaching out to us. We have received your message and will get back to you shortly.
         
         Here's a summary of your submission:
         
-        Subject: ${subject}
-        Message: ${message}
+        Subject: ${values.subject}
+        Message: ${values.message}
         
         We appreciate your interest and will respond to your inquiry as soon as possible.
         
@@ -106,15 +132,15 @@ export async function POST(request) {
             <h1 style="color: #4f6df5;">Message Received</h1>
           </div>
           
-          <p>Dear <strong>${fullName}</strong>,</p>
+          <p>Dear <strong>${values.fullName}</strong>,</p>
           
           <p>Thank you for reaching out to us. We have received your message and will get back to you shortly.</p>
           
           <div style="background-color: #f7f9fc; border-left: 4px solid #4f6df5; padding: 15px; margin: 20px 0;">
             <h3 style="margin-top: 0;">Your Message Summary:</h3>
-            <p><strong>Subject:</strong> ${subject}</p>
+            <p><strong>Subject:</strong> ${values.subject}</p>
             <p><strong>Message:</strong></p>
-            <p style="font-style: italic;">"${message}"</p>
+            <p style="font-style: italic;">"${values.message}"</p>
           </div>
           
           <p>We appreciate your interest and will respond to your inquiry as soon as possible.</p>
@@ -129,7 +155,7 @@ export async function POST(request) {
 
       // Send confirmation email
       await sendEmail(
-        email,
+        values.email,
         confirmationEmailSubject,
         confirmationEmailText,
         confirmationEmailHtml

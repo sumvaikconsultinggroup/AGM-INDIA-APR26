@@ -10,6 +10,7 @@ import {
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { colors, spacing, borderRadius, shadows } from '../../theme';
 import LanguageDrawer from '../../components/LanguageDrawer';
@@ -25,6 +26,7 @@ interface MenuItem {
 export function ProfileScreen() {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
+  const navigation = useNavigation<any>();
   const [languageDrawerVisible, setLanguageDrawerVisible] = useState(false);
 
   const handleLogout = () => {
@@ -65,7 +67,7 @@ export function ProfileScreen() {
       icon: 'hand-heart',
       title: t('profile.menu.donations.title'),
       subtitle: t('profile.menu.donations.subtitle'),
-      onPress: () => handleMenuPress(t('profile.menu.donations.title')),
+      onPress: () => navigation.navigate('DonationHistory'),
       showChevron: true,
     },
     {

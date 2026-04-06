@@ -184,11 +184,11 @@ function formatPeriod(p?: TimePeriod): string {
   return `${p.start} - ${p.end}`;
 }
 
-function formatDisplayDate(date?: string): string {
+function formatDisplayDate(date?: string, locale = 'en-IN'): string {
   if (!date) return '';
   const parsed = new Date(date);
   if (Number.isNaN(parsed.getTime())) return date;
-  return parsed.toLocaleDateString('en-IN', {
+  return parsed.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -197,14 +197,11 @@ function formatDisplayDate(date?: string): string {
 
 // ─── Sub-Components ──────────────────────────────────────────────────
 
-function SectionHeader({ icon, title, titleHindi }: { icon: React.ComponentProps<typeof Icon>['name']; title: string; titleHindi?: string }) {
+function SectionHeader({ icon, title }: { icon: React.ComponentProps<typeof Icon>['name']; title: string }) {
   return (
     <View style={styles.sectionHeader}>
       <Icon name={icon} size={18} color={colors.primary.saffron} />
-      <View>
-        {titleHindi && <Text style={styles.sectionTitleHindi}>{titleHindi}</Text>}
-        <Text style={styles.sectionTitle}>{title}</Text>
-      </View>
+      <Text style={styles.sectionTitle}>{title}</Text>
     </View>
   );
 }
@@ -219,16 +216,16 @@ function TimeBox({ icon, label, time }: { icon: React.ComponentProps<typeof Icon
   );
 }
 
-function MuhurtaRow({ label, labelEn, start, end, variant, note }: {
-  label: string; labelEn: string; start?: string; end?: string;
+function MuhurtaRow({ label, start, end, variant, note }: {
+  label: string; start?: string; end?: string;
   variant: 'auspicious' | 'inauspicious'; note?: string;
 }) {
+  const { t } = useTranslation();
   const isAuspicious = variant === 'auspicious';
   return (
     <View style={[styles.muhurtaRow, isAuspicious ? styles.muhurtaAuspicious : styles.muhurtaInauspicious]}>
       <View style={styles.muhurtaInfo}>
         <Text style={styles.muhurtaLabel}>{label}</Text>
-        <Text style={styles.muhurtaLabelEn}>{labelEn}</Text>
         {note && (
           <View style={styles.muhurtaNote}>
             <Icon name="meditation" size={12} color="#2E7D32" />
@@ -237,7 +234,7 @@ function MuhurtaRow({ label, labelEn, start, end, variant, note }: {
         )}
       </View>
       <Text style={[styles.muhurtaTime, isAuspicious ? styles.muhurtaTimeGreen : styles.muhurtaTimeRed]}>
-        {start && end ? `${start} - ${end}` : '--:-- - --:--'}
+        {start && end ? `${start} - ${end}` : t('panchang.periodUnavailable')}
       </Text>
     </View>
   );
@@ -274,7 +271,7 @@ function InfoChip({ label, value, valueColor }: { label: string; value: string; 
 export default function PanchangScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [selectedCity, setSelectedCity] = useState<City>(DEFAULT_CITY);
   const [cityPickerVisible, setCityPickerVisible] = useState(false);
@@ -317,14 +314,14 @@ export default function PanchangScreen() {
         setPanchang(normalized);
       } else {
         setPanchang(null);
-        setFetchError('Live Panchang data is incomplete for this location/date.');
+        setFetchError(t('panchang.errors.incompleteData'));
       }
     } else {
       if (panchangResult.reason instanceof Error) {
         console.warn('Panchang data fetch failed:', panchangResult.reason.message);
       }
       setPanchang(null);
-      setFetchError('Unable to load live Panchang data.');
+      setFetchError(t('panchang.errors.loadFailed'));
     }
 
     if (festivalsResult.status === 'fulfilled') {
@@ -362,7 +359,7 @@ export default function PanchangScreen() {
 
   const isEkadashi = (panchang?.tithi?.number === 11 || panchang?.tithi?.number === 26);
   const primaryFestival = panchang?.festival || panchang?.festivals?.[0];
-  const displayDate = formatDisplayDate(panchang?.date);
+  const displayDate = formatDisplayDate(panchang?.date, i18n.language === 'en' ? 'en-IN' : `${i18n.language}-IN`);
   const displayDay = panchang?.dayNameHindi || panchang?.dayName || '';
   const displayLocation = [selectedCity.name, selectedCity.timezone].filter(Boolean).join(' • ');
 
@@ -370,7 +367,7 @@ export default function PanchangScreen() {
     return (
       <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
         <ActivityIndicator size="large" color={colors.primary.saffron} />
-        <Text style={styles.loadingText}>Loading Panchang...</Text>
+        <Text style={styles.loadingText}>{t('panchang.loading')}</Text>
       </View>
     );
   }
@@ -395,7 +392,7 @@ export default function PanchangScreen() {
       {!!fetchError && (
         <TouchableOpacity style={styles.errorBanner} onPress={onRefresh} activeOpacity={0.8}>
           <Icon name="alert-circle-outline" size={16} color={colors.primary.vermillion} />
-          <Text style={styles.errorText}>{fetchError} - Tap to retry</Text>
+          <Text style={styles.errorText}>{fetchError} - {t('panchang.tapToRetry')}</Text>
         </TouchableOpacity>
       )}
 
@@ -406,8 +403,8 @@ export default function PanchangScreen() {
         {!panchang ? (
           <View style={styles.emptyState}>
             <Icon name="calendar-blank-outline" size={48} color={colors.text.secondary} />
-            <Text style={styles.emptyStateText}>No Panchang data available</Text>
-            <Text style={styles.emptyStateSubText}>Pull down to refresh</Text>
+            <Text style={styles.emptyStateText}>{t('panchang.emptyTitle')}</Text>
+            <Text style={styles.emptyStateSubText}>{t('panchang.emptySubtitle')}</Text>
           </View>
         ) : (
           <>
@@ -427,8 +424,8 @@ export default function PanchangScreen() {
               {isEkadashi && (
                 <LinearGradient colors={['rgba(212,160,23,0.15)', 'rgba(212,160,23,0.05)']} style={StyleSheet.absoluteFillObject} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
               )}
-              <Text style={styles.heroLabel}>पंचांग</Text>
-              <Text style={styles.heroSubLabel}>Five Elements of Time</Text>
+              <Text style={styles.heroLabel}>{t('panchang.title')}</Text>
+              <Text style={styles.heroSubLabel}>{t('panchang.heroSubtitle')}</Text>
               {(displayDay || displayDate) && (
                 <View style={styles.heroMetaWrap}>
                   <View style={styles.heroDateBadge}>
@@ -449,9 +446,9 @@ export default function PanchangScreen() {
               {/* Tithi */}
               <View style={styles.tithiRow}>
                 <View style={styles.tithiMain}>
-                  <Text style={styles.tithiLabel}>तिथि</Text>
-                  <Text style={styles.tithiName}>{panchang.tithi?.name || 'N/A'}</Text>
-                  {panchang.tithi?.endTime && <Text style={styles.tithiEndTime}>Ends: {formatTime(panchang.tithi.endTime)}</Text>}
+                  <Text style={styles.tithiLabel}>{t('panchang.tithi')}</Text>
+                  <Text style={styles.tithiName}>{panchang.tithi?.name || t('panchang.notAvailable')}</Text>
+                  {panchang.tithi?.endTime && <Text style={styles.tithiEndTime}>{t('panchang.endsLabel')}: {formatTime(panchang.tithi.endTime)}</Text>}
                 </View>
                 {panchang.tithi?.paksha && (
                   <View style={[styles.pakshaBadge, panchang.tithi.paksha.toLowerCase().includes('shukla') ? styles.shukla : styles.krishna]}>
@@ -463,27 +460,26 @@ export default function PanchangScreen() {
               {isEkadashi && (
                 <View style={styles.ekadashiBanner}>
                   <Icon name="star-four-points" size={14} color={colors.gold.dark} />
-                  <Text style={styles.ekadashiText}>Ekadashi - Fasting Day</Text>
+                  <Text style={styles.ekadashiText}>{t('panchang.ekadashiBanner')}</Text>
                   <Icon name="star-four-points" size={14} color={colors.gold.dark} />
                 </View>
               )}
 
               {/* Nakshatra */}
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>नक्षत्र</Text>
+                <Text style={styles.infoLabel}>{t('panchang.nakshatra')}</Text>
                 <Text style={styles.infoValue}>
-                  {panchang.nakshatra?.name || 'N/A'}
+                  {panchang.nakshatra?.name || t('panchang.notAvailable')}
                   {panchang.nakshatra?.deity ? ` (${panchang.nakshatra.deity})` : ''}
                 </Text>
-                {panchang.nakshatra?.pada && <Text style={styles.infoSubValue}>Pada {panchang.nakshatra.pada} {panchang.nakshatra.planet ? `\u00B7 ${panchang.nakshatra.planet}` : ''}</Text>}
+                {panchang.nakshatra?.pada && <Text style={styles.infoSubValue}>{t('panchang.pada')} {panchang.nakshatra.pada} {panchang.nakshatra.planet ? `\u00B7 ${panchang.nakshatra.planet}` : ''}</Text>}
               </View>
 
               {/* Yoga & Karana Grid */}
               <View style={styles.gridRow}>
                 <View style={styles.gridCell}>
-                  <Text style={styles.gridLabel}>योग</Text>
-                  <Text style={styles.gridLabelEn}>Yoga</Text>
-                  <Text style={styles.gridValue}>{panchang.yoga?.name || 'N/A'}</Text>
+                  <Text style={styles.gridLabel}>{t('panchang.yoga')}</Text>
+                  <Text style={styles.gridValue}>{panchang.yoga?.name || t('panchang.notAvailable')}</Text>
                   {panchang.yoga?.nature && (
                     <View style={[styles.natureBadge, panchang.yoga.nature === 'shubh' ? styles.natureBadgeGood : panchang.yoga.nature === 'ashubh' ? styles.natureBadgeBad : styles.natureBadgeNeutral]}>
                       <Text style={[styles.natureBadgeText, panchang.yoga.nature === 'shubh' ? styles.natureBadgeTextGood : panchang.yoga.nature === 'ashubh' ? styles.natureBadgeTextBad : styles.natureBadgeTextNeutral]}>
@@ -494,32 +490,31 @@ export default function PanchangScreen() {
                 </View>
                 <View style={styles.gridDivider} />
                 <View style={styles.gridCell}>
-                  <Text style={styles.gridLabel}>करण</Text>
-                  <Text style={styles.gridLabelEn}>Karana</Text>
-                  <Text style={styles.gridValue}>{panchang.karana?.name || 'N/A'}</Text>
+                  <Text style={styles.gridLabel}>{t('panchang.karana')}</Text>
+                  <Text style={styles.gridValue}>{panchang.karana?.name || t('panchang.notAvailable')}</Text>
                 </View>
               </View>
 
               {/* Samvat Row */}
               <View style={styles.samvatRow}>
-                {panchang.vikramSamvat && <Text style={styles.samvatText}>Vikram Samvat {panchang.vikramSamvat}</Text>}
-                {panchang.shakaSamvat && <Text style={styles.samvatText}>Shaka {panchang.shakaSamvat}</Text>}
+                {panchang.vikramSamvat && <Text style={styles.samvatText}>{t('panchang.vikramSamvat')} {panchang.vikramSamvat}</Text>}
+                {panchang.shakaSamvat && <Text style={styles.samvatText}>{t('panchang.shakaSamvat')} {panchang.shakaSamvat}</Text>}
               </View>
             </View>
 
             {/* ═══ RASHI & HORA (NEW) ═══ */}
             {(panchang.moonRashi || panchang.sunRashi || panchang.hora) && (
               <View style={styles.section}>
-                <SectionHeader icon="zodiac-aries" title="Rashi & Hora" titleHindi="राशि एवं होरा" />
+                <SectionHeader icon="zodiac-aries" title={t('panchang.sections.rashiHora')} />
                 <View style={styles.rashiGrid}>
                   {/* Moon Rashi */}
                   {panchang.moonRashi && (
                     <View style={styles.rashiCard}>
                       <Icon name="moon-waxing-crescent" size={22} color="#60A5FA" />
-                      <Text style={styles.rashiCardLabel}>Moon Rashi</Text>
+                      <Text style={styles.rashiCardLabel}>{t('panchang.moonRashi')}</Text>
                       <Text style={styles.rashiCardValue}>{panchang.moonRashi.name || '--'}</Text>
                       {panchang.moonRashi.nameHindi && <Text style={styles.rashiCardHindi}>{panchang.moonRashi.nameHindi}</Text>}
-                      {panchang.moonRashi.lord && <Text style={styles.rashiCardSub}>Lord: {panchang.moonRashi.lord}</Text>}
+                      {panchang.moonRashi.lord && <Text style={styles.rashiCardSub}>{t('panchang.lordLabel')}: {panchang.moonRashi.lord}</Text>}
                       {panchang.moonRashi.degree !== undefined && <Text style={styles.rashiCardDegree}>{panchang.moonRashi.degree}°</Text>}
                     </View>
                   )}
@@ -527,10 +522,10 @@ export default function PanchangScreen() {
                   {panchang.sunRashi && (
                     <View style={styles.rashiCard}>
                       <Icon name="white-balance-sunny" size={22} color="#FB923C" />
-                      <Text style={styles.rashiCardLabel}>Sun Rashi</Text>
+                      <Text style={styles.rashiCardLabel}>{t('panchang.sunRashi')}</Text>
                       <Text style={styles.rashiCardValue}>{panchang.sunRashi.name || '--'}</Text>
                       {panchang.sunRashi.nameHindi && <Text style={styles.rashiCardHindi}>{panchang.sunRashi.nameHindi}</Text>}
-                      {panchang.sunRashi.lord && <Text style={styles.rashiCardSub}>Lord: {panchang.sunRashi.lord}</Text>}
+                      {panchang.sunRashi.lord && <Text style={styles.rashiCardSub}>{t('panchang.lordLabel')}: {panchang.sunRashi.lord}</Text>}
                     </View>
                   )}
                 </View>
@@ -540,7 +535,7 @@ export default function PanchangScreen() {
                   <View style={[styles.horaCard, panchang.hora.nature === 'shubh' ? styles.horaCardGood : panchang.hora.nature === 'ashubh' ? styles.horaCardBad : styles.horaCardNeutral]}>
                     <View style={styles.horaHeader}>
                       <Icon name="clock-outline" size={20} color={panchang.hora.nature === 'shubh' ? '#16A34A' : panchang.hora.nature === 'ashubh' ? '#DC2626' : '#CA8A04'} />
-                      <Text style={styles.horaTitle}>Current Hora</Text>
+                      <Text style={styles.horaTitle}>{t('panchang.currentHora')}</Text>
                       <View style={[styles.horaNatureBadge, panchang.hora.nature === 'shubh' ? styles.horaGood : panchang.hora.nature === 'ashubh' ? styles.horaBad : styles.horaNeutral]}>
                         <Text style={[styles.horaNatureText, panchang.hora.nature === 'shubh' ? { color: '#16A34A' } : panchang.hora.nature === 'ashubh' ? { color: '#DC2626' } : { color: '#CA8A04' }]}>{panchang.hora.nature}</Text>
                       </View>
@@ -554,10 +549,10 @@ export default function PanchangScreen() {
 
             {/* ═══ SUN & MOON TIMES ═══ */}
             <View style={styles.timesRow}>
-              <TimeBox icon="weather-sunset-up" label="Sunrise" time={formatTime(panchang.sunrise)} />
-              <TimeBox icon="weather-sunset-down" label="Sunset" time={formatTime(panchang.sunset)} />
-              <TimeBox icon="moon-waxing-crescent" label="Moonrise" time={formatTime(panchang.moonrise)} />
-              <TimeBox icon="moon-waning-crescent" label="Moonset" time={formatTime(panchang.moonset)} />
+              <TimeBox icon="weather-sunset-up" label={t('panchang.sunrise')} time={formatTime(panchang.sunrise)} />
+              <TimeBox icon="weather-sunset-down" label={t('panchang.sunset')} time={formatTime(panchang.sunset)} />
+              <TimeBox icon="moon-waxing-crescent" label={t('panchang.moonrise')} time={formatTime(panchang.moonrise)} />
+              <TimeBox icon="moon-waning-crescent" label={t('panchang.moonset')} time={formatTime(panchang.moonset)} />
             </View>
 
             {/* ═══ FESTIVAL BANNER ═══ */}
@@ -573,31 +568,31 @@ export default function PanchangScreen() {
 
             {/* ═══ MUHURTA TIMINGS ═══ */}
             <View style={styles.section}>
-              <SectionHeader icon="clock-time-four-outline" title="Muhurta Timings" titleHindi="मुहूर्त" />
-              <Text style={styles.muhurtaGroupLabel}>Auspicious (शुभ)</Text>
-              <MuhurtaRow label="ब्रह्म मुहूर्त" labelEn="Brahma Muhurta" start={panchang.muhurta?.brahmaMuhurta?.start} end={panchang.muhurta?.brahmaMuhurta?.end} variant="auspicious" note="Best for meditation" />
-              <MuhurtaRow label="अभिजित मुहूर्त" labelEn="Abhijit Muhurta" start={panchang.muhurta?.abhijitMuhurta?.start} end={panchang.muhurta?.abhijitMuhurta?.end} variant="auspicious" />
+              <SectionHeader icon="clock-time-four-outline" title={t('panchang.sections.muhurta')} />
+              <Text style={styles.muhurtaGroupLabel}>{t('panchang.auspiciousGroup')}</Text>
+              <MuhurtaRow label={t('panchang.brahmaMuhurta')} start={panchang.muhurta?.brahmaMuhurta?.start} end={panchang.muhurta?.brahmaMuhurta?.end} variant="auspicious" note={t('panchang.bestForMeditation')} />
+              <MuhurtaRow label={t('panchang.abhijitMuhurta')} start={panchang.muhurta?.abhijitMuhurta?.start} end={panchang.muhurta?.abhijitMuhurta?.end} variant="auspicious" />
 
-              <Text style={[styles.muhurtaGroupLabel, { marginTop: spacing.md }]}>Inauspicious (अशुभ)</Text>
-              <MuhurtaRow label="राहु काल" labelEn="Rahu Kaal" start={panchang.muhurta?.rahuKaal?.start} end={panchang.muhurta?.rahuKaal?.end} variant="inauspicious" />
-              <MuhurtaRow label="यमघण्ड" labelEn="Yamaghanda" start={panchang.muhurta?.yamaghanda?.start} end={panchang.muhurta?.yamaghanda?.end} variant="inauspicious" />
-              <MuhurtaRow label="गुलिक काल" labelEn="Gulika Kaal" start={panchang.muhurta?.gulikaKaal?.start} end={panchang.muhurta?.gulikaKaal?.end} variant="inauspicious" />
+              <Text style={[styles.muhurtaGroupLabel, { marginTop: spacing.md }]}>{t('panchang.inauspiciousGroup')}</Text>
+              <MuhurtaRow label={t('panchang.rahuKaal')} start={panchang.muhurta?.rahuKaal?.start} end={panchang.muhurta?.rahuKaal?.end} variant="inauspicious" />
+              <MuhurtaRow label={t('panchang.yamaghanda')} start={panchang.muhurta?.yamaghanda?.start} end={panchang.muhurta?.yamaghanda?.end} variant="inauspicious" />
+              <MuhurtaRow label={t('panchang.gulikaKaal')} start={panchang.muhurta?.gulikaKaal?.start} end={panchang.muhurta?.gulikaKaal?.end} variant="inauspicious" />
 
               {/* Dur Muhurta */}
               {panchang.durMuhurta && panchang.durMuhurta.length > 0 && panchang.durMuhurta.map((dm, i) => (
-                <MuhurtaRow key={`dur-${i}`} label="दुर्मुहूर्त" labelEn={`Dur Muhurta ${panchang.durMuhurta!.length > 1 ? i + 1 : ''}`} start={dm.start} end={dm.end} variant="inauspicious" />
+                <MuhurtaRow key={`dur-${i}`} label={`${t('panchang.durMuhurta')}${panchang.durMuhurta!.length > 1 ? ` ${i + 1}` : ''}`} start={dm.start} end={dm.end} variant="inauspicious" />
               ))}
 
               {/* Varjyam */}
               {panchang.varjyam && (
-                <MuhurtaRow label="वर्ज्यम" labelEn="Varjyam" start={panchang.varjyam.start} end={panchang.varjyam.end} variant="inauspicious" />
+                <MuhurtaRow label={t('panchang.varjyam')} start={panchang.varjyam.start} end={panchang.varjyam.end} variant="inauspicious" />
               )}
             </View>
 
             {/* ═══ DISHA SHOOL (NEW) ═══ */}
             {panchang.dishaShool && (
               <View style={styles.section}>
-                <SectionHeader icon="compass-outline" title="Disha Shool" titleHindi="दिशा शूल" />
+                <SectionHeader icon="compass-outline" title={t('panchang.sections.dishaShool')} />
                 <View style={styles.dishaShoolCard}>
                   <View style={styles.dishaShoolHeader}>
                     <Icon name="compass" size={28} color="#D97706" />
@@ -612,7 +607,7 @@ export default function PanchangScreen() {
                   {panchang.dishaShool.remedy && (
                     <View style={styles.dishaShoolRemedy}>
                       <Icon name="shield-check-outline" size={16} color="#059669" />
-                      <Text style={styles.dishaShoolRemedyText}>Remedy: {panchang.dishaShool.remedy}</Text>
+                      <Text style={styles.dishaShoolRemedyText}>{t('panchang.remedyLabel')}: {panchang.dishaShool.remedy}</Text>
                     </View>
                   )}
                 </View>
@@ -622,7 +617,7 @@ export default function PanchangScreen() {
             {/* ═══ AUSPICIOUS ACTIVITIES (NEW) ═══ */}
             {panchang.auspiciousActivities && panchang.auspiciousActivities.length > 0 && (
               <View style={styles.section}>
-                <SectionHeader icon="check-decagram-outline" title="Auspicious Activities" titleHindi="शुभ कार्य" />
+                <SectionHeader icon="check-decagram-outline" title={t('panchang.sections.auspiciousActivities')} />
                 {panchang.auspiciousActivities.map((act, i) => (
                   <View key={i} style={[styles.activityRow, act.suitable ? styles.activityRowGood : styles.activityRowBad]}>
                     <Icon name={act.suitable ? 'check-circle' : 'close-circle'} size={20} color={act.suitable ? '#16A34A' : '#DC2626'} />
@@ -640,9 +635,9 @@ export default function PanchangScreen() {
             {/* ═══ CHOGHADIYA ═══ */}
             {panchang.choghadiya && (
               <View style={styles.section}>
-                <SectionHeader icon="view-grid-outline" title="Choghadiya" titleHindi="चौघड़िया" />
+                <SectionHeader icon="view-grid-outline" title={t('panchang.sections.choghadiya')} />
                 {/* Day Choghadiya */}
-                <Text style={styles.choghadiyaSubLabel}>Day</Text>
+                <Text style={styles.choghadiyaSubLabel}>{t('panchang.day')}</Text>
                 {panchang.choghadiya.day?.map((p, i) => (
                   <View key={`day-${i}`} style={[styles.choghadiyaRow, { backgroundColor: p.nature === 'shubh' || p.nature === 'amrit' || p.nature === 'labh' ? 'rgba(22,163,74,0.06)' : p.nature === 'rog' || p.nature === 'kaal' ? 'rgba(220,38,38,0.06)' : 'rgba(202,138,4,0.06)' }]}>
                     <Text style={styles.choghadiyaName}>{p.name}</Text>
@@ -653,7 +648,7 @@ export default function PanchangScreen() {
                   </View>
                 ))}
                 {/* Night Choghadiya */}
-                <Text style={[styles.choghadiyaSubLabel, { marginTop: spacing.md }]}>Night</Text>
+                <Text style={[styles.choghadiyaSubLabel, { marginTop: spacing.md }]}>{t('panchang.night')}</Text>
                 {panchang.choghadiya.night?.map((p, i) => (
                   <View key={`night-${i}`} style={[styles.choghadiyaRow, { backgroundColor: p.nature === 'shubh' || p.nature === 'amrit' || p.nature === 'labh' ? 'rgba(22,163,74,0.06)' : p.nature === 'rog' || p.nature === 'kaal' ? 'rgba(220,38,38,0.06)' : 'rgba(202,138,4,0.06)' }]}>
                     <Text style={styles.choghadiyaName}>{p.name}</Text>
@@ -668,19 +663,19 @@ export default function PanchangScreen() {
 
             {/* ═══ HINDU CALENDAR INFO ═══ */}
             <View style={styles.section}>
-              <SectionHeader icon="calendar-text" title="Hindu Calendar" titleHindi="हिंदू पंचांग" />
+              <SectionHeader icon="calendar-text" title={t('panchang.sections.hinduCalendar')} />
               <View style={styles.calendarInfoGrid}>
-                {panchang.hinduMonth && <InfoChip label="Month" value={panchang.hinduMonth} />}
-                {panchang.ritu && <InfoChip label="Ritu" value={panchang.ritu} />}
-                {panchang.ayana && <InfoChip label="Ayana" value={panchang.ayana} />}
-                {panchang.samvatName && <InfoChip label="Samvat" value={panchang.samvatName} />}
+                {panchang.hinduMonth && <InfoChip label={t('panchang.month')} value={panchang.hinduMonth} />}
+                {panchang.ritu && <InfoChip label={t('panchang.ritu')} value={panchang.ritu} />}
+                {panchang.ayana && <InfoChip label={t('panchang.ayana')} value={panchang.ayana} />}
+                {panchang.samvatName && <InfoChip label={t('panchang.samvat')} value={panchang.samvatName} />}
               </View>
             </View>
 
             {/* ═══ VRAT DAYS ═══ */}
             {panchang.vratDays && panchang.vratDays.length > 0 && (
               <View style={styles.section}>
-                <SectionHeader icon="food-off" title="Vrat Days" titleHindi="व्रत" />
+                <SectionHeader icon="food-off" title={t('panchang.sections.vratDays')} />
                 <View style={styles.vratContainer}>
                   {panchang.vratDays.map((v, i) => (
                     <View key={i} style={styles.vratBadge}>
@@ -695,7 +690,7 @@ export default function PanchangScreen() {
             {/* ═══ UPCOMING FESTIVALS ═══ */}
             {festivals.length > 0 && (
               <View style={styles.section}>
-                <SectionHeader icon="party-popper" title="Upcoming Festivals" titleHindi="आगामी त्योहार" />
+                <SectionHeader icon="party-popper" title={t('panchang.sections.upcomingFestivals')} />
                 {festivals.map((fest, idx) => (
                   <View key={fest._id || idx} style={styles.festivalRow}>
                     <View style={styles.festivalDot} />
@@ -707,7 +702,7 @@ export default function PanchangScreen() {
                     </View>
                     <View style={styles.daysUntilBadge}>
                       <Text style={styles.daysUntilText}>
-                        {fest.daysUntil === 0 ? 'Today' : fest.daysUntil === 1 ? 'Tomorrow' : `${fest.daysUntil} days`}
+                        {fest.daysUntil === 0 ? t('panchang.today') : fest.daysUntil === 1 ? t('panchang.tomorrow') : t('panchang.daysCount', { count: fest.daysUntil })}
                       </Text>
                     </View>
                   </View>
@@ -723,7 +718,7 @@ export default function PanchangScreen() {
             >
               <LinearGradient colors={[colors.primary.saffron, colors.primary.maroon]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.calendarButtonGradient}>
                 <Icon name="calendar-month" size={20} color={colors.text.white} />
-                <Text style={styles.calendarButtonText}>View Full Calendar</Text>
+                <Text style={styles.calendarButtonText}>{t('panchang.viewFullCalendar')}</Text>
                 <Icon name="arrow-right" size={18} color={colors.text.white} />
               </LinearGradient>
             </TouchableOpacity>

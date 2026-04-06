@@ -26,7 +26,12 @@ i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    fallbackLng: 'en',
+    fallbackLng: (code) => {
+      if (!code) return ['en'];
+      if (code.startsWith('en')) return ['en'];
+      if (code.startsWith('hi')) return ['hi', 'en'];
+      return ['hi', 'en'];
+    },
     supportedLngs: ['en', 'hi', 'bn', 'ta', 'te', 'mr', 'gu', 'kn', 'ml', 'pa', 'or', 'as'],
     nonExplicitSupportedLngs: true,
     defaultNS: 'common',

@@ -19,6 +19,10 @@ export interface DonationDocument extends Document {
   donationType?: 'one_time' | 'subscription';
   panNumber?: string;
   taxBenefitOptIn?: boolean;
+  isAnonymous?: boolean;
+  dedicationType?: 'memory' | 'honor' | 'occasion' | 'general';
+  dedicatedTo?: string;
+  dedicationMessage?: string;
   receiptNumber?: string;
   receiptAccessToken?: string;
   receiptIssuedAt?: Date;
@@ -39,13 +43,21 @@ const DonationSchema = new Schema<DonationDocument>({
   campaignId: { type: String},
   nationality: { type: String },
   amount: { type: Number, required: true },
-  currency: { type: String, default: 'USD' },
+  currency: { type: String, default: 'INR' },
   paymentStatus: { type: String, required: true },
   paymentMethod: { type: String },
   donatedAt: { type: Date, default: Date.now },
   donationType: { type: String, enum: ['one_time', 'subscription'], default: 'one_time' },
   panNumber: { type: String, trim: true, uppercase: true },
   taxBenefitOptIn: { type: Boolean, default: false },
+  isAnonymous: { type: Boolean, default: false },
+  dedicationType: {
+    type: String,
+    enum: ['memory', 'honor', 'occasion', 'general'],
+    default: 'general',
+  },
+  dedicatedTo: { type: String, trim: true },
+  dedicationMessage: { type: String, trim: true },
   receiptNumber: { type: String, index: true },
   receiptAccessToken: { type: String, index: true },
   receiptIssuedAt: { type: Date },

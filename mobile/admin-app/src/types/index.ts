@@ -267,6 +267,9 @@ export interface Volunteer {
   fullName: string;
   email: string;
   phone: string;
+  city?: string;
+  state?: string;
+  country?: string;
   location?: string;
   age?: number;
   occupationType?: string;
@@ -287,8 +290,93 @@ export interface ContactMessage {
   _id: string;
   fullName: string;
   email: string;
+  phone?: string;
   subject?: string;
   message: string;
+  status?: 'new' | 'in_review' | 'responded' | 'archived';
+  assignedTo?: string;
+  assignedToName?: string;
+  internalNotes?: string;
+  responseText?: string;
+  respondedAt?: string;
+  lastActionAt?: string;
   isDeleted?: boolean;
   createdAt: string;
+}
+
+export interface MantraDikshaRegistration {
+  _id: string;
+  fullName: string;
+  dateOfBirth: string;
+  gender: string;
+  nationality: string;
+  mobileNumber: string;
+  email?: string;
+  whatsappNumber?: string;
+  aadhaarNumber?: string;
+  passportNumber?: string;
+  aadhaarDocument?: string;
+  passportDocument?: string;
+  recentPhoto?: string;
+  spiritualIntent?: string;
+  spiritualPath?: string;
+  previousDiksha?: string;
+  registrationDate: string;
+  status?: 'pending' | 'under_review' | 'approved' | 'rejected';
+  assignedTo?: string;
+  assignedToName?: string;
+  internalNotes?: string;
+  ceremonyDate?: string;
+  reviewedAt?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  isDeleted?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SevaTask {
+  _id: string;
+  title: string;
+  description?: string;
+  sevaType: 'kitchen' | 'cleaning' | 'reception' | 'social_media' | 'event_support' | 'travel' | 'other';
+  city?: string;
+  dueDate?: string;
+  shift?: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'open' | 'assigned' | 'in_progress' | 'completed' | 'blocked';
+  assignedToType?: 'team' | 'volunteer';
+  assignedToId?: string;
+  assignedToName?: string;
+  linkedNoteId?: string;
+  createdById?: string;
+  createdByName?: string;
+  completionNotes?: string;
+  isDeleted?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SmartNoteMention {
+  memberId?: string;
+  name: string;
+  username?: string;
+}
+
+export interface SmartNote {
+  _id: string;
+  title: string;
+  body: string;
+  tags?: string[];
+  assignedToId?: string;
+  assignedToName?: string;
+  mentionedMembers?: SmartNoteMention[];
+  assignmentStatus?: 'unassigned' | 'auto_assigned' | 'acknowledged' | 'completed';
+  linkedSevaTaskId?: string;
+  createTask?: boolean;
+  createdById?: string;
+  createdByName?: string;
+  isDeleted?: boolean;
+  createdAt: string;
+  updatedAt: string;
 }

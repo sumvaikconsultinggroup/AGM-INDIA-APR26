@@ -13,6 +13,7 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { colors, spacing, borderRadius, shadows } from '../../theme';
 import { Event } from '../../types';
@@ -26,6 +27,7 @@ interface RouteParams {
 export function EventDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const { eventId } = route.params as RouteParams;
 
   const [event, setEvent] = useState<Event | null>(null);
@@ -44,7 +46,7 @@ export function EventDetailScreen() {
       setIsRegistered(response.data.registeredUsers?.includes(eventId) || false);
     } catch (error) {
       console.error('Error fetching event details:', error);
-      Alert.alert('Error', 'Failed to load event details');
+      Alert.alert(t('common.error'), t('details.event.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -58,13 +60,13 @@ export function EventDetailScreen() {
       await api.post('/event-registration/register', { eventId });
       setIsRegistered(true);
       Alert.alert(
-        'Registration Successful',
-        'You have successfully registered for this event. May your journey be blessed.',
-        [{ text: 'Hari Om', style: 'default' }]
+        t('details.event.registrationSuccessTitle'),
+        t('details.event.registrationSuccessMessage'),
+        [{ text: t('home.welcome'), style: 'default' }]
       );
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Failed to register for event';
-      Alert.alert('Registration Failed', message);
+      const message = error.response?.data?.message || t('details.event.registrationFailedMessage');
+      Alert.alert(t('details.event.registrationFailedTitle'), message);
     } finally {
       setRegistering(false);
     }
@@ -93,7 +95,7 @@ export function EventDetailScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary.saffron} />
-        <Text style={styles.loadingText}>Loading event...</Text>
+        <Text style={styles.loadingText}>{t('details.event.loading')}</Text>
       </View>
     );
   }
@@ -102,9 +104,9 @@ export function EventDetailScreen() {
     return (
       <View style={styles.errorContainer}>
         <Icon name="calendar-alert" size={64} color={colors.text.secondary} />
-        <Text style={styles.errorText}>Event not found</Text>
+        <Text style={styles.errorText}>{t('details.event.notFound')}</Text>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Go Back</Text>
+          <Text style={styles.backButtonText}>{t('common.goBack')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -149,7 +151,7 @@ export function EventDetailScreen() {
                 <Icon name="calendar" size={20} color={colors.gold.main} />
               </View>
               <View>
-                <Text style={styles.metaLabel}>Date</Text>
+                <Text style={styles.metaLabel}>{t('schedule.date')}</Text>
                 <Text style={styles.metaValue}>{formatDate(event.eventDate)}</Text>
               </View>
             </View>
@@ -159,7 +161,7 @@ export function EventDetailScreen() {
                 <Icon name="clock-outline" size={20} color={colors.gold.main} />
               </View>
               <View>
-                <Text style={styles.metaLabel}>Time</Text>
+                <Text style={styles.metaLabel}>{t('details.event.time')}</Text>
                 <Text style={styles.metaValue}>{formatTime(event.eventDate)}</Text>
               </View>
             </View>
@@ -169,7 +171,7 @@ export function EventDetailScreen() {
                 <Icon name="map-marker" size={20} color={colors.gold.main} />
               </View>
               <View style={styles.metaTextContainer}>
-                <Text style={styles.metaLabel}>Location</Text>
+                <Text style={styles.metaLabel}>{t('schedule.location')}</Text>
                 <Text style={styles.metaValue} numberOfLines={2}>
                   {event.eventLocation}
                 </Text>
@@ -179,7 +181,7 @@ export function EventDetailScreen() {
 
           {/* Description */}
           <View style={styles.descriptionSection}>
-            <Text style={styles.sectionTitle}>About This Event</Text>
+            <Text style={styles.sectionTitle}>{t('details.event.aboutThisEvent')}</Text>
             <View style={styles.descriptionCard}>
               <Text style={styles.description}>{event.description}</Text>
             </View>
@@ -188,9 +190,7 @@ export function EventDetailScreen() {
           {/* Spiritual Quote */}
           <View style={styles.quoteSection}>
             <Icon name="format-quote-open" size={24} color={colors.gold.main} />
-            <Text style={styles.quoteText}>
-              "When we gather with divine intention, blessings multiply."
-            </Text>
+            <Text style={styles.quoteText}>{t('details.event.quote')}</Text>
           </View>
         </View>
       </ScrollView>
@@ -225,7 +225,7 @@ export function EventDetailScreen() {
                   color={colors.text.white}
                 />
                 <Text style={styles.registerButtonText}>
-                  {isRegistered ? 'Registered' : 'Register for Event'}
+                  {isRegistered ? t('schedule.registered') : t('details.event.registerForEvent')}
                 </Text>
               </>
             )}

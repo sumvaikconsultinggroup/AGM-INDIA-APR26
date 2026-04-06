@@ -1,40 +1,101 @@
 {
   "hero": {
+    "eyebrow": "सेवा अर्पित करें",
     "title": "प्रेम से",
     "titleHighlight": "दान करें",
-    "subtitle": "आपका उदार योगदान स्वामी जी के आध्यात्मिक ज्ञान के प्रसार और मानवता की सेवा के मिशन को बनाए रखने में सहायता करता है।"
-  },
-  "causes": {
-    "sanskritTitle": "सेवा",
-    "title": "हमारे",
-    "titleHighlight": "कारणों का समर्थन करें",
-    "subtitle": "अपने हृदय के करीब एक कारण चुनें और सार्थक योगदान करें"
-  },
-  "noCauses": {
-    "title": "कोई कारण नहीं मिला",
-    "subtitle": "दान के अवसरों के लिए बाद में जांचें।"
-  },
-  "labels": {
-    "raised": "प्राप्त",
-    "goal": "लक्ष्य"
-  },
-  "custom": {
-    "title": "कस्टम दान राशि",
-    "subtitle": "हर योगदान, चाहे छोटा हो या बड़ा, आशीर्वाद लाता है",
-    "placeholder": "राशि दर्ज करें"
+    "subtitle": "सुरक्षित चेकआउट, त्वरित स्वीकृति और अधिक विश्वास के साथ शांत एवं पूर्ण दान यात्रा।"
   },
   "handoff": {
     "message": "आप मोबाइल ऐप से दान चेकआउट पर आए हैं।",
     "returnToApp": "ऐप पर वापस जाएं"
   },
-  "impact": {
-    "title": "आपका प्रभाव",
-    "subtitle": "देखें कि आपके दान ने प्रकाश और प्रेम फैलाने में कैसे मदद की",
-    "stats": {
-      "mealsServed": "भोजन वितरित",
-      "studentsEducated": "शिक्षित छात्र",
-      "healthcareCamps": "स्वास्थ्य शिविर"
-    }
+  "overview": {
+    "eyebrow": "अर्पण",
+    "title": "विश्वास, स्पष्टता और कृतज्ञता से निर्मित दान अनुभव",
+    "subtitle": "एक अभियान चुनें, अपने दाता विवरण एक बार भरें, और सुरक्षित Razorpay चेकआउट से सेवा अर्पित करें।"
+  },
+  "socialProof": {
+    "item": "{{name}} ने {{campaign}} हेतु {{amount}} अर्पित किए"
+  },
+  "labels": {
+    "raised": "प्राप्त",
+    "daysLeft": "{{count}} दिन शेष",
+    "raisedValue": "{{amount}} प्राप्त",
+    "goalValue": "{{amount}} लक्ष्य",
+    "donorCount": "{{count}} दानदाता"
+  },
+  "form": {
+    "eyebrow": "दाता प्रपत्र",
+    "title": "अपना अर्पण पूर्ण करें",
+    "subtitle": "अपने विवरण एक बार भरें, एकबारगी या मासिक सेवा चुनें, और त्वरित स्वीकृति प्राप्त करें।",
+    "oneTime": "एक बार",
+    "monthly": "मासिक सेवा",
+    "amountLabel": "राशि",
+    "amountPlaceholder": "राशि दर्ज करें",
+    "fullNameLabel": "पूरा नाम",
+    "fullNamePlaceholder": "अपना पूरा नाम दर्ज करें",
+    "emailLabel": "ईमेल पता",
+    "emailPlaceholder": "अपना ईमेल पता दर्ज करें",
+    "mobileLabel": "मोबाइल नंबर",
+    "mobilePlaceholder": "अपना मोबाइल नंबर दर्ज करें",
+    "nationalityLabel": "राष्ट्रीयता",
+    "nationalityIndian": "भारतीय",
+    "nationalityForeign": "विदेशी",
+    "panLabel": "पैन (80G रसीद हेतु)",
+    "panPlaceholder": "पैन दर्ज करें",
+    "addressLabel": "पता",
+    "addressPlaceholder": "अपना पता दर्ज करें",
+    "dedicationTypeLabel": "समर्पण प्रकार",
+    "dedicationGeneral": "सामान्य अर्पण",
+    "dedicationMemory": "स्मृति में",
+    "dedicationHonor": "सम्मान में",
+    "dedicationOccasion": "विशेष अवसर हेतु",
+    "dedicatedToLabel": "किसके लिए समर्पित",
+    "dedicatedToPlaceholder": "नाम या अवसर",
+    "messageLabel": "संदेश या संकल्प",
+    "messagePlaceholder": "यदि चाहें तो संक्षिप्त संदेश लिखें",
+    "taxBenefitOptIn": "मैं इस दान हेतु 80G उपयुक्त रसीद चाहता/चाहती हूँ",
+    "anonymous": "इस दान को गुमनाम रखें"
+  },
+  "validation": {
+    "amountMin": "कृपया कम से कम Rs. 100 दर्ज करें।",
+    "fullNameRequired": "कृपया अपना पूरा नाम दर्ज करें।",
+    "emailRequired": "कृपया अपना ईमेल पता दर्ज करें।",
+    "mobileRequired": "कृपया अपना मोबाइल नंबर दर्ज करें।",
+    "nationalityRequired": "कृपया अपनी राष्ट्रीयता दर्ज करें।",
+    "checkoutUnavailable": "सुरक्षित चेकआउट अभी लोड नहीं हो सका। कृपया पेज रिफ्रेश करें।"
+  },
+  "checkout": {
+    "oneTimeDescription": "एकबारगी दान",
+    "subscriptionDescription": "मासिक सेवा दान",
+    "payButton": "{{amount}} अर्पित करें",
+    "monthlyButton": "{{amount}} मासिक सेवा प्रारम्भ करें"
+  },
+  "summary": {
+    "generalDonation": "सामान्य दान"
+  },
+  "states": {
+    "loadError": "दान संबंधी जानकारी अभी लोड नहीं हो सकी।",
+    "checkoutError": "भुगतान प्रक्रिया प्रारम्भ नहीं हो सकी। कृपया पुनः प्रयास करें।",
+    "verifyError": "भुगतान आरम्भ हुआ था, पर पुष्टि सत्यापित नहीं हो सकी। यदि राशि कट गई हो तो कृपया आश्रम कार्यालय से संपर्क करें।",
+    "processing": "सुरक्षित चेकआउट तैयार किया जा रहा है..."
+  },
+  "success": {
+    "title": "आपका दान कृतज्ञतापूर्वक प्राप्त हुआ",
+    "subtitle": "आपका अर्पण दर्ज हो गया है। रसीद विवरण आपको ईमेल और व्हाट्सऐप पर प्राप्त होंगे।",
+    "amount": "राशि",
+    "campaign": "अभियान",
+    "reference": "भुगतान संदर्भ",
+    "share": "इस सेवा को साझा करें",
+    "shareTitle": "मैंने AvdheshanandG Mission का समर्थन किया",
+    "shareText": "मैंने AvdheshanandG Mission के माध्यम से {{campaign}} हेतु {{amount}} अर्पित किए।",
+    "returnToApp": "ऐप पर वापस जाएं"
+  },
+  "trust": {
+    "secureTitle": "Razorpay द्वारा सुरक्षित",
+    "secureSubtitle": "आपका भुगतान सुरक्षित Razorpay चेकआउट और सत्यापित बैकएंड ऑर्डर निर्माण से पूरा होता है।",
+    "receiptTitle": "ईमेल और व्हाट्सऐप पर रसीद",
+    "receiptSubtitle": "पात्र दान के लिए धन प्राप्त होते ही स्वीकृति और 80G उपयुक्त रसीद भेज दी जाती है।"
   },
   "donateNow": "अभी दान करें",
   "donateWithLove": "प्रेम से दान करें"

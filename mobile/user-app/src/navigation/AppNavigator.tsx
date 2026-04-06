@@ -34,7 +34,7 @@ import {
 } from '../screens/explore';
 import { ScheduleScreen } from '../screens/schedule';
 import { DonateScreen } from '../screens/donate';
-import { ProfileLoginPrompt, ProfileScreen } from '../screens/profile';
+import { DonationHistoryScreen, ProfileLoginPrompt, ProfileScreen } from '../screens/profile';
 import LiveStreamScreen from '../screens/live/LiveStreamScreen';
 import PanchangScreen from '../screens/panchang/PanchangScreen';
 import PanchangCalendarScreen from '../screens/panchang/PanchangCalendarScreen';
@@ -59,6 +59,7 @@ export type RootStackParamList = {
   Panchang: undefined;
   PanchangCalendar: { lat?: number; lng?: number; cityName?: string; timezone?: string };
   NotificationPreferences: undefined;
+  DonationHistory: undefined;
 };
 
 export type MainTabParamList = {
@@ -101,6 +102,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       Panchang: 'panchang',
       PanchangCalendar: 'panchang/calendar',
       NotificationPreferences: 'panchang/notifications',
+      DonationHistory: 'profile/donations',
     },
   },
 };
@@ -196,6 +198,7 @@ function MainTabs() {
 
 export function AppNavigator() {
   const { isLoading } = useAuth();
+  const { t } = useTranslation();
 
   if (isLoading) {
     return (
@@ -362,6 +365,17 @@ export function AppNavigator() {
           options={{
             headerShown: false,
             animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="DonationHistory"
+          component={DonationHistoryScreen}
+          options={{
+            headerShown: true,
+            title: t('profile.menu.donations.title'),
+            animation: 'slide_from_right',
+            headerStyle: { backgroundColor: colors.background.warmWhite },
+            headerTintColor: colors.primary.maroon,
           }}
         />
       </Stack.Navigator>

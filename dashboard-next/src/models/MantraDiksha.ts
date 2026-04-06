@@ -17,6 +17,14 @@ export interface IMantraDiksha extends Document {
   aadhaarDocument?: string; // Only for Indian nationality
   recentPhoto?: string;
   registrationDate: Date;
+  status: 'pending' | 'under_review' | 'approved' | 'rejected';
+  assignedTo?: string;
+  assignedToName?: string;
+  internalNotes?: string;
+  ceremonyDate?: Date;
+  reviewedAt?: Date;
+  approvedAt?: Date;
+  rejectedAt?: Date;
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -181,6 +189,43 @@ const MantraDikshaSchema = new Schema<IMantraDiksha>(
       type: Date,
       default: Date.now,
     },
+    status: {
+      type: String,
+      enum: ['pending', 'under_review', 'approved', 'rejected'],
+      default: 'pending',
+      index: true,
+    },
+    assignedTo: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    assignedToName: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    internalNotes: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    ceremonyDate: {
+      type: Date,
+      default: null,
+    },
+    reviewedAt: {
+      type: Date,
+      default: null,
+    },
+    approvedAt: {
+      type: Date,
+      default: null,
+    },
+    rejectedAt: {
+      type: Date,
+      default: null,
+    },
     
     // Soft delete flag
     isDeleted: {
@@ -207,6 +252,7 @@ MantraDikshaSchema.index({ aadhaarNumber: 1 });
 MantraDikshaSchema.index({ passportNumber: 1 });
 MantraDikshaSchema.index({ fullName: 'text' });
 MantraDikshaSchema.index({ isDeleted: 1, createdAt: -1 });
+MantraDikshaSchema.index({ status: 1, createdAt: -1 });
 
 const MantraDiksha = mongoose.model<IMantraDiksha>('MantraDiksha', MantraDikshaSchema);
 

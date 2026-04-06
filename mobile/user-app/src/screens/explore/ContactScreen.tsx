@@ -15,6 +15,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { colors, spacing, borderRadius, shadows } from '../../theme';
 
@@ -39,6 +40,7 @@ const contactInfo = {
 
 export function ContactScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -58,19 +60,19 @@ export function ContactScreen() {
     const newErrors: FormErrors = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = t('contact.errors.nameRequired');
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('contact.errors.emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
+      newErrors.email = t('contact.errors.emailValid');
     }
 
     if (!formData.message.trim()) {
-      newErrors.message = 'Message is required';
+      newErrors.message = t('contact.errors.messageRequired');
     } else if (formData.message.trim().length < 10) {
-      newErrors.message = 'Message must be at least 10 characters';
+      newErrors.message = t('contact.errors.messageMin');
     }
 
     setErrors(newErrors);
@@ -85,11 +87,11 @@ export function ContactScreen() {
       await api.post('/connect', formData);
 
       Alert.alert(
-        'Message Sent',
-        'Thank you for reaching out to us. We will respond to your inquiry soon.\n\nHari Om 🙏',
+        t('contact.successTitle'),
+        t('contact.successMessage'),
         [
           {
-            text: 'OK',
+            text: t('common.ok'),
             onPress: () => {
               setFormData({ name: '', email: '', message: '' });
             },
@@ -97,8 +99,8 @@ export function ContactScreen() {
         ]
       );
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Failed to send message';
-      Alert.alert('Submission Failed', message);
+      const message = error.response?.data?.message || t('contact.errors.submitFailed');
+      Alert.alert(t('contact.submissionFailedTitle'), message);
     } finally {
       setSubmitting(false);
     }
@@ -183,7 +185,7 @@ export function ContactScreen() {
         >
           <Icon name="arrow-left" size={24} color={colors.primary.maroon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Contact Us</Text>
+        <Text style={styles.headerTitle}>{t('contact.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -202,11 +204,8 @@ export function ContactScreen() {
             <View style={styles.iconCircle}>
               <Icon name="email-heart-outline" size={40} color={colors.primary.saffron} />
             </View>
-            <Text style={styles.introTitle}>Get In Touch</Text>
-            <Text style={styles.introText}>
-              We&apos;d love to hear from you. Send us a message and we&apos;ll respond as
-              soon as possible.
-            </Text>
+            <Text style={styles.introTitle}>{t('contact.introTitle')}</Text>
+            <Text style={styles.introText}>{t('contact.introText')}</Text>
           </View>
 
           {/* Contact Info Cards */}
@@ -219,7 +218,7 @@ export function ContactScreen() {
                 <Icon name="phone" size={24} color={colors.primary.saffron} />
               </View>
               <View style={styles.contactCardContent}>
-                <Text style={styles.contactCardLabel}>Phone</Text>
+                <Text style={styles.contactCardLabel}>{t('contact.phone')}</Text>
                 <Text style={styles.contactCardValue}>{contactInfo.phone}</Text>
               </View>
               <Icon name="chevron-right" size={20} color={colors.text.secondary} />
@@ -233,7 +232,7 @@ export function ContactScreen() {
                 <Icon name="email" size={24} color={colors.primary.saffron} />
               </View>
               <View style={styles.contactCardContent}>
-                <Text style={styles.contactCardLabel}>Email</Text>
+                <Text style={styles.contactCardLabel}>{t('contact.email')}</Text>
                 <Text style={styles.contactCardValue}>{contactInfo.email}</Text>
               </View>
               <Icon name="chevron-right" size={20} color={colors.text.secondary} />
@@ -244,7 +243,7 @@ export function ContactScreen() {
                 <Icon name="map-marker" size={24} color={colors.primary.saffron} />
               </View>
               <View style={styles.contactCardContent}>
-                <Text style={styles.contactCardLabel}>Address</Text>
+                <Text style={styles.contactCardLabel}>{t('contact.address')}</Text>
                 <Text style={styles.contactCardValue}>{contactInfo.address}</Text>
               </View>
             </View>
@@ -254,19 +253,19 @@ export function ContactScreen() {
           <View style={styles.formSection}>
             <View style={styles.formHeader}>
               <View style={styles.goldAccent} />
-              <Text style={styles.formTitle}>Send a Message</Text>
+              <Text style={styles.formTitle}>{t('contact.formTitle')}</Text>
             </View>
 
-            {renderInput('name', 'Your Name', 'Enter your name', 'account')}
+            {renderInput('name', t('contact.yourName'), t('contact.placeholders.name'), 'account')}
 
-            {renderInput('email', 'Email Address', 'your@email.com', 'email', {
+            {renderInput('email', t('contact.emailAddress'), t('contact.placeholders.email'), 'email', {
               keyboardType: 'email-address',
             })}
 
             {renderInput(
               'message',
-              'Message',
-              'Write your message here...',
+              t('contact.yourMessage'),
+              t('contact.placeholders.message'),
               'message-text',
               { multiline: true }
             )}
@@ -288,7 +287,7 @@ export function ContactScreen() {
                 ) : (
                   <>
                     <Icon name="send" size={20} color={colors.text.white} />
-                    <Text style={styles.submitButtonText}>Send Message</Text>
+                    <Text style={styles.submitButtonText}>{t('contact.sendMessage')}</Text>
                   </>
                 )}
               </LinearGradient>
@@ -301,7 +300,7 @@ export function ContactScreen() {
               ॐ सर्वे भवन्तु सुखिनः
             </Text>
             <Text style={styles.footerSubtext}>
-              May all beings be happy
+              {t('contact.footerSubtext')}
             </Text>
           </View>
         </ScrollView>

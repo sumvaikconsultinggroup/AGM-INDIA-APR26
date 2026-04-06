@@ -1,92 +1,185 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Heart, Home, Leaf, Loader2, Sparkles, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import {
+  CheckCircle2,
+  Clock3,
+  Heart,
+  ImageIcon,
+  Loader2,
+  Repeat,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'next/navigation';
 import api from '../../lib/api';
 import { PageHero } from '@/components/ui/PageHero';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  BookOpen,
-  Users,
-  Home,
-  Leaf,
-  Heart,
-  Sparkles,
-};
+declare global {
+  interface Window {
+    Razorpay?: new (options: Record<string, unknown>) => {
+      open: () => void;
+      on: (event: string, callback: () => void) => void;
+    };
+  }
+}
 
-const fallbackCauses = [
-  {
-    title: 'Shivganga Project',
-    description:
-      'Transforming arid villages in Jhabua, MP through water conservation, agriculture, and skill development.',
-    icon: 'Leaf',
-    amount: '₹5,00,000',
-    raised: 65,
-  },
-  {
-    title: 'Spiritual Education',
-    description: 'Supporting Sanskrit and Vedic education at Bhopal Vidya Peeth and other centers.',
-    icon: 'BookOpen',
-    amount: '₹2,00,000',
-    raised: 75,
-  },
-  {
-    title: 'Healthcare Camps',
-    description: 'Free medical and eye care camps serving thousands at spiritual gatherings and rural areas.',
-    icon: 'Heart',
-    amount: '₹1,50,000',
-    raised: 80,
-  },
-  {
-    title: 'Ashram Development',
-    description:
-      'Maintaining and expanding Harihar Ashram at Kankhal, Haridwar — a sanctuary for seekers worldwide.',
-    icon: 'Home',
-    amount: '₹10,00,000',
-    raised: 45,
-  },
-];
-
-interface DonationCause {
-  _id?: string;
+type Campaign = {
+  _id: string;
   title: string;
   description?: string;
-  icon?: string;
-  amount?: string | number;
-  goal?: string | number;
-  raised?: number;
-  progress?: number;
+  additionalText?: string;
+  goal?: number;
+  achieved?: number;
+  donors?: number;
+  totalDays?: number;
+  createdAt?: string;
+  backgroundImage?: string;
+};
+
+type RecentDonation = {
+  id: string;
+  donorName: string;
+  amount: number;
+  donatedAt: string;
+  campaignTitle: string;
+  donationType: 'one_time' | 'subscription';
+  isAnonymous: boolean;
+};
+
+type DonateMode = 'one_time' | 'subscription';
+
+type DonorForm = {
+  amount: string;
+  fullName: string;
+  email: string;
+  mobile: string;
+  nationality: string;
+  address: string;
+  panNumber: string;
+  taxBenefitOptIn: boolean;
+  isAnonymous: boolean;
+  dedicationType: 'general' | 'memory' | 'honor' | 'occasion';
+  dedicatedTo: string;
+  dedicationMessage: string;
+};
+
+const initialForm: DonorForm = {
+  amount: '1100',
+  fullName: '',
+  email: '',
+  mobile: '',
+  nationality: 'Indian',
+  address: '',
+  panNumber: '',
+  taxBenefitOptIn: true,
+  isAnonymous: false,
+  dedicationType: 'general',
+  dedicatedTo: '',
+  dedicationMessage: '',
+};
+
+const quickAmounts = ['501', '1100', '2501', '5001'];
+
+function loadRazorpayScript() {
+  return new Promise<boolean>((resolve) => {
+    if (typeof window === 'undefined') {
+      resolve(false);
+      return;
+    }
+
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+
+    const existing = document.querySelector('script[data-razorpay="true"]') as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener('load', () => resolve(true));
+      existing.addEventListener('error', () => resolve(false));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.dataset.razorpay = 'true';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
+function formatCurrency(amount: number | string | undefined) {
+  const numeric =
+    typeof amount === 'string'
+      ? Number(String(amount).replace(/[^\d.]/g, ''))
+      : Number(amount || 0);
+  return `₹${numeric.toLocaleString('en-IN')}`;
+}
+
+function calculateDaysLeft(campaign: Campaign) {
+  if (!campaign.createdAt || !campaign.totalDays) return null;
+  const created = new Date(campaign.createdAt);
+  const end = new Date(created);
+  end.setDate(end.getDate() + campaign.totalDays);
+  const diff = Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  return diff > 0 ? diff : 0;
+}
+
+function getProgress(campaign: Campaign) {
+  const goal = Number(campaign.goal || 0);
+  const achieved = Number(campaign.achieved || 0);
+  if (!goal) return 0;
+  return Math.max(0, Math.min(100, Math.round((achieved / goal) * 100)));
 }
 
 export default function DonatePage() {
-  const { t } = useTranslation('donate');
+  const { t, i18n } = useTranslation('donate');
   const { t: tCommon } = useTranslation('common');
   const searchParams = useSearchParams();
-  const [causes, setCauses] = useState<DonationCause[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [customAmount, setCustomAmount] = useState('');
+
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [recentDonations, setRecentDonations] = useState<RecentDonation[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+  const [mode, setMode] = useState<DonateMode>('one_time');
+  const [form, setForm] = useState<DonorForm>(initialForm);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [checkoutReady, setCheckoutReady] = useState(false);
   const [returnToAppUrl, setReturnToAppUrl] = useState<string | null>(null);
+  const [successState, setSuccessState] = useState<{
+    paymentId: string;
+    orderOrSubscriptionId: string;
+    amount: number;
+    campaignTitle: string;
+  } | null>(null);
 
-  const DONATE_CHECKOUT_URL =
-    process.env.NEXT_PUBLIC_DONATE_CHECKOUT_URL || 'https://www.avdheshanandg.org/donate';
+  const localeByLanguage: Record<string, string> = {
+    en: 'en-IN',
+    hi: 'hi-IN',
+    bn: 'bn-IN',
+    ta: 'ta-IN',
+    te: 'te-IN',
+    mr: 'mr-IN',
+    gu: 'gu-IN',
+    kn: 'kn-IN',
+    ml: 'ml-IN',
+    pa: 'pa-IN',
+    or: 'or-IN',
+    as: 'as-IN',
+  };
+  const dateLocale = localeByLanguage[i18n.language] || 'en-IN';
 
-  useEffect(() => {
-    api
-      .get('/donate')
-      .then((response) => {
-        const data = response.data?.data || response.data || [];
-        setCauses(data.length > 0 ? data : fallbackCauses);
-      })
-      .catch(() => {
-        setCauses(fallbackCauses);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  const selectedCampaign = useMemo(
+    () => campaigns.find((campaign) => campaign._id === selectedCampaignId) || campaigns[0] || null,
+    [campaigns, selectedCampaignId]
+  );
 
   useEffect(() => {
     const amountFromQuery = searchParams.get('amount');
@@ -94,10 +187,10 @@ export default function DonatePage() {
     const returnTo = searchParams.get('returnTo');
 
     if (amountFromQuery) {
-      const sanitized = amountFromQuery.replace(/[^\d]/g, '');
-      if (sanitized) {
-        setCustomAmount(sanitized);
-      }
+      setForm((current) => ({
+        ...current,
+        amount: amountFromQuery.replace(/[^\d]/g, '') || current.amount,
+      }));
     }
 
     if (campaignIdFromQuery) {
@@ -109,39 +202,180 @@ export default function DonatePage() {
     }
   }, [searchParams]);
 
-  const formatAmount = (amount?: string | number) => {
-    if (!amount) return '₹1,100';
-    if (typeof amount === 'string') return amount.startsWith('₹') ? amount : `₹${amount}`;
-    return `₹${amount.toLocaleString('en-IN')}`;
+  useEffect(() => {
+    let mounted = true;
+    Promise.all([
+      api.get('/donate'),
+      api.get('/donations/recent?limit=8').catch(() => ({ data: [] })),
+      loadRazorpayScript(),
+    ])
+      .then(([campaignResponse, recentResponse, razorpayLoaded]) => {
+        if (!mounted) return;
+        const campaignData = campaignResponse.data?.data || campaignResponse.data || [];
+        setCampaigns(campaignData);
+        if (!selectedCampaignId && campaignData[0]?._id) {
+          setSelectedCampaignId(campaignData[0]._id);
+        }
+        setRecentDonations(recentResponse.data?.data || recentResponse.data || []);
+        setCheckoutReady(razorpayLoaded);
+      })
+      .catch((requestError) => {
+        if (!mounted) return;
+        console.error('Failed to load donate page data:', requestError);
+        setError(t('states.loadError'));
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedCampaignId, t]);
+
+  const setField = <K extends keyof DonorForm>(field: K, value: DonorForm[K]) => {
+    setForm((current) => ({ ...current, [field]: value }));
   };
 
-  const getIcon = (iconName?: string) => {
-    const IconComponent = iconName ? iconMap[iconName] : Heart;
-    return IconComponent || Heart;
+  const validateForm = () => {
+    if (!form.amount || Number(form.amount) < 100) {
+      return t('validation.amountMin');
+    }
+    if (!form.fullName.trim()) return t('validation.fullNameRequired');
+    if (!form.email.trim()) return t('validation.emailRequired');
+    if (!form.mobile.trim()) return t('validation.mobileRequired');
+    if (!form.nationality.trim()) return t('validation.nationalityRequired');
+    if (!checkoutReady) return t('validation.checkoutUnavailable');
+    return null;
   };
 
-  const handleDonate = (cause?: DonationCause) => {
-    const checkoutUrl = new URL(DONATE_CHECKOUT_URL);
-    checkoutUrl.searchParams.set('source', 'website');
-
-    const campaignId = cause?._id || selectedCampaignId;
-    if (campaignId) {
-      checkoutUrl.searchParams.set('campaignId', campaignId);
+  const handleCheckout = async () => {
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
     }
 
-    if (customAmount) {
-      checkoutUrl.searchParams.set('amount', customAmount);
-    }
+    setSubmitting(true);
+    setError(null);
 
-    checkoutUrl.searchParams.set('returnTo', window.location.href);
-    window.location.href = checkoutUrl.toString();
+    const endpoint = mode === 'subscription' ? '/create-custom-subs' : '/create-checkout-session';
+    const payload = {
+      amount: Number(form.amount),
+      campaignId: selectedCampaign?._id,
+      fullName: form.fullName.trim(),
+      email: form.email.trim(),
+      mobile: form.mobile.trim(),
+      address: form.address.trim(),
+      nationality: form.nationality.trim(),
+      donationType: mode,
+      panNumber: form.panNumber.trim().toUpperCase(),
+      taxBenefitOptIn: form.taxBenefitOptIn,
+      isAnonymous: form.isAnonymous,
+      dedicationType: form.dedicationType,
+      dedicatedTo: form.dedicatedTo.trim(),
+      dedicationMessage: form.dedicationMessage.trim(),
+      interval: 'monthly',
+      customerEmail: form.email.trim(),
+      source: returnToAppUrl ? 'mobile' : 'website',
+    };
+
+    try {
+      const response = await api.post(endpoint, payload);
+      const data = response.data?.data || response.data;
+
+      const options: Record<string, unknown> = {
+        key: data.key,
+        amount: Number(form.amount) * 100,
+        currency: data.currency || 'INR',
+        name: 'AvdheshanandG Mission',
+        description:
+          mode === 'subscription'
+            ? t('checkout.subscriptionDescription')
+            : t('checkout.oneTimeDescription'),
+        prefill: {
+          name: form.fullName.trim(),
+          email: form.email.trim(),
+          contact: form.mobile.trim(),
+        },
+        notes: {
+          campaignTitle: selectedCampaign?.title || 'General Donation',
+          donationType: mode,
+        },
+        theme: { color: '#B57B1D' },
+        modal: {
+          ondismiss: () => {
+            setSubmitting(false);
+          },
+        },
+        handler: async (paymentResponse: Record<string, string>) => {
+          try {
+            const verification = await api.post('/verify-session', paymentResponse);
+            const verified = verification.data?.success ?? verification.data?.status === 'success';
+            if (!verified) {
+              throw new Error('Verification failed');
+            }
+
+            setSuccessState({
+              paymentId: paymentResponse.razorpay_payment_id,
+              orderOrSubscriptionId:
+                paymentResponse.razorpay_order_id ||
+                paymentResponse.razorpay_subscription_id ||
+                '',
+              amount: Number(form.amount),
+              campaignTitle: selectedCampaign?.title || t('summary.generalDonation'),
+            });
+            setSubmitting(false);
+          } catch (verificationError) {
+            console.error('Failed to verify payment:', verificationError);
+            setError(t('states.verifyError'));
+            setSubmitting(false);
+          }
+        },
+      };
+
+      if (mode === 'subscription') {
+        options.subscription_id = data.subscriptionId;
+      } else {
+        options.order_id = data.orderId;
+      }
+
+      if (!window.Razorpay) {
+        throw new Error('Razorpay checkout is unavailable');
+      }
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (checkoutError) {
+      console.error('Donation checkout failed:', checkoutError);
+      setError(t('states.checkoutError'));
+      setSubmitting(false);
+    }
+  };
+
+  const shareImpact = async () => {
+    if (!successState || typeof navigator === 'undefined' || !navigator.share) return;
+
+    try {
+      await navigator.share({
+        title: t('success.shareTitle'),
+        text: t('success.shareText', {
+          amount: formatCurrency(successState.amount),
+          campaign: successState.campaignTitle,
+        }),
+      });
+    } catch {
+      // user dismissed share
+    }
   };
 
   return (
     <div className="bg-parchment pt-20">
       <PageHero
         tone="dark"
-        eyebrow="Support Seva"
+        eyebrow={t('hero.eyebrow')}
         title={t('hero.title')}
         highlight={t('hero.titleHighlight')}
         subtitle={t('hero.subtitle')}
@@ -162,141 +396,399 @@ export default function DonatePage() {
       <section className="section-padding bg-parchment">
         <div className="container-custom">
           <SectionHeading
-            eyebrow="Giving"
-            title="Donation pathways with more clarity and trust"
-            subtitle="The donate flow now feels calmer and more intentional, with clearer campaigns, more legible progress states, and a stronger primary action."
+            eyebrow={t('overview.eyebrow')}
+            title={t('overview.title')}
+            subtitle={t('overview.subtitle')}
           />
 
-          {loading && (
+          {recentDonations.length > 0 && (
+            <div className="mb-8 overflow-hidden rounded-full border border-[rgba(122,86,26,0.12)] bg-white/92 px-4 py-3 shadow-[0_18px_42px_rgba(60,34,12,0.08)]">
+              <div className="flex flex-wrap items-center gap-3 text-sm text-spiritual-maroon">
+                <Sparkles className="h-4 w-4 text-gold-600" />
+                {recentDonations.map((donation) => (
+                  <span
+                    key={donation.id}
+                    className="rounded-full bg-[rgba(247,234,192,0.78)] px-3 py-1.5 text-xs font-semibold"
+                  >
+                    {t('socialProof.item', {
+                      name: donation.donorName,
+                      amount: formatCurrency(donation.amount),
+                      campaign: donation.campaignTitle,
+                    })}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {loading ? (
             <div className="flex flex-col items-center justify-center py-20">
               <Loader2 className="mb-4 h-12 w-12 animate-spin text-spiritual-saffron" />
               <p className="text-spiritual-warmGray">{tCommon('loadingCauses')}</p>
             </div>
-          )}
+          ) : (
+            <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  {campaigns.map((campaign, index) => {
+                    const progress = getProgress(campaign);
+                    const daysLeft = calculateDaysLeft(campaign);
+                    const isSelected = selectedCampaign?._id === campaign._id;
 
-          {!loading && causes.length === 0 && (
-            <div className="rounded-[30px] border border-[rgba(122,86,26,0.12)] bg-white/90 py-20 text-center shadow-[0_20px_48px_rgba(60,34,12,0.08)]">
-              <Heart className="mx-auto mb-4 h-16 w-16 text-gold-500" />
-              <h3 className="font-display text-2xl text-spiritual-maroon">{t('noCauses.title')}</h3>
-              <p className="mt-2 text-spiritual-warmGray">{t('noCauses.subtitle')}</p>
-            </div>
-          )}
-
-          {!loading && causes.length > 0 && (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-              {causes.map((cause, index) => {
-                const IconComponent = getIcon(cause.icon);
-                const progress = cause.raised || cause.progress || 0;
-
-                return (
-                  <motion.article
-                    key={cause._id || cause.title}
-                    initial={{ opacity: 0, y: 24 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.05 }}
-                    className="rounded-[28px] border border-[rgba(122,86,26,0.12)] bg-white/92 p-6 shadow-[0_18px_42px_rgba(60,34,12,0.08)]"
-                  >
-                    <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#f3d894,#b57b1d)] text-white shadow-[0_12px_28px_rgba(181,123,29,0.24)]">
-                      <IconComponent className="h-7 w-7" />
-                    </div>
-                    <h3 className="font-display text-2xl leading-tight text-spiritual-maroon">{cause.title}</h3>
-                    <p className="mt-3 min-h-[72px] text-sm leading-relaxed text-spiritual-warmGray">
-                      {cause.description || ''}
-                    </p>
-                    <div className="mt-6">
-                      <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.16em] text-spiritual-warmGray">
-                        <span>{progress}% {t('labels.raised')}</span>
-                        <span>{t('labels.goal')}: {formatAmount(cause.amount || cause.goal)}</span>
-                      </div>
-                      <div className="h-2.5 overflow-hidden rounded-full bg-[rgba(122,86,26,0.12)]">
-                        <div
-                          className="h-full rounded-full bg-[linear-gradient(90deg,#b57b1d,#d6a647)]"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                    </div>
-                    <p className="mt-5 font-display text-2xl text-gradient-gold">
-                      {formatAmount(cause.amount || cause.goal)}
-                    </p>
-                    <button type="button" className="btn-primary mt-6 w-full" onClick={() => handleDonate(cause)}>
-                      <Heart className="mr-2 h-4 w-4" />
-                      {t('donateNow')}
-                    </button>
-                  </motion.article>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="section-padding bg-temple-warm">
-        <div className="container-custom grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-          <div className="rounded-[30px] border border-[rgba(122,86,26,0.12)] bg-white/92 p-8 shadow-[0_20px_48px_rgba(60,34,12,0.08)]">
-            <SectionHeading
-              eyebrow="Custom Offering"
-              title={t('custom.title')}
-              subtitle={t('custom.subtitle')}
-              align="left"
-            />
-            <div className="space-y-5">
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-display text-2xl text-gold-600">₹</span>
-                <input
-                  type="number"
-                  placeholder={t('custom.placeholder')}
-                  value={customAmount}
-                  onChange={(event) => setCustomAmount(event.target.value.replace(/[^\d]/g, ''))}
-                  className="w-full rounded-[22px] border border-[rgba(122,86,26,0.16)] bg-[rgba(248,243,232,0.92)] px-12 py-4 text-center font-display text-2xl text-spiritual-maroon outline-none transition focus:border-[rgba(122,86,26,0.32)] focus:bg-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {['₹501', '₹1,001', '₹2,501', '₹5,001'].map((amount) => (
-                  <button
-                    key={amount}
-                    type="button"
-                    onClick={() => setCustomAmount(amount.replace(/[^\d]/g, ''))}
-                    className="rounded-full border border-[rgba(122,86,26,0.16)] bg-white px-4 py-3 text-sm font-medium text-spiritual-maroon transition hover:border-[rgba(122,86,26,0.28)] hover:bg-[rgba(248,243,232,0.92)]"
-                  >
-                    {amount}
-                  </button>
-                ))}
-              </div>
-
-              <button type="button" className="btn-primary w-full py-4 text-base" onClick={() => handleDonate()}>
-                <Heart className="mr-2 h-5 w-5" />
-                {t('donateWithLove')} {customAmount ? `₹${customAmount}` : ''}
-              </button>
-            </div>
-
-            <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-[rgba(122,86,26,0.1)] pt-6 text-xs font-semibold uppercase tracking-[0.14em] text-spiritual-warmGray">
-              <span>{tCommon('securePayment')}</span>
-              <span>{tCommon('taxDeductible')}</span>
-            </div>
-          </div>
-
-          <div className="rounded-[30px] border border-[rgba(122,86,26,0.12)] bg-[linear-gradient(180deg,rgba(128,0,32,0.94),rgba(89,8,28,0.96))] p-8 text-white shadow-[0_26px_60px_rgba(45,10,18,0.22)]">
-            <SectionHeading
-              eyebrow="Impact"
-              title={t('impact.title')}
-              subtitle={t('impact.subtitle')}
-              align="left"
-            />
-            <div className="grid gap-5 sm:grid-cols-3">
-              {[
-                { value: '50,000+', label: t('impact.stats.mealsServed') },
-                { value: '2,000+', label: t('impact.stats.studentsEducated') },
-                { value: '100+', label: t('impact.stats.healthcareCamps') },
-              ].map((stat) => (
-                <div key={stat.label} className="rounded-[22px] border border-white/10 bg-white/8 px-5 py-5 text-center">
-                  <p className="font-display text-3xl text-gold-200">{stat.value}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-gold-50/74">{stat.label}</p>
+                    return (
+                      <motion.article
+                        key={campaign._id}
+                        initial={{ opacity: 0, y: 24 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: index * 0.04 }}
+                        className={`overflow-hidden rounded-[28px] border ${
+                          isSelected
+                            ? 'border-[rgba(181,123,29,0.42)] shadow-[0_22px_56px_rgba(181,123,29,0.16)]'
+                            : 'border-[rgba(122,86,26,0.12)] shadow-[0_18px_42px_rgba(60,34,12,0.08)]'
+                        } bg-white/92`}
+                      >
+                        <button type="button" className="block w-full text-left" onClick={() => setSelectedCampaignId(campaign._id)}>
+                          <div className="relative h-52 bg-[linear-gradient(135deg,#f2e0b1,#b57b1d)]">
+                            {campaign.backgroundImage ? (
+                              <img
+                                src={campaign.backgroundImage}
+                                alt={campaign.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-white/80">
+                                <ImageIcon className="h-10 w-10" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(38,17,4,0.02),rgba(38,17,4,0.78))]" />
+                            <div className="absolute left-5 right-5 top-5 flex items-start justify-between gap-3">
+                              <span className="rounded-full bg-white/88 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-spiritual-maroon">
+                                {progress}% {t('labels.raised')}
+                              </span>
+                              {daysLeft !== null && (
+                                <span className="rounded-full bg-[rgba(128,0,32,0.84)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white">
+                                  {t('labels.daysLeft', { count: daysLeft })}
+                                </span>
+                              )}
+                            </div>
+                            <div className="absolute bottom-5 left-5 right-5">
+                              <h3 className="font-display text-3xl leading-tight text-white">{campaign.title}</h3>
+                              <p className="mt-2 text-sm leading-relaxed text-white/82">
+                                {campaign.additionalText || campaign.description}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="space-y-5 p-6">
+                            <p className="text-sm leading-relaxed text-spiritual-warmGray">
+                              {campaign.description}
+                            </p>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.16em] text-spiritual-warmGray">
+                                <span>
+                                  {t('labels.raisedValue', {
+                                    amount: formatCurrency(campaign.achieved || 0),
+                                  })}
+                                </span>
+                                <span>
+                                  {t('labels.goalValue', {
+                                    amount: formatCurrency(campaign.goal || 0),
+                                  })}
+                                </span>
+                              </div>
+                              <div className="h-2.5 overflow-hidden rounded-full bg-[rgba(122,86,26,0.12)]">
+                                <div
+                                  className="h-full rounded-full bg-[linear-gradient(90deg,#b57b1d,#d6a647)]"
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between text-sm text-spiritual-maroon">
+                              <span className="inline-flex items-center gap-2 font-medium">
+                                <Users className="h-4 w-4 text-gold-600" />
+                                {t('labels.donorCount', { count: campaign.donors || 0 })}
+                              </span>
+                              <span className="font-display text-xl text-gradient-gold">
+                                {formatCurrency(campaign.goal || 0)}
+                              </span>
+                            </div>
+                          </div>
+                        </button>
+                      </motion.article>
+                    );
+                  })}
                 </div>
-              ))}
+              </div>
+
+              <div className="space-y-6">
+                <div className="rounded-[30px] border border-[rgba(122,86,26,0.12)] bg-white/94 p-8 shadow-[0_20px_48px_rgba(60,34,12,0.08)]">
+                  <SectionHeading
+                    eyebrow={t('form.eyebrow')}
+                    title={t('form.title')}
+                    subtitle={t('form.subtitle')}
+                    align="left"
+                  />
+
+                  <div className="mt-6 grid grid-cols-2 gap-3 rounded-full bg-[rgba(248,243,232,0.9)] p-1">
+                    {(['one_time', 'subscription'] as DonateMode[]).map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setMode(type)}
+                        className={`rounded-full px-4 py-3 text-sm font-semibold transition ${
+                          mode === type
+                            ? 'bg-spiritual-maroon text-white shadow-[0_12px_26px_rgba(93,13,31,0.18)]'
+                            : 'text-spiritual-maroon'
+                        }`}
+                      >
+                        {type === 'one_time' ? t('form.oneTime') : t('form.monthly')}
+                      </button>
+                    ))}
+                  </div>
+
+                  {successState ? (
+                    <div className="mt-6 space-y-5 rounded-[24px] border border-[rgba(29,122,64,0.14)] bg-[rgba(239,252,243,0.96)] p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="rounded-2xl bg-[rgba(29,122,64,0.12)] p-3 text-[#1D7A40]">
+                          <CheckCircle2 className="h-7 w-7" />
+                        </div>
+                        <div>
+                          <h3 className="font-display text-2xl text-spiritual-maroon">{t('success.title')}</h3>
+                          <p className="mt-2 text-sm leading-relaxed text-spiritual-warmGray">
+                            {t('success.subtitle')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid gap-3 rounded-[20px] bg-white/88 p-4 text-sm text-spiritual-maroon">
+                        <div className="flex items-center justify-between">
+                          <span>{t('success.amount')}</span>
+                          <strong>{formatCurrency(successState.amount)}</strong>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>{t('success.campaign')}</span>
+                          <strong>{successState.campaignTitle}</strong>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>{t('success.reference')}</span>
+                          <strong>{successState.paymentId}</strong>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <button type="button" className="btn-primary" onClick={shareImpact}>
+                          <Sparkles className="mr-2 h-4 w-4" />
+                          {t('success.share')}
+                        </button>
+                        {returnToAppUrl && (
+                          <a href={returnToAppUrl} className="btn-secondary">
+                            {t('success.returnToApp')}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-6 space-y-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        {quickAmounts.map((amount) => (
+                          <button
+                            key={amount}
+                            type="button"
+                            onClick={() => setField('amount', amount)}
+                            className={`rounded-full border px-4 py-3 text-sm font-semibold transition ${
+                              form.amount === amount
+                                ? 'border-[rgba(181,123,29,0.42)] bg-[rgba(247,234,192,0.72)] text-spiritual-maroon'
+                                : 'border-[rgba(122,86,26,0.16)] bg-white text-spiritual-maroon'
+                            }`}
+                          >
+                            {formatCurrency(amount)}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-spiritual-maroon">{t('form.amountLabel')}</span>
+                          <input
+                            type="number"
+                            value={form.amount}
+                            onChange={(event) => setField('amount', event.target.value.replace(/[^\d]/g, ''))}
+                            placeholder={t('form.amountPlaceholder')}
+                            className="w-full rounded-2xl border border-[rgba(122,86,26,0.14)] bg-[rgba(248,243,232,0.88)] px-4 py-3 text-spiritual-maroon outline-none focus:border-[rgba(122,86,26,0.3)]"
+                          />
+                        </label>
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-spiritual-maroon">{t('form.fullNameLabel')}</span>
+                          <input
+                            type="text"
+                            value={form.fullName}
+                            onChange={(event) => setField('fullName', event.target.value)}
+                            placeholder={t('form.fullNamePlaceholder')}
+                            className="w-full rounded-2xl border border-[rgba(122,86,26,0.14)] bg-[rgba(248,243,232,0.88)] px-4 py-3 text-spiritual-maroon outline-none focus:border-[rgba(122,86,26,0.3)]"
+                          />
+                        </label>
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-spiritual-maroon">{t('form.emailLabel')}</span>
+                          <input
+                            type="email"
+                            value={form.email}
+                            onChange={(event) => setField('email', event.target.value)}
+                            placeholder={t('form.emailPlaceholder')}
+                            className="w-full rounded-2xl border border-[rgba(122,86,26,0.14)] bg-[rgba(248,243,232,0.88)] px-4 py-3 text-spiritual-maroon outline-none focus:border-[rgba(122,86,26,0.3)]"
+                          />
+                        </label>
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-spiritual-maroon">{t('form.mobileLabel')}</span>
+                          <input
+                            type="tel"
+                            value={form.mobile}
+                            onChange={(event) => setField('mobile', event.target.value)}
+                            placeholder={t('form.mobilePlaceholder')}
+                            className="w-full rounded-2xl border border-[rgba(122,86,26,0.14)] bg-[rgba(248,243,232,0.88)] px-4 py-3 text-spiritual-maroon outline-none focus:border-[rgba(122,86,26,0.3)]"
+                          />
+                        </label>
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-spiritual-maroon">{t('form.nationalityLabel')}</span>
+                          <select
+                            value={form.nationality}
+                            onChange={(event) => setField('nationality', event.target.value)}
+                            className="w-full rounded-2xl border border-[rgba(122,86,26,0.14)] bg-[rgba(248,243,232,0.88)] px-4 py-3 text-spiritual-maroon outline-none focus:border-[rgba(122,86,26,0.3)]"
+                          >
+                            <option value="Indian">{t('form.nationalityIndian')}</option>
+                            <option value="Foreign">{t('form.nationalityForeign')}</option>
+                          </select>
+                        </label>
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-spiritual-maroon">{t('form.panLabel')}</span>
+                          <input
+                            type="text"
+                            value={form.panNumber}
+                            onChange={(event) => setField('panNumber', event.target.value.toUpperCase())}
+                            placeholder={t('form.panPlaceholder')}
+                            className="w-full rounded-2xl border border-[rgba(122,86,26,0.14)] bg-[rgba(248,243,232,0.88)] px-4 py-3 text-spiritual-maroon outline-none focus:border-[rgba(122,86,26,0.3)]"
+                          />
+                        </label>
+                      </div>
+
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium text-spiritual-maroon">{t('form.addressLabel')}</span>
+                        <textarea
+                          rows={3}
+                          value={form.address}
+                          onChange={(event) => setField('address', event.target.value)}
+                          placeholder={t('form.addressPlaceholder')}
+                          className="w-full rounded-2xl border border-[rgba(122,86,26,0.14)] bg-[rgba(248,243,232,0.88)] px-4 py-3 text-spiritual-maroon outline-none focus:border-[rgba(122,86,26,0.3)]"
+                        />
+                      </label>
+
+                      <div className="rounded-[24px] border border-[rgba(122,86,26,0.12)] bg-[rgba(248,243,232,0.76)] p-4">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <label className="space-y-2">
+                            <span className="text-sm font-medium text-spiritual-maroon">{t('form.dedicationTypeLabel')}</span>
+                            <select
+                              value={form.dedicationType}
+                              onChange={(event) =>
+                                setField('dedicationType', event.target.value as DonorForm['dedicationType'])
+                              }
+                              className="w-full rounded-2xl border border-[rgba(122,86,26,0.14)] bg-white px-4 py-3 text-spiritual-maroon outline-none focus:border-[rgba(122,86,26,0.3)]"
+                            >
+                              <option value="general">{t('form.dedicationGeneral')}</option>
+                              <option value="memory">{t('form.dedicationMemory')}</option>
+                              <option value="honor">{t('form.dedicationHonor')}</option>
+                              <option value="occasion">{t('form.dedicationOccasion')}</option>
+                            </select>
+                          </label>
+                          <label className="space-y-2">
+                            <span className="text-sm font-medium text-spiritual-maroon">{t('form.dedicatedToLabel')}</span>
+                            <input
+                              type="text"
+                              value={form.dedicatedTo}
+                              onChange={(event) => setField('dedicatedTo', event.target.value)}
+                              placeholder={t('form.dedicatedToPlaceholder')}
+                              className="w-full rounded-2xl border border-[rgba(122,86,26,0.14)] bg-white px-4 py-3 text-spiritual-maroon outline-none focus:border-[rgba(122,86,26,0.3)]"
+                            />
+                          </label>
+                        </div>
+                        <label className="mt-4 block space-y-2">
+                          <span className="text-sm font-medium text-spiritual-maroon">{t('form.messageLabel')}</span>
+                          <textarea
+                            rows={3}
+                            value={form.dedicationMessage}
+                            onChange={(event) => setField('dedicationMessage', event.target.value)}
+                            placeholder={t('form.messagePlaceholder')}
+                            className="w-full rounded-2xl border border-[rgba(122,86,26,0.14)] bg-white px-4 py-3 text-spiritual-maroon outline-none focus:border-[rgba(122,86,26,0.3)]"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="space-y-3 rounded-[24px] border border-[rgba(122,86,26,0.12)] bg-[rgba(248,243,232,0.76)] p-4">
+                        <label className="flex items-center gap-3 text-sm text-spiritual-maroon">
+                          <input
+                            type="checkbox"
+                            checked={form.taxBenefitOptIn}
+                            onChange={(event) => setField('taxBenefitOptIn', event.target.checked)}
+                            className="h-4 w-4 accent-[#B57B1D]"
+                          />
+                          {t('form.taxBenefitOptIn')}
+                        </label>
+                        <label className="flex items-center gap-3 text-sm text-spiritual-maroon">
+                          <input
+                            type="checkbox"
+                            checked={form.isAnonymous}
+                            onChange={(event) => setField('isAnonymous', event.target.checked)}
+                            className="h-4 w-4 accent-[#B57B1D]"
+                          />
+                          {t('form.anonymous')}
+                        </label>
+                      </div>
+
+                      {error && (
+                        <div className="rounded-2xl border border-[rgba(201,58,58,0.18)] bg-[rgba(255,241,241,0.96)] px-4 py-3 text-sm text-[#9a2626]">
+                          {error}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleCheckout}
+                        disabled={submitting}
+                        className="btn-primary w-full py-4 text-base disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {submitting ? (
+                          <>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            {t('states.processing')}
+                          </>
+                        ) : (
+                          <>
+                            {mode === 'subscription' ? <Repeat className="mr-2 h-5 w-5" /> : <Heart className="mr-2 h-5 w-5" />}
+                            {mode === 'subscription'
+                              ? t('checkout.monthlyButton', { amount: formatCurrency(form.amount || 0) })
+                              : t('checkout.payButton', { amount: formatCurrency(form.amount || 0) })}
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="mt-6 grid gap-3 rounded-[24px] bg-[rgba(248,243,232,0.72)] p-5 text-sm text-spiritual-maroon">
+                    <div className="flex items-start gap-3">
+                      <ShieldCheck className="mt-0.5 h-5 w-5 text-gold-600" />
+                      <div>
+                        <p className="font-semibold">{t('trust.secureTitle')}</p>
+                        <p className="text-spiritual-warmGray">{t('trust.secureSubtitle')}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Clock3 className="mt-0.5 h-5 w-5 text-gold-600" />
+                      <div>
+                        <p className="font-semibold">{t('trust.receiptTitle')}</p>
+                        <p className="text-spiritual-warmGray">{t('trust.receiptSubtitle')}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
     </div>

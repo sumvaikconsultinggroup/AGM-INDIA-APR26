@@ -12,7 +12,23 @@ function getRazorpay() {
 export async function POST(req) {
   try {
     const razorpay = getRazorpay();
-    const { amount, interval, customerEmail } = await req.json();
+    const {
+      amount,
+      interval,
+      customerEmail,
+      fullName,
+      mobile,
+      nationality,
+      address,
+      campaignId,
+      panNumber,
+      taxBenefitOptIn,
+      isAnonymous,
+      dedicationType,
+      dedicatedTo,
+      dedicationMessage,
+      source,
+    } = await req.json();
 
     if (!amount || amount < 100) {
       return NextResponse.json({ error: 'Amount must be at least ₹100' }, { status: 400 });
@@ -35,13 +51,31 @@ export async function POST(req) {
       total_count: 12,
       customer_notify: 1,
       notes: {
-        email: customerEmail,
-        purpose: 'Custom Donation',
+        email: customerEmail || '',
+        full_name: fullName || '',
+        phone: mobile || '',
+        nationality: nationality || '',
+        address: address || '',
+        campaign_id: campaignId || '',
+        donation_type: 'subscription',
+        pan_number: panNumber || '',
+        tax_benefit_opt_in: taxBenefitOptIn ? 'true' : 'false',
+        is_anonymous: isAnonymous ? 'true' : 'false',
+        dedication_type: dedicationType || 'general',
+        dedicated_to: dedicatedTo || '',
+        dedication_message: dedicationMessage || '',
+        source: source || 'website',
       },
     });
     console.log('Created subscription:', subscription);
 
-    return NextResponse.json({ subscriptionId: subscription.id });
+    return NextResponse.json({
+      success: true,
+      subscriptionId: subscription.id,
+      key: process.env.RAZORPAY_KEY_ID,
+      amount,
+      currency: 'INR',
+    });
   } catch (error) {
     console.error('Error creating subscription:', error);
     return NextResponse.json({ error: 'Failed to create subscription' }, { status: 500 });

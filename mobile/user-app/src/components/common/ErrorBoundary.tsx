@@ -6,6 +6,7 @@
 import React, { Component, ReactNode, ErrorInfo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { colors, spacing, borderRadius } from '../../theme';
+import i18n from '../../i18n';
 
 interface Props {
   children: ReactNode;
@@ -49,13 +50,13 @@ export class ErrorBoundary extends Component<Props, State> {
         <View style={styles.container}>
           <View style={styles.card}>
             <Text style={styles.icon}>⚠️</Text>
-            <Text style={styles.title}>Something went wrong</Text>
+            <Text style={styles.title}>{i18n.t('common.somethingWentWrong')}</Text>
             <Text style={styles.message}>
-              {this.state.error?.message || 'An unexpected error occurred'}
+              {this.state.error?.message || i18n.t('common.unexpectedError')}
             </Text>
 
             <TouchableOpacity style={styles.retryButton} onPress={this.handleRetry}>
-              <Text style={styles.retryText}>Try Again</Text>
+              <Text style={styles.retryText}>{i18n.t('common.tryAgain')}</Text>
             </TouchableOpacity>
 
             {__DEV__ && this.state.errorInfo && (

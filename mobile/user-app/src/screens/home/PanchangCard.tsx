@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { getPanchangToday } from '../../services/panchangApi';
 import { colors, spacing, borderRadius, shadows } from '../../theme';
 
@@ -42,6 +43,7 @@ function unwrapPayload<T = unknown>(payload: unknown, maxDepth = 3): T | null {
 
 export default function PanchangCard({ onPress }: PanchangCardProps) {
   const navigation = useNavigation<any>();
+  const { t } = useTranslation();
   const [data, setData] = useState<PanchangSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -81,8 +83,8 @@ export default function PanchangCard({ onPress }: PanchangCardProps) {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.labelHindi}>आज का पंचांग</Text>
-          <Text style={styles.labelEn}>Today's Panchang</Text>
+          <Text style={styles.labelHindi}>{t('panchang.todayTitle')}</Text>
+          <Text style={styles.labelEn}>{t('panchang.todaySubtitle')}</Text>
         </View>
         <TouchableOpacity
           style={styles.bellButton}
@@ -100,7 +102,7 @@ export default function PanchangCard({ onPress }: PanchangCardProps) {
       ) : !data ? (
         <View style={styles.loadingBox}>
           <Icon name="calendar-blank-outline" size={24} color={colors.text.secondary} />
-          <Text style={styles.emptyText}>Tap to view Panchang</Text>
+          <Text style={styles.emptyText}>{t('panchang.tapToView')}</Text>
         </View>
       ) : (
         <>
@@ -122,9 +124,9 @@ export default function PanchangCard({ onPress }: PanchangCardProps) {
           <View style={styles.mainRow}>
             <View style={styles.mainItem}>
               <Icon name="star-four-points" size={16} color={colors.gold.main} />
-              <Text style={styles.mainLabel}>तिथि</Text>
+              <Text style={styles.mainLabel}>{t('panchang.tithi')}</Text>
               <Text style={styles.mainValue} numberOfLines={1}>
-                {data.tithi?.name || 'N/A'}
+                {data.tithi?.name || t('panchang.notAvailable')}
               </Text>
               {data.tithi?.paksha && (
                 <Text style={styles.mainSub}>{data.tithi.paksha}</Text>
@@ -133,17 +135,17 @@ export default function PanchangCard({ onPress }: PanchangCardProps) {
             <View style={styles.divider} />
             <View style={styles.mainItem}>
               <Icon name="calendar-star" size={16} color={colors.gold.main} />
-              <Text style={styles.mainLabel}>नक्षत्र</Text>
+              <Text style={styles.mainLabel}>{t('panchang.nakshatra')}</Text>
               <Text style={styles.mainValue} numberOfLines={1}>
-                {data.nakshatra?.name || 'N/A'}
+                {data.nakshatra?.name || t('panchang.notAvailable')}
               </Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.mainItem}>
               <Icon name="weather-sunset-up" size={16} color={colors.gold.main} />
-              <Text style={styles.mainLabel}>Sunrise</Text>
+              <Text style={styles.mainLabel}>{t('panchang.sunrise')}</Text>
               <Text style={styles.mainValue}>
-                {data.sunrise || '--:--'}
+                {data.sunrise || t('panchang.timeUnavailable')}
               </Text>
             </View>
           </View>
@@ -163,7 +165,7 @@ export default function PanchangCard({ onPress }: PanchangCardProps) {
             <View style={styles.chipRow}>
               <View style={styles.chip}>
                 <Icon name="moon-waxing-crescent" size={12} color="#60A5FA" />
-                <Text style={styles.chipText}>Moon: {data.moonRashi.name}</Text>
+                <Text style={styles.chipText}>{t('panchang.moonLabel', { value: data.moonRashi.name })}</Text>
               </View>
               {data.hinduMonth && (
                 <View style={styles.chip}>
@@ -176,7 +178,7 @@ export default function PanchangCard({ onPress }: PanchangCardProps) {
 
           {/* CTA */}
           <View style={styles.cta}>
-            <Text style={styles.ctaText}>View Full Panchang</Text>
+            <Text style={styles.ctaText}>{t('panchang.viewFullCalendar')}</Text>
             <Icon name="arrow-right" size={16} color={colors.primary.saffron} />
           </View>
         </>

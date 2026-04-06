@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CalendarDays, Sparkles, ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '@/lib/api';
 
 interface Festival {
@@ -28,9 +29,9 @@ function daysUntil(dateStr: string): number {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
-function formatFestivalDate(dateStr: string): string {
+function formatFestivalDate(dateStr: string, locale: string): string {
   try {
-    return new Date(dateStr).toLocaleDateString('en-IN', {
+    return new Date(dateStr).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
       weekday: 'short',
@@ -57,6 +58,7 @@ function SkeletonList() {
 }
 
 export default function FestivalList() {
+  const { t, i18n } = useTranslation('panchang');
   const [festivals, setFestivals] = useState<Festival[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
@@ -92,7 +94,7 @@ export default function FestivalList() {
         <div className="flex items-center gap-2">
           <CalendarDays className="w-5 h-5 text-spiritual-saffron" />
           <h3 className="font-display text-lg text-spiritual-maroon font-semibold">
-            आगामी त्यौहार (Upcoming Festivals)
+            {t('upcomingFestivals')}
           </h3>
         </div>
       </div>
@@ -103,7 +105,7 @@ export default function FestivalList() {
         ) : festivals.length === 0 ? (
           <div className="text-center py-8 text-spiritual-warmGray text-sm">
             <CalendarDays className="w-8 h-8 mx-auto mb-2 opacity-30" />
-            <p>No upcoming festivals found</p>
+            <p>{t('noUpcomingFestivals')}</p>
           </div>
         ) : (
           <div className="space-y-1">
@@ -141,12 +143,12 @@ export default function FestivalList() {
                         }`}
                       >
                         {days === 0 ? (
-                          <span className="text-[10px] font-bold">TODAY</span>
+                          <span className="text-[10px] font-bold">{t('today').toUpperCase()}</span>
                         ) : (
                           <>
                             <span className="text-sm font-bold leading-none">{days}</span>
                             <span className="text-[9px] leading-none opacity-70">
-                              {days === 1 ? 'day' : 'days'}
+                              {days === 1 ? t('daySingular') : t('dayPlural')}
                             </span>
                           </>
                         )}
@@ -164,7 +166,7 @@ export default function FestivalList() {
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs text-spiritual-warmGray">
-                            {formatFestivalDate(festival.date)}
+                            {formatFestivalDate(festival.date, i18n.language === 'en' ? 'en-IN' : `${i18n.language}-IN`)}
                           </span>
                           {festival.type && (
                             <span

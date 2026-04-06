@@ -14,6 +14,7 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 import { registerForPushNotifications } from '../../services/notifications';
 import { colors, spacing, borderRadius, shadows } from '../../theme';
 
@@ -79,6 +80,7 @@ async function syncPrefsToServer(pushToken: string, prefs: NotificationPrefs) {
 export default function NotificationPreferencesScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   
   const [prefs, setPrefs] = useState<NotificationPrefs>({
     dailyPanchang: true,
@@ -120,12 +122,12 @@ export default function NotificationPreferencesScreen() {
         setPushToken(token);
         await AsyncStorage.setItem(STORAGE_KEY_PUSH_TOKEN, token);
         await syncPrefsToServer(token, prefs);
-        Alert.alert('Notifications Enabled', 'You will receive daily Panchang alerts at Brahma Muhurta time.');
+        Alert.alert(t('panchangNotifications.enabledTitle'), t('panchangNotifications.enabledMessage'));
       } else {
-        Alert.alert('Permission Denied', 'Please enable notifications in your device settings to receive Panchang alerts.');
+        Alert.alert(t('panchangNotifications.permissionDeniedTitle'), t('panchangNotifications.permissionDeniedMessage'));
       }
     } catch {
-      Alert.alert('Error', 'Unable to enable notifications. Please try again.');
+      Alert.alert(t('common.error'), t('panchangNotifications.enableFailedMessage'));
     } finally {
       setSaving(false);
     }
@@ -159,7 +161,7 @@ export default function NotificationPreferencesScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-left" size={24} color={colors.primary.maroon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notification Settings</Text>
+        <Text style={styles.headerTitle}>{t('panchangNotifications.headerTitle')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -167,10 +169,8 @@ export default function NotificationPreferencesScreen() {
         {/* Hero Info */}
         <View style={styles.heroBanner}>
           <Icon name="bell-ring-outline" size={32} color={colors.gold.main} />
-          <Text style={styles.heroTitle}>Daily Panchang Alerts</Text>
-          <Text style={styles.heroSubtitle}>
-            Receive Panchang summary, festival alerts, and auspicious timings at Brahma Muhurta (4:30 AM) in your chosen language
-          </Text>
+          <Text style={styles.heroTitle}>{t('panchangNotifications.heroTitle')}</Text>
+          <Text style={styles.heroSubtitle}>{t('panchangNotifications.heroSubtitle')}</Text>
         </View>
 
         {/* Enable Notifications */}
@@ -181,7 +181,7 @@ export default function NotificationPreferencesScreen() {
             ) : (
               <>
                 <Icon name="bell-plus" size={22} color={colors.text.white} />
-                <Text style={styles.enableButtonText}>Enable Push Notifications</Text>
+                <Text style={styles.enableButtonText}>{t('panchangNotifications.enableButton')}</Text>
               </>
             )}
           </TouchableOpacity>
@@ -190,20 +190,20 @@ export default function NotificationPreferencesScreen() {
         {pushToken && (
           <View style={styles.enabledBadge}>
             <Icon name="check-circle" size={18} color="#16A34A" />
-            <Text style={styles.enabledBadgeText}>Notifications enabled</Text>
+            <Text style={styles.enabledBadgeText}>{t('panchangNotifications.enabledBadge')}</Text>
           </View>
         )}
 
         {/* Notification Types */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notification Types</Text>
+          <Text style={styles.sectionTitle}>{t('panchangNotifications.notificationTypes')}</Text>
 
           <View style={styles.toggleRow}>
             <View style={styles.toggleInfo}>
               <Icon name="calendar-today" size={22} color={colors.primary.saffron} />
               <View style={styles.toggleTextContainer}>
-                <Text style={styles.toggleLabel}>Daily Panchang</Text>
-                <Text style={styles.toggleDescription}>Tithi, Nakshatra, sunrise, and muhurta timings</Text>
+                <Text style={styles.toggleLabel}>{t('panchangNotifications.dailyPanchangLabel')}</Text>
+                <Text style={styles.toggleDescription}>{t('panchangNotifications.dailyPanchangDescription')}</Text>
               </View>
             </View>
             <Switch
@@ -218,8 +218,8 @@ export default function NotificationPreferencesScreen() {
             <View style={styles.toggleInfo}>
               <Icon name="party-popper" size={22} color={colors.gold.main} />
               <View style={styles.toggleTextContainer}>
-                <Text style={styles.toggleLabel}>Festival Alerts</Text>
-                <Text style={styles.toggleDescription}>Get notified about upcoming Hindu festivals</Text>
+                <Text style={styles.toggleLabel}>{t('panchangNotifications.festivalAlertsLabel')}</Text>
+                <Text style={styles.toggleDescription}>{t('panchangNotifications.festivalAlertsDescription')}</Text>
               </View>
             </View>
             <Switch
@@ -234,8 +234,8 @@ export default function NotificationPreferencesScreen() {
             <View style={styles.toggleInfo}>
               <Icon name="weather-sunset-up" size={22} color={colors.primary.maroon} />
               <View style={styles.toggleTextContainer}>
-                <Text style={styles.toggleLabel}>Brahma Muhurta Reminder</Text>
-                <Text style={styles.toggleDescription}>Alert at the most auspicious time for meditation (4:30 AM)</Text>
+                <Text style={styles.toggleLabel}>{t('panchangNotifications.brahmaMuhurtaLabel')}</Text>
+                <Text style={styles.toggleDescription}>{t('panchangNotifications.brahmaMuhurtaDescription')}</Text>
               </View>
             </View>
             <Switch
@@ -249,8 +249,8 @@ export default function NotificationPreferencesScreen() {
 
         {/* Language Selection */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notification Language</Text>
-          <Text style={styles.sectionSubtitle}>Choose the language for your daily Panchang alerts</Text>
+          <Text style={styles.sectionTitle}>{t('panchangNotifications.notificationLanguage')}</Text>
+          <Text style={styles.sectionSubtitle}>{t('panchangNotifications.notificationLanguageSubtitle')}</Text>
 
           <TouchableOpacity style={styles.languageSelector} onPress={() => setLanguagePickerVisible(!languagePickerVisible)} activeOpacity={0.7}>
             <View style={styles.languageSelected}>
@@ -288,7 +288,7 @@ export default function NotificationPreferencesScreen() {
         <View style={styles.infoFooter}>
           <Icon name="information-outline" size={16} color={colors.text.secondary} />
           <Text style={styles.infoFooterText}>
-            Notifications are sent at Brahma Muhurta (approximately 4:30 AM) based on your city's sunrise time. The exact time varies by location and season.
+            {t('panchangNotifications.footerNote')}
           </Text>
         </View>
 
