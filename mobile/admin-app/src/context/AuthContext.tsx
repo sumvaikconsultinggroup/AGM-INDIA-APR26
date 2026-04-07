@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import api from '../services/api';
+import { deactivateAdminPushNotifications } from '../services/notifications';
 
 interface AdminUser {
   _id: string;
@@ -143,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      await deactivateAdminPushNotifications().catch(() => {});
       await api.post('/auth/logout').catch(() => {});
     } finally {
       await clearStoredAuth();

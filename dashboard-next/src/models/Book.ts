@@ -18,6 +18,7 @@ export interface IBook extends Document {
   ISBN: string;
   description: string;
   coverImage?: string; // Optional field for cover image
+  purchaseUrl?: string;
   pages: number;
   stock: IStock;
   price: number;
@@ -113,6 +114,23 @@ const bookSchema: Schema = new Schema(
     coverImage: {
       type: String,
       required: false, // This field is optional as not all books might have a cover image
+    },
+    purchaseUrl: {
+      type: String,
+      trim: true,
+      required: false,
+      validate: {
+        validator: function (value: string) {
+          if (!value) return true;
+          try {
+            const url = new URL(value);
+            return url.protocol === 'http:' || url.protocol === 'https:';
+          } catch {
+            return false;
+          }
+        },
+        message: 'Purchase link must be a valid http or https URL',
+      },
     },
     pages: {
       type: Number,

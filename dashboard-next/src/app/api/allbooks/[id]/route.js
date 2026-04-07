@@ -34,6 +34,7 @@ export async function PUT(req, { params }) {
       language: formData.get('language'),
       ISBN: formData.get('ISBN'),
       description: formData.get('description'),
+      purchaseUrl: formData.get('purchaseUrl')?.toString().trim() || undefined,
       pages: Number(formData.get('pages')),
       price: Number(formData.get('price')),
       stock: {
@@ -70,8 +71,7 @@ export async function DELETE(req, { params }) {
 
   try {
     await connectDB();
-    const { NewId } = params;
-    const deletedBook = await Book.findByIdAndDelete(NewId);
+    const deletedBook = await Book.findByIdAndDelete(params.id);
 
     if (!deletedBook) {
       return NextResponse.json({ success: false, error: 'Book not found' }, { status: 404 });

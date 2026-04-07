@@ -15,7 +15,8 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
-import { colors, spacing, borderRadius, shadows } from '../../theme';
+import { borderRadius, colors, spacing, typography } from '../../theme';
+import { EmptyStateCard, ScreenHeader, SurfaceCard } from '../../components/common';
 
 const { width } = Dimensions.get('window');
 const GALLERY_ITEM_WIDTH = (width - spacing.lg * 2 - spacing.sm) / 2;
@@ -33,8 +34,6 @@ interface Article {
   categoryTranslations?: LocalizedText;
   publishedDate: string;
   coverImage?: string;
-  link?: string;
-  readTime?: number;
 }
 
 interface Video {
@@ -53,6 +52,7 @@ interface Book {
   author?: string;
   price?: number;
   coverImage?: string;
+  purchaseUrl?: string;
 }
 
 interface Podcast {
@@ -63,7 +63,6 @@ interface Podcast {
   descriptionTranslations?: LocalizedText;
   duration?: string;
   coverImage?: string;
-  videoUrl?: string;
 }
 
 interface GalleryItem {
@@ -94,7 +93,7 @@ export function ExploreScreen() {
   const navigation = useNavigation<any>();
   const { t, i18n } = useTranslation();
   const initialCategory = route.params?.category || 'Articles';
-  
+
   const [selectedCategory, setSelectedCategory] = useState<Category>(initialCategory);
   const [data, setData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
@@ -177,8 +176,7 @@ export function ExploreScreen() {
       const query = searchQuery.toLowerCase();
       const filtered = data.filter((item) => {
         const title = resolveLocalizedText(item.titleTranslations, item.title || item.eventName || '');
-        const description =
-          resolveLocalizedText(item.descriptionTranslations, item.description || item.excerpt || '');
+        const description = resolveLocalizedText(item.descriptionTranslations, item.description || item.excerpt || '');
         const author = item.author || '';
         return (
           title.toLowerCase().includes(query) ||
@@ -188,7 +186,7 @@ export function ExploreScreen() {
       });
       setFilteredData(filtered);
     }
-  }, [searchQuery, data]);
+  }, [searchQuery, data, resolveLocalizedText]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -206,139 +204,128 @@ export function ExploreScreen() {
   };
 
   const renderArticleItem = ({ item }: { item: Article }) => (
-    <TouchableOpacity
-      style={styles.listItem}
-      onPress={() => navigation.navigate('ArticleDetail', { articleId: item._id })}
-    >
-      <View style={styles.itemImageContainer}>
-        {item.coverImage ? (
-          <Image source={{ uri: item.coverImage }} style={styles.itemImage} />
-        ) : (
-          <View style={styles.itemImagePlaceholder}>
-            <Icon name="file-document" size={24} color={colors.gold.main} />
-          </View>
-        )}
-      </View>
-      <View style={styles.itemContent}>
-        <Text style={styles.itemTitle} numberOfLines={2}>
-          {resolveLocalizedText(item.titleTranslations, item.title)}
-        </Text>
-        <Text style={styles.itemDescription} numberOfLines={2}>
-          {resolveLocalizedText(item.descriptionTranslations, item.description || '')}
-        </Text>
-        <View style={styles.itemMeta}>
-        {(item.category || item.categoryTranslations) && (
-            <Text style={styles.itemMetaText}>
-              {resolveLocalizedText(item.categoryTranslations, item.category)}
-            </Text>
+    <TouchableOpacity style={styles.listItemWrap} onPress={() => navigation.navigate('ArticleDetail', { articleId: item._id })}>
+      <SurfaceCard compact style={styles.listItem}>
+        <View style={styles.itemImageContainer}>
+          {item.coverImage ? (
+            <Image source={{ uri: item.coverImage }} style={styles.itemImage} />
+          ) : (
+            <View style={styles.itemImagePlaceholder}>
+              <Icon name="file-document" size={24} color={colors.gold.main} />
+            </View>
           )}
-          <Text style={styles.itemDate}>{formatDate(item.publishedDate)}</Text>
         </View>
-      </View>
+        <View style={styles.itemContent}>
+          <Text style={styles.itemTitle} numberOfLines={2}>
+            {resolveLocalizedText(item.titleTranslations, item.title)}
+          </Text>
+          <Text style={styles.itemDescription} numberOfLines={2}>
+            {resolveLocalizedText(item.descriptionTranslations, item.description || '')}
+          </Text>
+          <View style={styles.itemMeta}>
+            {(item.category || item.categoryTranslations) ? (
+              <Text style={styles.itemMetaText}>
+                {resolveLocalizedText(item.categoryTranslations, item.category)}
+              </Text>
+            ) : null}
+            <Text style={styles.itemDate}>{formatDate(item.publishedDate)}</Text>
+          </View>
+        </View>
+      </SurfaceCard>
     </TouchableOpacity>
   );
 
   const renderVideoItem = ({ item }: { item: Video }) => (
-    <TouchableOpacity 
-      style={styles.listItem}
-      onPress={() => navigation.navigate('VideoSeries', { seriesId: item._id })}
-    >
-      <View style={styles.itemImageContainer}>
-        {item.thumbnail ? (
-          <Image source={{ uri: item.thumbnail }} style={styles.itemImage} />
-        ) : (
-          <View style={styles.itemImagePlaceholder}>
-            <Icon name="video" size={24} color={colors.gold.main} />
+    <TouchableOpacity style={styles.listItemWrap} onPress={() => navigation.navigate('VideoSeries', { seriesId: item._id })}>
+      <SurfaceCard compact style={styles.listItem}>
+        <View style={styles.itemImageContainer}>
+          {item.thumbnail ? (
+            <Image source={{ uri: item.thumbnail }} style={styles.itemImage} />
+          ) : (
+            <View style={styles.itemImagePlaceholder}>
+              <Icon name="video" size={24} color={colors.gold.main} />
+            </View>
+          )}
+          <View style={styles.playButton}>
+            <Icon name="play" size={16} color={colors.text.white} />
           </View>
-        )}
-        <View style={styles.playButton}>
-          <Icon name="play" size={16} color={colors.text.white} />
         </View>
-      </View>
-      <View style={styles.itemContent}>
-        <Text style={styles.itemTitle} numberOfLines={2}>
-          {resolveLocalizedText(item.titleTranslations, item.title)}
-        </Text>
-        <Text style={styles.itemDescription} numberOfLines={3}>
-          {resolveLocalizedText(item.descriptionTranslations, item.description) || t('explore.videoSeriesFallback')}
-        </Text>
-      </View>
+        <View style={styles.itemContent}>
+          <Text style={styles.itemTitle} numberOfLines={2}>
+            {resolveLocalizedText(item.titleTranslations, item.title)}
+          </Text>
+          <Text style={styles.itemDescription} numberOfLines={3}>
+            {resolveLocalizedText(item.descriptionTranslations, item.description) || t('explore.videoSeriesFallback')}
+          </Text>
+        </View>
+      </SurfaceCard>
     </TouchableOpacity>
   );
 
   const renderBookItem = ({ item }: { item: Book }) => (
-    <TouchableOpacity 
-      style={styles.listItem}
-      onPress={() => navigation.navigate('BookDetail', { bookId: item._id })}
-    >
-      <View style={styles.bookImageContainer}>
-        {item.coverImage ? (
-          <Image source={{ uri: item.coverImage }} style={styles.bookImage} />
-        ) : (
-          <View style={styles.bookImagePlaceholder}>
-            <Icon name="book-open-variant" size={32} color={colors.gold.main} />
-          </View>
-        )}
-      </View>
-      <View style={styles.itemContent}>
-        <Text style={styles.itemTitle} numberOfLines={2}>
-          {resolveLocalizedText(item.titleTranslations, item.title)}
-        </Text>
-        {item.author && (
-          <Text style={styles.itemDescription}>
-            {t('explore.byAuthor', { author: item.author })}
+    <TouchableOpacity style={styles.listItemWrap} onPress={() => navigation.navigate('BookDetail', { bookId: item._id })}>
+      <SurfaceCard compact style={styles.listItem}>
+        <View style={styles.bookImageContainer}>
+          {item.coverImage ? (
+            <Image source={{ uri: item.coverImage }} style={styles.bookImage} />
+          ) : (
+            <View style={styles.bookImagePlaceholder}>
+              <Icon name="book-open-variant" size={32} color={colors.gold.main} />
+            </View>
+          )}
+        </View>
+        <View style={styles.itemContent}>
+          <Text style={styles.itemTitle} numberOfLines={2}>
+            {resolveLocalizedText(item.titleTranslations, item.title)}
           </Text>
-        )}
-        {item.price !== undefined && (
-          <Text style={styles.bookPrice}>₹{item.price.toLocaleString('en-IN')}</Text>
-        )}
-      </View>
+          {item.author ? <Text style={styles.itemDescription}>{t('explore.byAuthor', { author: item.author })}</Text> : null}
+          {item.price !== undefined ? <Text style={styles.bookPrice}>₹{item.price.toLocaleString('en-IN')}</Text> : null}
+        </View>
+      </SurfaceCard>
     </TouchableOpacity>
   );
 
   const renderPodcastItem = ({ item }: { item: Podcast }) => (
-    <TouchableOpacity
-      style={styles.listItem}
-      onPress={() => navigation.navigate('PodcastDetail', { podcastId: item._id })}
-    >
-      <View style={styles.podcastIcon}>
-        {item.coverImage ? (
-          <Image source={{ uri: item.coverImage }} style={{ width: 56, height: 56, borderRadius: 28 }} />
-        ) : (
-          <Icon name="podcast" size={28} color={colors.primary.saffron} />
-        )}
-      </View>
-      <View style={styles.itemContent}>
-        <Text style={styles.itemTitle} numberOfLines={2}>
-          {resolveLocalizedText(item.titleTranslations, item.title)}
-        </Text>
-        {item.description && (
-          <Text style={styles.itemDescription} numberOfLines={2}>
-            {resolveLocalizedText(item.descriptionTranslations, item.description)}
+    <TouchableOpacity style={styles.listItemWrap} onPress={() => navigation.navigate('PodcastDetail', { podcastId: item._id })}>
+      <SurfaceCard compact style={styles.listItem}>
+        <View style={styles.podcastIcon}>
+          {item.coverImage ? (
+            <Image source={{ uri: item.coverImage }} style={styles.podcastImage} />
+          ) : (
+            <Icon name="podcast" size={28} color={colors.primary.saffron} />
+          )}
+        </View>
+        <View style={styles.itemContent}>
+          <Text style={styles.itemTitle} numberOfLines={2}>
+            {resolveLocalizedText(item.titleTranslations, item.title)}
           </Text>
-        )}
-        {item.duration && (
-          <View style={styles.durationBadge}>
-            <Icon name="clock-outline" size={12} color={colors.text.secondary} />
-            <Text style={styles.durationText}>{item.duration}</Text>
-          </View>
-        )}
-      </View>
-      <Icon name="play-circle" size={32} color={colors.primary.saffron} />
+          {item.description ? (
+            <Text style={styles.itemDescription} numberOfLines={2}>
+              {resolveLocalizedText(item.descriptionTranslations, item.description)}
+            </Text>
+          ) : null}
+          {item.duration ? (
+            <View style={styles.durationBadge}>
+              <Icon name="clock-outline" size={12} color={colors.text.secondary} />
+              <Text style={styles.durationText}>{item.duration}</Text>
+            </View>
+          ) : null}
+        </View>
+        <Icon name="play-circle" size={32} color={colors.primary.saffron} />
+      </SurfaceCard>
     </TouchableOpacity>
   );
 
   const renderGalleryItem = ({ item }: { item: GalleryItem }) => (
-    <TouchableOpacity 
-      style={styles.galleryItem}
-      onPress={() => navigation.navigate('GalleryFull')}
-    >
-      <Image source={{ uri: item.image }} style={styles.galleryImage} />
-      {(item.title || item.titleTranslations) && (
-        <Text style={styles.galleryTitle} numberOfLines={1}>
-          {resolveLocalizedText(item.titleTranslations, item.title)}
-        </Text>
-      )}
+    <TouchableOpacity style={styles.galleryItem} onPress={() => navigation.navigate('GalleryFull')}>
+      <SurfaceCard compact style={styles.galleryCard}>
+        <Image source={{ uri: item.image }} style={styles.galleryImage} />
+        {(item.title || item.titleTranslations) ? (
+          <Text style={styles.galleryTitle} numberOfLines={1}>
+            {resolveLocalizedText(item.titleTranslations, item.title)}
+          </Text>
+        ) : null}
+      </SurfaceCard>
     </TouchableOpacity>
   );
 
@@ -359,114 +346,112 @@ export function ExploreScreen() {
     }
   };
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Icon
-        name={categories.find((c) => c.key === selectedCategory)?.icon || 'alert'}
-        size={48}
-        color={colors.text.secondary}
+  const listHeader = (
+    <View>
+      <ScreenHeader
+        compact
+        eyebrow={t('explore.title')}
+        title={categoryLabels[selectedCategory]}
+        subtitle={t('onboarding.slides.wisdomDescription')}
+        icon={categories.find((item) => item.key === selectedCategory)?.icon || 'compass-outline'}
       />
-      <Text style={styles.emptyTitle}>
-        {t('explore.noItemsTitle', { category: categoryLabels[selectedCategory] })}
-      </Text>
-      <Text style={styles.emptySubtitle}>
-        {searchQuery
-          ? t('explore.searchTryDifferent')
-          : t('explore.checkBackLater')}
-      </Text>
+
+      <View style={styles.controlsWrap}>
+        <SurfaceCard compact style={styles.categoryPanel}>
+          <FlatList
+            horizontal
+            data={categories}
+            keyExtractor={(item) => item.key}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryList}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.categoryTab, selectedCategory === item.key && styles.categoryTabActive]}
+                onPress={() => setSelectedCategory(item.key)}
+              >
+                <Icon
+                  name={item.icon}
+                  size={18}
+                  color={selectedCategory === item.key ? colors.text.white : colors.text.primary}
+                />
+                <Text style={[styles.categoryText, selectedCategory === item.key && styles.categoryTextActive]}>
+                  {categoryLabels[item.key]}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </SurfaceCard>
+
+        <SurfaceCard compact style={styles.searchPanel}>
+          <View style={styles.searchBar}>
+            <Icon name="magnify" size={20} color={colors.text.secondary} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={t('explore.searchPlaceholder', {
+                category: categoryLabels[selectedCategory].toLowerCase(),
+              })}
+              placeholderTextColor={colors.text.secondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 ? (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Icon name="close" size={20} color={colors.text.secondary} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        </SurfaceCard>
+
+        {selectedCategory === 'Books' ? (
+          <SurfaceCard compact style={styles.disclaimerPanel}>
+            <View style={styles.disclaimerRow}>
+              <Icon name="information-outline" size={18} color={colors.primary.maroon} />
+              <Text style={styles.disclaimerText}>{t('details.book.externalSellerNoticeShort')}</Text>
+            </View>
+          </SurfaceCard>
+        ) : null}
+      </View>
     </View>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary.saffron} />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      {/* Category Tabs */}
-      <View style={styles.categoryContainer}>
-        <FlatList
-          horizontal
-          data={categories}
-          keyExtractor={(item) => item.key}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryList}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.categoryTab,
-                selectedCategory === item.key && styles.categoryTabActive,
-              ]}
-              onPress={() => setSelectedCategory(item.key)}
-            >
-              <Icon
-                name={item.icon}
-                size={18}
-                color={
-                  selectedCategory === item.key
-                    ? colors.text.white
-                    : colors.text.primary
-                }
-              />
-              <Text
-                style={[
-                  styles.categoryText,
-                  selectedCategory === item.key && styles.categoryTextActive,
-                ]}
-              >
-                {categoryLabels[item.key]}
-              </Text>
-            </TouchableOpacity>
-          )}
+    <FlatList
+      data={filteredData}
+      keyExtractor={(item) => item._id}
+      renderItem={renderItem}
+      numColumns={selectedCategory === 'Gallery' ? 2 : 1}
+      key={selectedCategory === 'Gallery' ? 'gallery' : 'list'}
+      style={styles.container}
+      contentContainerStyle={[
+        styles.listContainer,
+        selectedCategory === 'Gallery' && styles.galleryContainer,
+      ]}
+      showsVerticalScrollIndicator={false}
+      ListHeaderComponent={listHeader}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={[colors.primary.saffron]}
+          tintColor={colors.primary.saffron}
         />
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Icon name="magnify" size={20} color={colors.text.secondary} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t('explore.searchPlaceholder', {
-              category: categoryLabels[selectedCategory].toLowerCase(),
-            })}
-            placeholderTextColor={colors.text.secondary}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Icon name="close" size={20} color={colors.text.secondary} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      {/* Content List */}
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary.saffron} />
-        </View>
-      ) : (
-        <FlatList
-          data={filteredData}
-          keyExtractor={(item) => item._id}
-          renderItem={renderItem}
-          numColumns={selectedCategory === 'Gallery' ? 2 : 1}
-          key={selectedCategory === 'Gallery' ? 'gallery' : 'list'}
-          contentContainerStyle={[
-            styles.listContainer,
-            selectedCategory === 'Gallery' && styles.galleryContainer,
-          ]}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={[colors.primary.saffron]}
-              tintColor={colors.primary.saffron}
-            />
-          }
-          ListEmptyComponent={renderEmptyState}
+      }
+      ListEmptyComponent={
+        <EmptyStateCard
+          icon={categories.find((c) => c.key === selectedCategory)?.icon || 'alert'}
+          title={t('explore.noItemsTitle', { category: categoryLabels[selectedCategory] })}
+          subtitle={searchQuery ? t('explore.searchTryDifferent') : t('explore.checkBackLater')}
         />
-      )}
-    </View>
+      }
+    />
   );
 }
 
@@ -475,14 +460,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.parchment,
   },
-  categoryContainer: {
-    backgroundColor: colors.background.warmWhite,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.gold as string,
+  controlsWrap: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+  },
+  categoryPanel: {
+    marginBottom: spacing.md,
+    paddingVertical: spacing.sm,
   },
   categoryList: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingRight: spacing.xs,
   },
   categoryTab: {
     flexDirection: 'row',
@@ -497,31 +484,39 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary.saffron,
   },
   categoryText: {
-    fontSize: 14,
-    fontWeight: '500',
+    ...typography.bodySm,
     color: colors.text.primary,
+    fontWeight: '600',
     marginLeft: spacing.xs,
   },
   categoryTextActive: {
     color: colors.text.white,
   },
-  searchContainer: {
-    padding: spacing.md,
+  searchPanel: {
+    marginBottom: spacing.md,
+  },
+  disclaimerPanel: {
+    marginBottom: spacing.md,
     backgroundColor: colors.background.warmWhite,
+  },
+  disclaimerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  disclaimerText: {
+    flex: 1,
+    ...typography.caption,
+    color: colors.text.secondary,
+    lineHeight: 18,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background.parchment,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border.gold as string,
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
+    ...typography.body,
     color: colors.text.primary,
     marginLeft: spacing.sm,
   },
@@ -529,26 +524,25 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.background.parchment,
   },
   listContainer: {
-    padding: spacing.md,
+    paddingBottom: spacing.xxl,
   },
   galleryContainer: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  listItemWrap: {
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
   },
   listItem: {
     flexDirection: 'row',
-    backgroundColor: colors.background.warmWhite,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border.gold as string,
-    ...shadows.warm,
+    alignItems: 'center',
   },
   itemImageContainer: {
-    width: 80,
-    height: 80,
+    width: 82,
+    height: 82,
     borderRadius: borderRadius.md,
     overflow: 'hidden',
     marginRight: spacing.md,
@@ -568,18 +562,46 @@ const styles = StyleSheet.create({
   },
   playButton: {
     position: 'absolute',
-    bottom: 4,
-    right: 4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    bottom: 6,
+    right: 6,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: colors.primary.saffron,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  itemContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  itemTitle: {
+    ...typography.title,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  itemDescription: {
+    ...typography.bodySm,
+    color: colors.text.secondary,
+  },
+  itemMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+    gap: spacing.sm,
+  },
+  itemMetaText: {
+    ...typography.caption,
+    color: colors.gold.dark,
+    flex: 1,
+  },
+  itemDate: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
   bookImageContainer: {
-    width: 70,
-    height: 100,
+    width: 72,
+    height: 104,
     borderRadius: borderRadius.sm,
     overflow: 'hidden',
     marginRight: spacing.md,
@@ -596,94 +618,51 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  bookPrice: {
+    ...typography.title,
+    color: colors.primary.maroon,
+    marginTop: spacing.sm,
+  },
   podcastIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     backgroundColor: colors.background.cream,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
   },
-  itemContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  itemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  itemDescription: {
-    fontSize: 13,
-    color: colors.text.secondary,
-    lineHeight: 18,
-    marginBottom: spacing.xs,
-  },
-  itemMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  itemMetaText: {
-    fontSize: 12,
-    color: colors.gold.dark,
-    fontWeight: '500',
-  },
-  itemDate: {
-    fontSize: 12,
-    color: colors.text.secondary,
-  },
-  bookPrice: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.primary.maroon,
-    marginTop: spacing.xs,
+  podcastImage: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
   },
   durationBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
   durationText: {
-    fontSize: 12,
+    ...typography.caption,
     color: colors.text.secondary,
     marginLeft: spacing.xs,
   },
   galleryItem: {
     width: GALLERY_ITEM_WIDTH,
-    marginRight: spacing.sm,
     marginBottom: spacing.md,
-    borderRadius: borderRadius.md,
-    overflow: 'hidden',
-    backgroundColor: colors.background.warmWhite,
-    ...shadows.warm,
+    marginRight: spacing.sm,
+  },
+  galleryCard: {
+    padding: spacing.sm,
   },
   galleryImage: {
     width: '100%',
-    height: GALLERY_ITEM_WIDTH,
-    resizeMode: 'cover',
+    height: 160,
+    borderRadius: borderRadius.md,
   },
   galleryTitle: {
-    fontSize: 12,
+    ...typography.bodySm,
     color: colors.text.primary,
-    padding: spacing.sm,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: spacing.xxl,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text.primary,
-    marginTop: spacing.md,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
 });

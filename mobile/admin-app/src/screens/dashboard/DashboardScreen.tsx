@@ -1,192 +1,343 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
-import { Card } from 'react-native-paper';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import { colors, spacing, borderRadius } from '../../theme';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { usePermissions } from '../../context/PermissionContext';
 import { useI18n } from '../../i18n/I18nProvider';
 import { LanguageSwitcher } from '../../components/common/LanguageSwitcher';
+import {
+  AdminHero,
+  AdminMetricCard,
+  AdminSectionHeader,
+  AdminSurface,
+} from '../../components/common';
 import type { ModuleId } from '../../context/PermissionContext';
+import { borderRadius, colors, spacing, typography } from '../../theme';
 
 interface StatCard {
   title: string;
   value: number;
-  icon: string;
+  icon: React.ComponentProps<typeof Icon>['name'];
   color: string;
   route: string;
   module: ModuleId;
+  meta?: string;
 }
+
+interface DashboardSnapshot {
+  prayerRequests: number;
+  appointments: number;
+  smartNotes: number;
+  sevaTasks: number;
+}
+
+interface FocusCard {
+  label: string;
+  count: number;
+  icon: React.ComponentProps<typeof Icon>['name'];
+  route: string;
+  module: ModuleId;
+  color: string;
+  meta: string;
+}
+
+const DEFAULT_SNAPSHOT: DashboardSnapshot = {
+  prayerRequests: 0,
+  appointments: 0,
+  smartNotes: 0,
+  sevaTasks: 0,
+};
 
 export function DashboardScreen({ navigation }: any) {
   const { admin, logout } = useAuth();
   const { role, canAccessModule } = usePermissions();
   const { t } = useI18n();
-  const [stats, setStats] = useState<StatCard[]>([
-    { title: t('admin.statUsers'), value: 0, icon: 'account-group', color: colors.primary.saffron, route: 'UsersStack', module: 'users' },
-    { title: t('admin.statEvents'), value: 0, icon: 'calendar', color: colors.accent.peacock, route: 'Events', module: 'events' },
-    { title: t('admin.statDonations'), value: 0, icon: 'hand-heart', color: colors.primary.maroon, route: 'Donations', module: 'donations' },
-    { title: t('admin.statVolunteers'), value: 0, icon: 'account-heart', color: colors.accent.sage, route: 'VolunteersStack', module: 'volunteers' },
-    { title: t('admin.statBooks'), value: 0, icon: 'book-open-variant', color: colors.gold.main, route: 'BooksStack', module: 'books' },
-    { title: t('admin.statArticles'), value: 0, icon: 'newspaper', color: colors.primary.vermillion, route: 'Content', module: 'articles' },
-  ]);
   const [refreshing, setRefreshing] = useState(false);
+  const [stats, setStats] = useState<StatCard[]>([
+    {
+      title: t('admin.statUsers'),
+      value: 0,
+      icon: 'account-group-outline',
+      color: colors.primary.saffron,
+      route: 'UsersStack',
+      module: 'users',
+    },
+    {
+      title: t('admin.statEvents'),
+      value: 0,
+      icon: 'calendar-month-outline',
+      color: colors.accent.peacock,
+      route: 'Events',
+      module: 'events',
+    },
+    {
+      title: t('admin.statDonations'),
+      value: 0,
+      icon: 'hand-heart-outline',
+      color: colors.primary.maroon,
+      route: 'Donations',
+      module: 'donations',
+    },
+    {
+      title: t('admin.statVolunteers'),
+      value: 0,
+      icon: 'account-heart-outline',
+      color: colors.accent.sage,
+      route: 'VolunteersStack',
+      module: 'volunteers',
+    },
+  ]);
+  const [snapshot, setSnapshot] = useState<DashboardSnapshot>(DEFAULT_SNAPSHOT);
 
-  const fetchStats = useCallback(async () => {
+  const fetchOverview = useCallback(async () => {
     try {
-      const [usersRes, eventsRes, donationsRes, volunteersRes, booksRes, articlesRes] = await Promise.allSettled([
-        api.get('/users'),
-        api.get('/events'),
-        api.get('/donate'),
-        api.get('/volunteer'),
-        api.get('/allbooks'),
-        api.get('/articles'),
-      ]);
+      const [usersRes, eventsRes, donationsRes, volunteersRes, messagesRes, appointmentsRes, notesRes, sevaRes] =
+        await Promise.allSettled([
+          api.get('/users'),
+          api.get('/events'),
+          api.get('/donate'),
+          api.get('/volunteer'),
+          api.get('/connect'),
+          api.get('/schedule-registration'),
+          api.get('/smart-notes'),
+          api.get('/seva-tasks'),
+        ]);
 
-      const responses = [usersRes, eventsRes, donationsRes, volunteersRes, booksRes, articlesRes];
+      const topLevelResponses = [usersRes, eventsRes, donationsRes, volunteersRes];
+      setStats((current) =>
+        current.map((stat, index) => {
+          const response = topLevelResponses[index];
+          if (response.status === 'fulfilled') {
+            const data = response.value.data;
+            return {
+              ...stat,
+              value: Array.isArray(data) ? data.length : 0,
+            };
+          }
+          return stat;
+        }),
+      );
 
-      setStats(prev => prev.map((stat, i) => {
-        const res = responses[i];
-        if (res.status === 'fulfilled') {
-          const data = res.value.data;
-          const count = Array.isArray(data) ? data.length : 0;
-          return { ...stat, value: count };
-        }
-        return stat;
-      }));
+      const countFulfilled = (result: PromiseSettledResult<any>) =>
+        result.status === 'fulfilled' && Array.isArray(result.value.data) ? result.value.data : [];
+
+      const messageItems = countFulfilled(messagesRes);
+      const appointmentItems = countFulfilled(appointmentsRes);
+      const noteItems = countFulfilled(notesRes);
+      const sevaItems = countFulfilled(sevaRes);
+
+      setSnapshot({
+        prayerRequests: messageItems.filter((item: any) => (item.status || 'new') === 'new').length,
+        appointments: appointmentItems.filter((item: any) => item.status === 'Pending').length,
+        smartNotes: noteItems.filter((item: any) => item.assignmentStatus !== 'completed').length,
+        sevaTasks: sevaItems.filter((item: any) => ['todo', 'in_progress', 'assigned'].includes(item.status)).length,
+      });
     } catch {
-      // Stats fetch failed silently
+      // Keep dashboard resilient if a slice fails.
     }
   }, []);
 
-  useEffect(() => { fetchStats(); }, [fetchStats]);
   useEffect(() => {
-    setStats(prev => [
-      { ...prev[0], title: t('admin.statUsers') },
-      { ...prev[1], title: t('admin.statEvents') },
-      { ...prev[2], title: t('admin.statDonations') },
-      { ...prev[3], title: t('admin.statVolunteers') },
-      { ...prev[4], title: t('admin.statBooks') },
-      { ...prev[5], title: t('admin.statArticles') },
+    fetchOverview();
+  }, [fetchOverview]);
+
+  useEffect(() => {
+    setStats((current) => [
+      { ...current[0], title: t('admin.statUsers') },
+      { ...current[1], title: t('admin.statEvents') },
+      { ...current[2], title: t('admin.statDonations') },
+      { ...current[3], title: t('admin.statVolunteers') },
     ]);
   }, [t]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchStats();
+    await fetchOverview();
     setRefreshing(false);
   };
+
+  const focusCards = useMemo<FocusCard[]>(
+    () => [
+      {
+        label: 'Prayer inbox',
+        count: snapshot.prayerRequests,
+        icon: 'hands-pray',
+        route: 'MessagesStack',
+        module: 'messages',
+        color: colors.primary.saffron,
+        meta: 'Fresh requests waiting for a reply',
+      },
+      {
+        label: 'Appointments',
+        count: snapshot.appointments,
+        icon: 'clipboard-text-clock-outline',
+        route: 'AppointmentInboxStack',
+        module: 'schedule',
+        color: colors.accent.peacock,
+        meta: 'Pending approvals and follow-up',
+      },
+      {
+        label: 'Smart notes',
+        count: snapshot.smartNotes,
+        icon: 'note-text-outline',
+        route: 'SmartNotes',
+        module: 'smartNotes',
+        color: colors.primary.maroon,
+        meta: 'Assigned work still open',
+      },
+      {
+        label: 'Seva board',
+        count: snapshot.sevaTasks,
+        icon: 'clipboard-check-outline',
+        route: 'SevaBoardStack',
+        module: 'sevaBoard',
+        color: colors.gold.dark,
+        meta: 'Tasks due or in progress',
+      },
+    ],
+    [snapshot],
+  );
+
+  const quickActions = [
+    { label: 'Create event', subtitle: 'Add a public event quickly', route: 'Events', icon: 'calendar-plus' },
+    { label: 'Send broadcast', subtitle: 'Push an urgent update', route: 'BroadcasterStack', icon: 'bullhorn-outline' },
+    { label: 'Review schedule', subtitle: 'Edit travel and appointment windows', route: 'ScheduleStack', icon: 'calendar-clock' },
+    { label: 'Open donations', subtitle: 'Check campaigns and receipts', route: 'Donations', icon: 'cash-multiple' },
+  ];
 
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary.saffron} />}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.primary.saffron}
+          colors={[colors.primary.saffron]}
+        />
+      }
+      showsVerticalScrollIndicator={false}
     >
-      {/* Welcome Header */}
-      <View style={styles.welcomeCard}>
-        <Text style={styles.welcomeText}>
-          {t('admin.welcome', { name: admin?.username || t('common.admin') })}
-        </Text>
-        <Text style={styles.roleText}>
-          {t('admin.roleLabel', { role: role || admin?.role || 'admin' })}
-        </Text>
-        <TouchableOpacity onPress={logout} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>{t('common.logout')}</Text>
-        </TouchableOpacity>
-      </View>
+      <AdminHero
+        eyebrow="Mission control"
+        title={t('admin.welcome', { name: admin?.username || t('common.admin') })}
+        subtitle="Daily approvals, content, tasks, and communications all move from here."
+        badge={(role || admin?.role || 'admin').toUpperCase()}
+        actions={[
+          { label: 'Refresh', icon: 'refresh', onPress: onRefresh },
+          { label: 'Logout', icon: 'logout', onPress: logout },
+        ]}
+      />
 
-      <View style={styles.languageWrapper}>
+      <View style={styles.languageWrap}>
         <LanguageSwitcher />
       </View>
 
-      {/* Stats Grid — RBAC filtered */}
-      <View style={styles.statsGrid}>
-        {stats.filter(stat => canAccessModule(stat.module)).map((stat) => (
-          <TouchableOpacity
-            key={stat.title}
-            style={styles.statCardContainer}
-            onPress={() => navigation.navigate(stat.route)}
-          >
-            <Card style={[styles.statCard, { borderTopColor: stat.color }]}>
-              <Card.Content style={styles.statContent}>
-                <Text style={[styles.statValue, { color: stat.color }]}>{stat.value}</Text>
-                <Text style={styles.statTitle}>{stat.title}</Text>
-              </Card.Content>
-            </Card>
-          </TouchableOpacity>
-        ))}
+      <AdminSectionHeader
+        title="Priority work"
+        subtitle="These are the sections most likely to need attention today."
+      />
+      <View style={styles.metricGrid}>
+        {focusCards
+          .filter((item) => canAccessModule(item.module))
+          .map((item) => (
+            <AdminMetricCard
+              key={item.label}
+              label={item.label}
+              value={item.count}
+              icon={item.icon}
+              tone={item.color}
+              meta={item.meta}
+              onPress={() => navigation.navigate(item.route)}
+            />
+          ))}
       </View>
 
-      {/* Quick Actions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('admin.quickActions')}</Text>
-        <View style={styles.actionsRow}>
-          {[
-            { label: t('admin.newEvent'), route: 'Events' },
-            { label: t('admin.newArticle'), route: 'Content' },
-            { label: t('admin.messages'), route: 'MessagesStack' },
-            { label: t('admin.bookings'), route: 'RoomsStack' },
-          ].map(action => (
-            <TouchableOpacity
-              key={action.label}
-              style={styles.actionButton}
-              onPress={() => navigation.navigate(action.route)}
-            >
-              <Text style={styles.actionLabel}>{action.label}</Text>
-            </TouchableOpacity>
+      <AdminSectionHeader
+        title="Platform snapshot"
+        subtitle="Top-level counts across the modules your team uses most."
+      />
+      <View style={styles.metricGrid}>
+        {stats
+          .filter((item) => canAccessModule(item.module))
+          .map((stat) => (
+            <AdminMetricCard
+              key={stat.title}
+              label={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              tone={stat.color}
+              onPress={() => navigation.navigate(stat.route)}
+            />
           ))}
-        </View>
       </View>
+
+      <AdminSectionHeader
+        title="Quick launch"
+        subtitle="Jump into the most common daily actions without digging through menus."
+      />
+      {quickActions.map((action) => (
+        <TouchableOpacity key={action.label} onPress={() => navigation.navigate(action.route)} activeOpacity={0.85}>
+          <AdminSurface style={styles.quickActionCard}>
+            <View style={[styles.quickIconWrap, { backgroundColor: `${colors.primary.saffron}14` }]}>
+              <Icon name={action.icon as any} size={22} color={colors.primary.saffron} />
+            </View>
+            <View style={styles.quickCopy}>
+              <Text style={styles.quickTitle}>{action.label}</Text>
+              <Text style={styles.quickSubtitle}>{action.subtitle}</Text>
+            </View>
+            <Icon name="chevron-right" size={22} color={colors.text.secondary} />
+          </AdminSurface>
+        </TouchableOpacity>
+      ))}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background.parchment },
-  welcomeCard: {
-    backgroundColor: colors.primary.maroon,
-    padding: spacing.lg,
-    margin: spacing.md,
-    borderRadius: borderRadius.lg,
-    flexDirection: 'column',
-  },
-  welcomeText: { fontSize: 24, fontWeight: '700', color: colors.gold.light },
-  roleText: { fontSize: 14, color: colors.gold.light, opacity: 0.8, marginTop: spacing.xs },
-  logoutButton: {
-    marginTop: spacing.md,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-    alignSelf: 'flex-start',
-  },
-  logoutText: { color: colors.gold.light, fontWeight: '600' },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: spacing.sm },
-  languageWrapper: { marginHorizontal: spacing.md, marginBottom: spacing.md },
-  statCardContainer: { width: '50%', padding: spacing.xs },
-  statCard: {
-    backgroundColor: colors.background.warmWhite,
-    borderRadius: borderRadius.md,
-    borderTopWidth: 3,
-    elevation: 2,
-  },
-  statContent: { alignItems: 'center', paddingVertical: spacing.md },
-  statValue: { fontSize: 32, fontWeight: '700' },
-  statTitle: { fontSize: 14, color: colors.text.secondary, marginTop: spacing.xs },
-  section: { padding: spacing.md },
-  sectionTitle: { fontSize: 20, fontWeight: '700', color: colors.primary.maroon, marginBottom: spacing.md },
-  actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  actionButton: {
-    backgroundColor: colors.background.warmWhite,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border.gold as string,
+  container: {
     flex: 1,
-    minWidth: '45%',
-    alignItems: 'center',
+    backgroundColor: colors.background.parchment,
   },
-  actionLabel: { color: colors.primary.maroon, fontWeight: '600', fontSize: 13 },
+  content: {
+    padding: spacing.md,
+    paddingBottom: spacing.xxl,
+  },
+  languageWrap: {
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  metricGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
+  },
+  quickActionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  quickIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  quickCopy: {
+    flex: 1,
+  },
+  quickTitle: {
+    ...typography.titleSm,
+    color: colors.text.primary,
+  },
+  quickSubtitle: {
+    ...typography.bodySm,
+    color: colors.text.secondary,
+    marginTop: 2,
+  },
 });

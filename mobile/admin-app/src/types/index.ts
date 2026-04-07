@@ -208,6 +208,7 @@ export interface Book {
   description?: string;
   price: number;
   coverImage?: string;
+  purchaseUrl?: string;
   pages?: number;
   language?: string;
   genre?: string;

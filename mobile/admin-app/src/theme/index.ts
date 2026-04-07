@@ -61,3 +61,63 @@ export const borderRadius = {
   xl: 24,
   full: 9999,
 };
+
+export const typography = {
+  hero: {
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '700' as const,
+  },
+  titleLg: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '700' as const,
+  },
+  title: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '700' as const,
+  },
+  titleSm: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '600' as const,
+  },
+  body: {
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: '400' as const,
+  },
+  bodySm: {
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '400' as const,
+  },
+  label: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600' as const,
+  },
+  micro: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '600' as const,
+  },
+};
+
+export const shadows = {
+  soft: {
+    shadowColor: '#2F1505',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 3,
+  },
+  raised: {
+    shadowColor: '#2F1505',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.12,
+    shadowRadius: 28,
+    elevation: 6,
+  },
+};

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,54 +6,101 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
-import { colors, spacing, borderRadius, shadows } from '../../theme';
+import { useAppShell } from '../../context/AppShellContext';
+import { borderRadius, colors, spacing, typography } from '../../theme';
 import LanguageDrawer from '../../components/LanguageDrawer';
+import { AppButton, ScreenHeader, SectionHeader, SurfaceCard } from '../../components/common';
+import api from '../../services/api';
 
 interface MenuItem {
   icon: React.ComponentProps<typeof Icon>['name'];
   title: string;
   subtitle?: string;
   onPress: () => void;
-  showChevron?: boolean;
+}
+
+type DonationSummary = {
+  totals: {
+    donationsCount: number;
+    totalAmount: number;
+    subscriptionCount: number;
+  };
+};
+
+function formatCurrency(amount: number) {
+  return `₹${amount.toLocaleString('en-IN')}`;
 }
 
 export function ProfileScreen() {
   const { user, logout } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<any>();
+  const { openDrawer } = useAppShell();
   const [languageDrawerVisible, setLanguageDrawerVisible] = useState(false);
+  const [summary, setSummary] = useState<DonationSummary | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+
+  const fetchSummary = useCallback(async () => {
+    try {
+      const response = await api.get(`/my-donations?lang=${encodeURIComponent(i18n.language || 'en')}`);
+      setSummary(response.data);
+    } catch (error) {
+      console.error('Failed to load profile summary:', error);
+      setSummary(null);
+    } finally {
+      setLoadingSummary(false);
+    }
+  }, [i18n.language]);
+
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
 
   const handleLogout = () => {
-    Alert.alert(
-      t('profile.logout'),
-      t('profile.logoutConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('profile.logout'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-            } catch (error) {
-              console.error('Logout error:', error);
-            }
-          },
+    Alert.alert(t('profile.logout'), t('profile.logoutConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('profile.logout'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await logout();
+          } catch (error) {
+            console.error('Logout error:', error);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleMenuPress = (item: string) => {
-    // Placeholder for navigation to detail screens
     Alert.alert(t('common.comingSoon'), t('profile.featureComingSoon', { item }));
   };
+
+  const currentLanguageLabel = useMemo(() => {
+    const code = (i18n.language || 'en').split('-')[0];
+    const map: Record<string, string> = {
+      en: 'English',
+      hi: 'हिन्दी',
+      bn: 'বাংলা',
+      ta: 'தமிழ்',
+      te: 'తెలుగు',
+      mr: 'मराठी',
+      gu: 'ગુજરાતી',
+      kn: 'ಕನ್ನಡ',
+      ml: 'മലയാളം',
+      pa: 'ਪੰਜਾਬੀ',
+      or: 'ଓଡ଼ିଆ',
+      as: 'অসমীয়া',
+    };
+    return map[code] || 'English';
+  }, [i18n.language]);
 
   const menuItems: MenuItem[] = [
     {
@@ -61,126 +108,122 @@ export function ProfileScreen() {
       title: t('profile.menu.registrations.title'),
       subtitle: t('profile.menu.registrations.subtitle'),
       onPress: () => handleMenuPress(t('profile.menu.registrations.title')),
-      showChevron: true,
     },
     {
       icon: 'hand-heart',
       title: t('profile.menu.donations.title'),
       subtitle: t('profile.menu.donations.subtitle'),
       onPress: () => navigation.navigate('DonationHistory'),
-      showChevron: true,
-    },
-    {
-      icon: 'home-city',
-      title: t('profile.menu.bookings.title'),
-      subtitle: t('profile.menu.bookings.subtitle'),
-      onPress: () => handleMenuPress(t('profile.menu.bookings.title')),
-      showChevron: true,
     },
     {
       icon: 'translate',
       title: t('profile.language'),
+      subtitle: currentLanguageLabel,
       onPress: () => setLanguageDrawerVisible(true),
-      showChevron: true,
     },
     {
-      icon: 'cog',
+      icon: 'cog-outline',
       title: t('profile.settings'),
       subtitle: t('profile.menu.settings.subtitle'),
       onPress: () => handleMenuPress(t('profile.settings')),
-      showChevron: true,
     },
   ];
 
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Profile Header */}
-      <LinearGradient
-        colors={[colors.primary.saffron, colors.primary.maroon]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
-      >
-        <View style={styles.avatarContainer}>
-          <Text style={styles.avatarSymbol}>ॐ</Text>
-        </View>
-        <Text style={styles.userName}>{user?.name || t('profile.devoteeFallback')}</Text>
-        <Text style={styles.userEmail}>{user?.email || ''}</Text>
-        {user?.phone && (
-          <View style={styles.phoneBadge}>
-            <Icon name="phone" size={14} color={colors.gold.light} />
-            <Text style={styles.phoneText}>{user.phone}</Text>
-          </View>
-        )}
-      </LinearGradient>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScreenHeader
+        eyebrow={t('profile.title')}
+        title={user?.name || t('profile.devoteeFallback')}
+        subtitle={user?.email || t('profile.appTagline')}
+        icon="account-circle-outline"
+        rightActionIcon="menu"
+        onRightActionPress={openDrawer}
+        rightActionLabel={t('appDrawer.openMenu')}
+      />
 
-      {/* Quick Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Icon name="calendar-check" size={24} color={colors.primary.saffron} />
-          <Text style={styles.statValue}>-</Text>
-          <Text style={styles.statLabel}>{t('profile.stats.registrations')}</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Icon name="hand-heart" size={24} color={colors.primary.saffron} />
-          <Text style={styles.statValue}>-</Text>
-          <Text style={styles.statLabel}>{t('profile.stats.donations')}</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Icon name="home-city" size={24} color={colors.primary.saffron} />
-          <Text style={styles.statValue}>-</Text>
-          <Text style={styles.statLabel}>{t('profile.stats.bookings')}</Text>
+      <View style={styles.identityStrip}>
+        {user?.phone ? (
+          <View style={styles.identityPill}>
+            <Icon name="phone-outline" size={16} color={colors.primary.maroon} />
+            <Text style={styles.identityPillText}>{user.phone}</Text>
+          </View>
+        ) : null}
+        <View style={styles.identityPill}>
+          <Icon name="translate" size={16} color={colors.primary.maroon} />
+          <Text style={styles.identityPillText}>{currentLanguageLabel}</Text>
         </View>
       </View>
 
-      {/* Menu Items */}
-      <View style={styles.menuSection}>
-        <Text style={styles.menuSectionTitle}>{t('profile.title')}</Text>
-        {menuItems.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.menuItem}
-            onPress={item.onPress}
-          >
-            <View style={styles.menuIconContainer}>
-              <Icon name={item.icon} size={22} color={colors.primary.saffron} />
+      <View style={styles.section}>
+        <SectionHeader
+          title={t('profile.title')}
+          subtitle={t('profile.appTagline')}
+          icon="star-four-points"
+        />
+        <SurfaceCard style={styles.statsCard}>
+          {loadingSummary ? (
+            <View style={styles.summaryLoading}>
+              <ActivityIndicator color={colors.primary.saffron} />
             </View>
-            <View style={styles.menuContent}>
-              <Text style={styles.menuTitle}>{item.title}</Text>
-              {item.subtitle && (
-                <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
-              )}
-            </View>
-            {item.showChevron && (
-              <Icon name="chevron-right" size={24} color={colors.text.secondary} />
-            )}
+          ) : (
+            <>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>
+                  {summary ? formatCurrency(summary.totals.totalAmount) : '—'}
+                </Text>
+                <Text style={styles.statLabel}>{t('donate.history.totalGiven')}</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{summary?.totals.donationsCount ?? '—'}</Text>
+                <Text style={styles.statLabel}>{t('donate.history.totalDonations')}</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{summary?.totals.subscriptionCount ?? '—'}</Text>
+                <Text style={styles.statLabel}>{t('donate.history.monthlyCount')}</Text>
+              </View>
+            </>
+          )}
+        </SurfaceCard>
+      </View>
+
+      <View style={styles.section}>
+        <SectionHeader
+          title={t('profile.title')}
+          subtitle={t('profile.menu.settings.subtitle')}
+          icon="view-grid-outline"
+        />
+        {menuItems.map((item) => (
+          <TouchableOpacity key={item.title} onPress={item.onPress} style={styles.menuItemWrap}>
+            <SurfaceCard compact style={styles.menuItem}>
+              <View style={styles.menuIconContainer}>
+                <Icon name={item.icon} size={20} color={colors.primary.saffron} />
+              </View>
+              <View style={styles.menuContent}>
+                <Text style={styles.menuTitle}>{item.title}</Text>
+                {item.subtitle ? <Text style={styles.menuSubtitle}>{item.subtitle}</Text> : null}
+              </View>
+              <Icon name="chevron-right" size={22} color={colors.text.secondary} />
+            </SurfaceCard>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Icon name="logout" size={20} color={colors.primary.vermillion} />
-        <Text style={styles.logoutText}>{t('profile.logout')}</Text>
-      </TouchableOpacity>
-
-      {/* App Info */}
-      <View style={styles.appInfo}>
-        <Text style={styles.appVersion}>AGM India App v1.0.0</Text>
-        <Text style={styles.appTagline}>{t('profile.appTagline')}</Text>
+      <View style={styles.section}>
+        <AppButton
+          label={t('profile.logout')}
+          onPress={handleLogout}
+          variant="secondary"
+          icon="logout"
+          style={styles.logoutButton}
+        />
+        <Text style={styles.appVersion}>AvdheshanandG Mission App v1.0.0</Text>
       </View>
 
       <View style={{ height: spacing.xxl }} />
 
-      <LanguageDrawer
-        visible={languageDrawerVisible}
-        onClose={() => setLanguageDrawerVisible(false)}
-      />
+      <LanguageDrawer visible={languageDrawerVisible} onClose={() => setLanguageDrawerVisible(false)} />
     </ScrollView>
   );
 }
@@ -190,109 +233,74 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.parchment,
   },
-  headerGradient: {
-    paddingTop: spacing.xxl,
-    paddingBottom: spacing.xl,
-    alignItems: 'center',
-    borderBottomLeftRadius: borderRadius.xl,
-    borderBottomRightRadius: borderRadius.xl,
+  identityStrip: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
   },
-  avatarContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-    borderWidth: 2,
-    borderColor: colors.gold.light,
-  },
-  avatarSymbol: {
-    fontSize: 36,
-    color: colors.gold.light,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.text.white,
-    marginBottom: spacing.xs,
-  },
-  userEmail: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
-  },
-  phoneBadge: {
+  identityPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-  },
-  phoneText: {
-    fontSize: 13,
-    color: colors.gold.light,
-    marginLeft: spacing.xs,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    marginHorizontal: spacing.lg,
-    marginTop: -spacing.lg,
     backgroundColor: colors.background.warmWhite,
-    borderRadius: borderRadius.lg,
-    paddingVertical: spacing.md,
+    borderRadius: borderRadius.full,
     borderWidth: 1,
     borderColor: colors.border.gold as string,
-    ...shadows.warm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  identityPillText: {
+    ...typography.bodySm,
+    color: colors.primary.maroon,
+    marginLeft: spacing.xs,
+  },
+  section: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+  },
+  statsCard: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    paddingVertical: spacing.lg,
+  },
+  summaryLoading: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
   },
   statDivider: {
     width: 1,
     backgroundColor: colors.border.gold as string,
   },
   statValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text.primary,
-    marginTop: spacing.sm,
+    ...typography.h3,
+    color: colors.primary.maroon,
+    textAlign: 'center',
   },
   statLabel: {
-    fontSize: 11,
+    ...typography.bodySm,
     color: colors.text.secondary,
+    textAlign: 'center',
     marginTop: spacing.xs,
   },
-  menuSection: {
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.lg,
-  },
-  menuSectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.text.secondary,
-    marginBottom: spacing.md,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  menuItemWrap: {
+    marginBottom: spacing.sm,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background.warmWhite,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border.gold as string,
   },
   menuIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: colors.background.cream,
     justifyContent: 'center',
     alignItems: 'center',
@@ -302,46 +310,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuTitle: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...typography.title,
     color: colors.text.primary,
   },
   menuSubtitle: {
-    fontSize: 12,
+    ...typography.bodySm,
     color: colors.text.secondary,
     marginTop: 2,
   },
   logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.lg,
-    backgroundColor: 'rgba(227, 66, 52, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(227, 66, 52, 0.3)',
-  },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary.vermillion,
-    marginLeft: spacing.sm,
-  },
-  appInfo: {
-    alignItems: 'center',
-    marginTop: spacing.xl,
-    paddingVertical: spacing.md,
+    marginBottom: spacing.md,
   },
   appVersion: {
-    fontSize: 12,
+    ...typography.caption,
     color: colors.text.secondary,
-  },
-  appTagline: {
-    fontSize: 14,
-    color: colors.gold.main,
-    marginTop: spacing.xs,
-    fontWeight: '500',
+    textAlign: 'center',
   },
 });

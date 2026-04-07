@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import * as Linking from 'expo-linking';
 import { useAuth } from '../context/AuthContext';
 import { useOnboarding } from '../context/OnboardingContext';
+import { AppShellProvider, useAppShell } from '../context/AppShellContext';
 import { colors } from '../theme';
+import PublicAppDrawer from '../components/PublicAppDrawer';
 
 // Auth screens
 import {
@@ -45,6 +47,11 @@ import LiveStreamScreen from '../screens/live/LiveStreamScreen';
 import PanchangScreen from '../screens/panchang/PanchangScreen';
 import PanchangCalendarScreen from '../screens/panchang/PanchangCalendarScreen';
 import NotificationPreferencesScreen from '../screens/panchang/NotificationPreferencesScreen';
+import { AboutSwamiScreen } from '../screens/about/AboutSwamiScreen';
+import { MissionScreen } from '../screens/about/MissionScreen';
+import { PrivacyPolicyScreen } from '../screens/legal/PrivacyPolicyScreen';
+import { TermsScreen } from '../screens/legal/TermsScreen';
+import { MantraDikshaScreen } from '../screens/spiritual/MantraDikshaScreen';
 
 export type RootStackParamList = {
   Main: undefined;
@@ -60,12 +67,25 @@ export type RootStackParamList = {
   PodcastDetail: { podcastId: string };
   GalleryFull: undefined;
   VolunteerForm: undefined;
-  ContactForm: undefined;
+  ContactForm:
+    | {
+        prefillSubject?: string;
+        titleOverride?: string;
+        introTitleOverride?: string;
+        introTextOverride?: string;
+        messagePlaceholder?: string;
+      }
+    | undefined;
   LiveStream: undefined;
   Panchang: undefined;
   PanchangCalendar: { lat?: number; lng?: number; cityName?: string; timezone?: string };
   NotificationPreferences: undefined;
   DonationHistory: undefined;
+  AboutSwami: undefined;
+  Mission: undefined;
+  PrivacyPolicy: undefined;
+  TermsOfService: undefined;
+  MantraDiksha: undefined;
   OnboardingWelcome: undefined;
   OnboardingNotifications: undefined;
   OnboardingLocation: undefined;
@@ -81,6 +101,32 @@ export type MainTabParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
+
+function DrawerButton() {
+  const { t } = useTranslation();
+  const { openDrawer } = useAppShell();
+
+  return (
+    <TouchableOpacity
+      onPress={openDrawer}
+      activeOpacity={0.85}
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#FFF4DE',
+        borderWidth: 1,
+        borderColor: colors.border.gold as string,
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={t('appDrawer.openMenu')}
+    >
+      <Icon name="menu" size={20} color={colors.primary.maroon} />
+    </TouchableOpacity>
+  );
+}
 
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [Linking.createURL('/'), 'https://www.avdheshanandg.org'],
@@ -151,6 +197,7 @@ function MainTabs() {
         headerTitleStyle: {
           fontWeight: '600',
         },
+        headerRight: () => <DrawerButton />,
         tabBarIcon: ({ color, size }) => {
           let iconName: React.ComponentProps<typeof Icon>['name'];
           switch (route.name) {
@@ -209,6 +256,7 @@ export function AppNavigator() {
   const { isLoading, isAuthenticated } = useAuth();
   const { isLoading: onboardingLoading, hasCompletedOnboarding } = useOnboarding();
   const { t } = useTranslation();
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
   if (isLoading || onboardingLoading) {
     return (
@@ -228,184 +276,212 @@ export function AppNavigator() {
   const showOnboarding = !hasCompletedOnboarding && !isAuthenticated;
 
   return (
-    <NavigationContainer linking={linking}>
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        {showOnboarding ? (
-          <>
-            <Stack.Screen name="OnboardingWelcome" component={OnboardingWelcomeScreen} />
-            <Stack.Screen
-              name="OnboardingNotifications"
-              component={OnboardingNotificationsScreen}
-              options={{ animation: 'slide_from_right' }}
-            />
-            <Stack.Screen
-              name="OnboardingLocation"
-              component={OnboardingLocationScreen}
-              options={{ animation: 'slide_from_right' }}
-            />
-          </>
-        ) : (
-          <Stack.Screen name="Main" component={MainTabs} />
-        )}
+    <AppShellProvider value={{ openDrawer: () => setDrawerVisible(true), closeDrawer: () => setDrawerVisible(false) }}>
+      <NavigationContainer linking={linking}>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          {showOnboarding ? (
+            <>
+              <Stack.Screen name="OnboardingWelcome" component={OnboardingWelcomeScreen} />
+              <Stack.Screen
+                name="OnboardingNotifications"
+                component={OnboardingNotificationsScreen}
+                options={{ animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name="OnboardingLocation"
+                component={OnboardingLocationScreen}
+                options={{ animation: 'slide_from_right' }}
+              />
+            </>
+          ) : (
+            <Stack.Screen name="Main" component={MainTabs} />
+          )}
 
-        {/* Auth screens as modals */}
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-          }}
-        />
-        <Stack.Screen
-          name="Register"
-          component={RegisterScreen}
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-          }}
-        />
-        <Stack.Screen
-          name="OTPVerification"
-          component={OTPScreen}
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-          }}
-        />
-        <Stack.Screen
-          name="ForgotPassword"
-          component={ForgotPasswordScreen}
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-          }}
-        />
-        <Stack.Screen
-          name="ResetPassword"
-          component={ResetPasswordScreen}
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-          }}
-        />
+          {/* Auth screens as modals */}
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+            }}
+          />
+          <Stack.Screen
+            name="Register"
+            component={RegisterScreen}
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+            }}
+          />
+          <Stack.Screen
+            name="OTPVerification"
+            component={OTPScreen}
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+            }}
+          />
+          <Stack.Screen
+            name="ForgotPassword"
+            component={ForgotPasswordScreen}
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+            }}
+          />
+          <Stack.Screen
+            name="ResetPassword"
+            component={ResetPasswordScreen}
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+            }}
+          />
 
-        {/* Detail Screens */}
-        <Stack.Screen
-          name="EventDetail"
-          component={EventDetailScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="ArticleDetail"
-          component={ArticleDetailScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="VideoSeries"
-          component={VideoSeriesScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="BookDetail"
-          component={BookDetailScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="PodcastDetail"
-          component={PodcastDetailScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="GalleryFull"
-          component={GalleryScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="VolunteerForm"
-          component={VolunteerScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="ContactForm"
-          component={ContactScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="LiveStream"
-          component={LiveStreamScreen}
-          options={{
-            title: 'Live Satsang',
-            headerShown: true,
-            animation: 'slide_from_right',
-          }}
-        />
+          {/* Detail Screens */}
+          <Stack.Screen
+            name="EventDetail"
+            component={EventDetailScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="ArticleDetail"
+            component={ArticleDetailScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="VideoSeries"
+            component={VideoSeriesScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="BookDetail"
+            component={BookDetailScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="PodcastDetail"
+            component={PodcastDetailScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="GalleryFull"
+            component={GalleryScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="VolunteerForm"
+            component={VolunteerScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="ContactForm"
+            component={ContactScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="AboutSwami"
+            component={AboutSwamiScreen}
+            options={{ headerShown: false, animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="Mission"
+            component={MissionScreen}
+            options={{ headerShown: false, animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="PrivacyPolicy"
+            component={PrivacyPolicyScreen}
+            options={{ headerShown: false, animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="TermsOfService"
+            component={TermsScreen}
+            options={{ headerShown: false, animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="MantraDiksha"
+            component={MantraDikshaScreen}
+            options={{ headerShown: false, animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="LiveStream"
+            component={LiveStreamScreen}
+            options={{
+              title: 'Live Satsang',
+              headerShown: true,
+              animation: 'slide_from_right',
+            }}
+          />
 
-        {/* Panchang Screens */}
-        <Stack.Screen
-          name="Panchang"
-          component={PanchangScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="PanchangCalendar"
-          component={PanchangCalendarScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="NotificationPreferences"
-          component={NotificationPreferencesScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        />
-        <Stack.Screen
-          name="DonationHistory"
-          component={DonationHistoryScreen}
-          options={{
-            headerShown: true,
-            title: t('profile.menu.donations.title'),
-            animation: 'slide_from_right',
-            headerStyle: { backgroundColor: colors.background.warmWhite },
-            headerTintColor: colors.primary.maroon,
-          }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+          {/* Panchang Screens */}
+          <Stack.Screen
+            name="Panchang"
+            component={PanchangScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="PanchangCalendar"
+            component={PanchangCalendarScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="NotificationPreferences"
+            component={NotificationPreferencesScreen}
+            options={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          />
+          <Stack.Screen
+            name="DonationHistory"
+            component={DonationHistoryScreen}
+            options={{
+              headerShown: true,
+              title: t('profile.menu.donations.title'),
+              animation: 'slide_from_right',
+              headerStyle: { backgroundColor: colors.background.warmWhite },
+              headerTintColor: colors.primary.maroon,
+            }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+      <PublicAppDrawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />
+    </AppShellProvider>
   );
 }

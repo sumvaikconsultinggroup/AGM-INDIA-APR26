@@ -12,7 +12,7 @@ import {
   Platform,
   Linking,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -22,12 +22,14 @@ import { colors, spacing, borderRadius, shadows } from '../../theme';
 interface FormData {
   name: string;
   email: string;
+  subject: string;
   message: string;
 }
 
 interface FormErrors {
   name?: string;
   email?: string;
+  subject?: string;
   message?: string;
 }
 
@@ -40,10 +42,13 @@ const contactInfo = {
 
 export function ContactScreen() {
   const navigation = useNavigation();
+  const route = useRoute<any>();
   const { t } = useTranslation();
+  const routeParams = route.params || {};
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
+    subject: routeParams.prefillSubject || 'General Message',
     message: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -69,6 +74,10 @@ export function ContactScreen() {
       newErrors.email = t('contact.errors.emailValid');
     }
 
+    if (!routeParams.prefillSubject && !formData.subject.trim()) {
+      newErrors.subject = t('contact.errors.subjectRequired');
+    }
+
     if (!formData.message.trim()) {
       newErrors.message = t('contact.errors.messageRequired');
     } else if (formData.message.trim().length < 10) {
@@ -84,7 +93,12 @@ export function ContactScreen() {
 
     setSubmitting(true);
     try {
-      await api.post('/connect', formData);
+      await api.post('/connect', {
+        fullName: formData.name,
+        email: formData.email,
+        subject: formData.subject || routeParams.prefillSubject || 'General Message',
+        message: formData.message,
+      });
 
       Alert.alert(
         t('contact.successTitle'),
@@ -93,7 +107,12 @@ export function ContactScreen() {
           {
             text: t('common.ok'),
             onPress: () => {
-              setFormData({ name: '', email: '', message: '' });
+              setFormData({
+                name: '',
+                email: '',
+                subject: routeParams.prefillSubject || 'General Message',
+                message: '',
+              });
             },
           },
         ]
@@ -185,7 +204,7 @@ export function ContactScreen() {
         >
           <Icon name="arrow-left" size={24} color={colors.primary.maroon} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('contact.title')}</Text>
+        <Text style={styles.headerTitle}>{routeParams.titleOverride || t('contact.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -204,8 +223,8 @@ export function ContactScreen() {
             <View style={styles.iconCircle}>
               <Icon name="email-heart-outline" size={40} color={colors.primary.saffron} />
             </View>
-            <Text style={styles.introTitle}>{t('contact.introTitle')}</Text>
-            <Text style={styles.introText}>{t('contact.introText')}</Text>
+            <Text style={styles.introTitle}>{routeParams.introTitleOverride || t('contact.introTitle')}</Text>
+            <Text style={styles.introText}>{routeParams.introTextOverride || t('contact.introText')}</Text>
           </View>
 
           {/* Contact Info Cards */}
@@ -262,10 +281,14 @@ export function ContactScreen() {
               keyboardType: 'email-address',
             })}
 
+            {!routeParams.prefillSubject
+              ? renderInput('subject', t('contact.subject'), t('contact.placeholders.subject'), 'tag-outline')
+              : null}
+
             {renderInput(
               'message',
               t('contact.yourMessage'),
-              t('contact.placeholders.message'),
+              routeParams.messagePlaceholder || t('contact.placeholders.message'),
               'message-text',
               { multiline: true }
             )}

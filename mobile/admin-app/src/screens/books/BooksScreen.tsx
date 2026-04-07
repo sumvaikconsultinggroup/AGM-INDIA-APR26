@@ -34,6 +34,7 @@ type BookFormData = {
   author: string;
   description: string;
   price: string;
+  purchaseUrl: string;
   pages: string;
   language: string;
   genre: string;
@@ -47,6 +48,7 @@ const emptyForm: BookFormData = {
   author: '',
   description: '',
   price: '',
+  purchaseUrl: '',
   pages: '',
   language: '',
   genre: '',
@@ -107,6 +109,7 @@ export function BooksScreen() {
       author: book.author || '',
       description: book.description || '',
       price: book.price?.toString() || '',
+      purchaseUrl: book.purchaseUrl || '',
       pages: book.pages?.toString() || '',
       language: book.language || '',
       genre: book.genre || '',
@@ -129,16 +132,26 @@ export function BooksScreen() {
   };
 
   const buildFormData = (): FormData => {
+    const existingStock = editingBook?.stock;
+    const stockIn = existingStock?.stockIn ?? 0;
+    const soldOut = existingStock?.soldOut ?? 0;
+    const available = existingStock?.available ?? Math.max(stockIn - soldOut, 0);
+
     const fd = new FormData();
     fd.append('title', form.title);
     fd.append('author', form.author);
     fd.append('description', form.description);
     fd.append('price', form.price);
+    if (form.purchaseUrl) fd.append('purchaseUrl', form.purchaseUrl.trim());
     if (form.pages) fd.append('pages', form.pages);
     if (form.language) fd.append('language', form.language);
     if (form.genre) fd.append('genre', form.genre);
     if (form.ISBN) fd.append('ISBN', form.ISBN);
     if (form.publishedDate) fd.append('publishedDate', form.publishedDate);
+    fd.append('stock[stockIn]', String(stockIn));
+    fd.append('stock[soldOut]', String(soldOut));
+    fd.append('stock[available]', String(available));
+    fd.append('stock[lastUpdated]', new Date().toISOString());
     if (form.coverImageUri) {
       const filename = form.coverImageUri.split('/').pop() || 'cover.jpg';
       const match = /\.(\w+)$/.exec(filename);
@@ -245,6 +258,11 @@ export function BooksScreen() {
               <Text style={styles.price}>{formatPrice(item.price)}</Text>
             </View>
             <View style={styles.chipRow}>
+              {item.purchaseUrl ? (
+                <Chip style={styles.linkChip} textStyle={styles.linkChipText} compact>
+                  External Buy Link
+                </Chip>
+              ) : null}
               <Chip
                 style={[styles.stockChip, { backgroundColor: stockStatus.color }]}
                 textStyle={styles.stockChipText}
@@ -406,6 +424,21 @@ export function BooksScreen() {
             outlineColor={colors.border.gold}
             activeOutlineColor={colors.primary.saffron}
           />
+          <TextInput
+            label="Buy Link"
+            value={form.purchaseUrl}
+            onChangeText={(v) => setForm((p) => ({ ...p, purchaseUrl: v }))}
+            mode="outlined"
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+            style={styles.input}
+            outlineColor={colors.border.gold}
+            activeOutlineColor={colors.primary.saffron}
+          />
+          <Text style={styles.helperText}>
+            Add the Amazon, publisher, or other marketplace URL. AvdheshanandG Mission will only display this external link and is not the seller.
+          </Text>
           <View style={styles.row}>
             <TextInput
               label="Pages"
@@ -677,6 +710,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent.peacock,
     height: 24,
   },
+  linkChip: {
+    backgroundColor: colors.primary.vermillion,
+    height: 24,
+  },
+  linkChipText: {
+    color: colors.text.white,
+    fontSize: 10,
+    fontWeight: '600',
+  },
   genreChipText: {
     color: colors.text.white,
     fontSize: 10,
@@ -704,6 +746,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: spacing.sm,
     textAlign: 'center',
+  },
+  helperText: {
+    color: colors.text.secondary,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.sm,
   },
   fab: {
     position: 'absolute',

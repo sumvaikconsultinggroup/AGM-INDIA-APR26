@@ -1,3 +1,9 @@
 export { ImagePickerButton } from './ImagePickerButton';
 export { StatsCard } from './StatsCard';
 export { EmptyState } from './EmptyState';
+export { AdminSurface } from './AdminSurface';
+export { AdminHero } from './AdminHero';
+export { AdminSectionHeader } from './AdminSectionHeader';
+export { AdminMetricCard } from './AdminMetricCard';
+export { AdminPill } from './AdminPill';
+export { AdminEmptyState } from './AdminEmptyState';

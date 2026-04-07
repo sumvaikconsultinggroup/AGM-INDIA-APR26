@@ -15,7 +15,13 @@ import {
   Platform,
 } from 'react-native';
 import { Card, FAB, ActivityIndicator, Chip, IconButton } from 'react-native-paper';
-import { colors, spacing, borderRadius } from '../../theme';
+import {
+  AdminEmptyState,
+  AdminHero,
+  AdminMetricCard,
+  AdminSectionHeader,
+} from '../../components/common';
+import { colors, spacing, borderRadius, typography } from '../../theme';
 import api from '../../services/api';
 import { Schedule, LocalizedText } from '../../types';
 
@@ -417,12 +423,58 @@ export function ScheduleScreen() {
   );
 
   const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Text style={styles.emptyStateIcon}>📅</Text>
-      <Text style={styles.emptyStateText}>No schedules available</Text>
-      <Text style={styles.emptyStateSubtext}>
-        Create the Delhi or Haridwar schedule here and every surface will read from the same source.
-      </Text>
+    <AdminEmptyState
+      icon="calendar-blank-outline"
+      title="No schedules available"
+      message="Create the Delhi or Haridwar schedule here and every surface will read from the same source."
+      actionLabel="Create schedule"
+      onAction={openCreateModal}
+    />
+  );
+
+  const scheduleSummary = {
+    total: schedules.length,
+    openAppointments: schedules.filter((item) => item.appointment).length,
+    urgent: schedules.filter((item) => item.isLastMinuteUpdate).length,
+    capacity: schedules.reduce((sum, item) => sum + (item.remainingCapacity || 0), 0),
+  };
+
+  const listHeader = (
+    <View style={styles.listHeader}>
+      <AdminHero
+        eyebrow="Travel and darshan windows"
+        title="Schedule"
+        subtitle="Keep the master itinerary, appointment availability, and location messaging aligned across the platform."
+        actions={[
+          { label: 'Create schedule', icon: 'plus', onPress: openCreateModal },
+          { label: 'Replace poster', icon: 'upload', onPress: handleImportLatestSchedule },
+        ]}
+      />
+      <View style={styles.metricGrid}>
+        <AdminMetricCard label="Entries" value={scheduleSummary.total} icon="calendar-multiple" />
+        <AdminMetricCard
+          label="Appointment open"
+          value={scheduleSummary.openAppointments}
+          icon="account-check-outline"
+          tone={colors.primary.saffron}
+        />
+        <AdminMetricCard
+          label="Urgent changes"
+          value={scheduleSummary.urgent}
+          icon="alert-circle-outline"
+          tone={colors.status.warning}
+        />
+        <AdminMetricCard
+          label="Open capacity"
+          value={scheduleSummary.capacity}
+          icon="seat-recline-normal"
+          tone={colors.accent.peacock}
+        />
+      </View>
+      <AdminSectionHeader
+        title="Schedule timeline"
+        subtitle="Each card is one published schedule block with its public title, capacity, and updates."
+      />
     </View>
   );
 
@@ -694,6 +746,7 @@ export function ScheduleScreen() {
         keyExtractor={(item) => item._id}
         renderItem={renderScheduleItem}
         renderSectionHeader={renderSectionHeader}
+        ListHeaderComponent={listHeader}
         contentContainerStyle={styles.listContent}
         stickySectionHeadersEnabled
         refreshControl={
@@ -709,14 +762,6 @@ export function ScheduleScreen() {
       />
 
       <FAB icon="plus" style={styles.fab} onPress={openCreateModal} color={colors.text.white} />
-      <FAB
-        icon="upload"
-        style={styles.importFab}
-        onPress={handleImportLatestSchedule}
-        color={colors.primary.maroon}
-        customSize={52}
-        loading={importing}
-      />
 
       {renderFormModal()}
     </View>
@@ -757,17 +802,30 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 100,
   },
+  listHeader: {
+    padding: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  metricGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg,
+  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: colors.primary.maroon,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...typography.titleSm,
     color: colors.gold.light,
   },
   sectionBadge: {
@@ -785,7 +843,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     marginTop: spacing.sm,
     backgroundColor: colors.background.warmWhite,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     elevation: 2,
   },
   cardContent: {
@@ -802,18 +860,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   locationText: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...typography.titleSm,
     color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   secondaryText: {
-    fontSize: 12,
+    ...typography.bodySm,
     color: colors.text.secondary,
     marginBottom: spacing.xs,
   },
   dateRangeText: {
-    fontSize: 13,
+    ...typography.bodySm,
     color: colors.text.secondary,
     marginBottom: spacing.sm,
   },
@@ -830,12 +887,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   metricText: {
-    fontSize: 12,
+    ...typography.label,
     color: colors.accent.peacock,
-    fontWeight: '500',
   },
   changeNoteText: {
-    fontSize: 12,
+    ...typography.bodySm,
     color: colors.status.warning,
     marginTop: spacing.sm,
   },
@@ -889,14 +945,6 @@ const styles = StyleSheet.create({
     right: spacing.lg,
     bottom: spacing.lg,
     backgroundColor: colors.primary.saffron,
-  },
-  importFab: {
-    position: 'absolute',
-    right: spacing.lg,
-    bottom: 92,
-    backgroundColor: colors.background.warmWhite,
-    borderWidth: 1,
-    borderColor: colors.border.gold as string,
   },
   modalOverlay: {
     flex: 1,
@@ -1020,24 +1068,5 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.6,
-  },
-  emptyState: {
-    padding: spacing.xxl,
-    alignItems: 'center',
-  },
-  emptyStateIcon: {
-    fontSize: 48,
-    marginBottom: spacing.md,
-  },
-  emptyStateText: {
-    color: colors.text.secondary,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  emptyStateSubtext: {
-    color: colors.text.secondary,
-    fontSize: 14,
-    marginTop: spacing.sm,
-    textAlign: 'center',
   },
 });

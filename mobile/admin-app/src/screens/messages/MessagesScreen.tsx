@@ -10,11 +10,19 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button, Card, Chip, Modal, Portal, ActivityIndicator } from 'react-native-paper';
+import { ActivityIndicator, Button, Modal, Portal } from 'react-native-paper';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import api from '../../services/api';
 import { ContactMessage } from '../../types';
-import { borderRadius, colors, spacing } from '../../theme';
+import {
+  AdminEmptyState,
+  AdminHero,
+  AdminMetricCard,
+  AdminPill,
+  AdminSectionHeader,
+  AdminSurface,
+} from '../../components/common';
+import { borderRadius, colors, spacing, typography } from '../../theme';
 
 type MessageFilter = 'all' | 'new' | 'in_review' | 'responded' | 'archived';
 
@@ -22,14 +30,14 @@ const FILTERS: MessageFilter[] = ['all', 'new', 'in_review', 'responded', 'archi
 
 const STATUS_LABELS: Record<Exclude<MessageFilter, 'all'>, string> = {
   new: 'New',
-  in_review: 'In Review',
+  in_review: 'In review',
   responded: 'Responded',
   archived: 'Archived',
 };
 
 const STATUS_COLORS: Record<Exclude<MessageFilter, 'all'>, string> = {
   new: colors.primary.saffron,
-  in_review: colors.status.info,
+  in_review: colors.accent.peacock,
   responded: colors.status.success,
   archived: colors.text.secondary,
 };
@@ -76,6 +84,18 @@ export function MessagesScreen() {
     return messages.filter((message) => (message.status || 'new') === filter);
   }, [filter, messages]);
 
+  const counts = useMemo(
+    () =>
+      FILTERS.reduce<Record<string, number>>((acc, key) => {
+        acc[key] =
+          key === 'all'
+            ? messages.length
+            : messages.filter((message) => (message.status || 'new') === key).length;
+        return acc;
+      }, {}),
+    [messages],
+  );
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchMessages();
@@ -110,11 +130,12 @@ export function MessagesScreen() {
       setMessages((current) => current.map((item) => (item._id === updated._id ? updated : item)));
       setSelectedMessage(updated);
 
-      if (sendResponse && responseText.trim()) {
-        Alert.alert('Sent', 'Prayer response email has been sent.');
-      } else {
-        Alert.alert('Saved', 'Prayer request updated successfully.');
-      }
+      Alert.alert(
+        sendResponse && responseText.trim() ? 'Sent' : 'Saved',
+        sendResponse && responseText.trim()
+          ? 'Prayer response email has been sent.'
+          : 'Prayer request updated successfully.',
+      );
     } catch (error) {
       console.error('Error updating prayer request:', error);
       Alert.alert('Error', 'Unable to update this prayer request right now.');
@@ -124,7 +145,7 @@ export function MessagesScreen() {
   };
 
   const archiveMessage = (message: ContactMessage) => {
-    Alert.alert('Archive Request', `Archive ${message.fullName}'s request?`, [
+    Alert.alert('Archive request', `Archive ${message.fullName}'s request?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Archive',
@@ -143,70 +164,6 @@ export function MessagesScreen() {
     ]);
   };
 
-  const renderHeader = () => {
-    const counts = FILTERS.reduce<Record<string, number>>((acc, key) => {
-      acc[key] =
-        key === 'all'
-          ? messages.length
-          : messages.filter((message) => (message.status || 'new') === key).length;
-      return acc;
-    }, {});
-
-    return (
-      <View style={styles.header}>
-        <Text style={styles.title}>Prayer Requests</Text>
-        <Text style={styles.subtitle}>Read, assign, and respond from mobile.</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersRow}>
-          {FILTERS.map((item) => (
-            <Chip
-              key={item}
-              selected={filter === item}
-              onPress={() => setFilter(item)}
-              style={[styles.filterChip, filter === item && styles.filterChipActive]}
-              textStyle={[styles.filterChipText, filter === item && styles.filterChipTextActive]}
-            >
-              {item === 'all' ? `All (${counts[item]})` : `${STATUS_LABELS[item]} (${counts[item]})`}
-            </Chip>
-          ))}
-        </ScrollView>
-      </View>
-    );
-  };
-
-  const renderItem = ({ item }: { item: ContactMessage }) => {
-    const status = (item.status || 'new') as Exclude<MessageFilter, 'all'>;
-    return (
-      <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedMessage(item)}>
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{item.fullName?.charAt(0)?.toUpperCase() || '?'}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.name}>{item.fullName}</Text>
-                <Text style={styles.metaText} numberOfLines={1}>{item.email}</Text>
-                {item.subject ? <Text style={styles.subject}>{item.subject}</Text> : null}
-              </View>
-              <Chip
-                compact
-                style={[styles.statusChip, { backgroundColor: `${STATUS_COLORS[status]}20` }]}
-                textStyle={[styles.statusChipText, { color: STATUS_COLORS[status] }]}
-              >
-                {STATUS_LABELS[status]}
-              </Chip>
-            </View>
-            <Text style={styles.preview} numberOfLines={3}>{item.message}</Text>
-            <View style={styles.cardFooter}>
-              <Text style={styles.metaText}>{formatDate(item.createdAt)}</Text>
-              {item.assignedToName ? <Text style={styles.assignee}>Assigned: {item.assignedToName}</Text> : null}
-            </View>
-          </Card.Content>
-        </Card>
-      </TouchableOpacity>
-    );
-  };
-
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -221,9 +178,6 @@ export function MessagesScreen() {
       <FlatList
         data={filteredMessages}
         keyExtractor={(item) => item._id}
-        renderItem={renderItem}
-        ListHeaderComponent={renderHeader}
-        contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -232,22 +186,78 @@ export function MessagesScreen() {
             tintColor={colors.primary.saffron}
           />
         }
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Icon name="hands-pray" size={48} color={colors.primary.saffron} />
-            <Text style={styles.emptyTitle}>No prayer requests</Text>
-            <Text style={styles.emptySubtitle}>Requests will appear here as devotees write in.</Text>
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={
+          <View>
+            <AdminHero
+              eyebrow="Prayer inbox"
+              title="Prayer Requests"
+              subtitle="Read with context, assign follow-up, and respond from wherever the team is."
+            />
+            <View style={styles.metricGrid}>
+              <AdminMetricCard label="All requests" value={counts.all || 0} icon="hands-pray" />
+              <AdminMetricCard label="New" value={counts.new || 0} icon="email-open-outline" tone={colors.primary.saffron} />
+              <AdminMetricCard label="In review" value={counts.in_review || 0} icon="progress-clock" tone={colors.accent.peacock} />
+              <AdminMetricCard label="Responded" value={counts.responded || 0} icon="reply-outline" tone={colors.status.success} />
+            </View>
+            <AdminSectionHeader
+              title="Inbox"
+              subtitle="Filter by status and open any request to assign or respond."
+            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+              {FILTERS.map((item) => (
+                <AdminPill
+                  key={item}
+                  label={item === 'all' ? `All (${counts[item] || 0})` : `${STATUS_LABELS[item]} (${counts[item] || 0})`}
+                  selected={filter === item}
+                  onPress={() => setFilter(item)}
+                />
+              ))}
+            </ScrollView>
           </View>
         }
+        ListEmptyComponent={
+          <AdminEmptyState
+            icon="hands-pray"
+            title="No prayer requests"
+            message="Requests will appear here as devotees write in."
+          />
+        }
+        renderItem={({ item }) => {
+          const status = (item.status || 'new') as Exclude<MessageFilter, 'all'>;
+          return (
+            <TouchableOpacity activeOpacity={0.85} onPress={() => setSelectedMessage(item)}>
+              <AdminSurface style={styles.card}>
+                <View style={styles.cardTopRow}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{item.fullName?.charAt(0)?.toUpperCase() || '?'}</Text>
+                  </View>
+                  <View style={styles.messageCopy}>
+                    <Text style={styles.name}>{item.fullName}</Text>
+                    <Text style={styles.metaText} numberOfLines={1}>{item.email}</Text>
+                    {item.subject ? <Text style={styles.subject}>{item.subject}</Text> : null}
+                  </View>
+                  <View style={[styles.statusBadge, { backgroundColor: `${STATUS_COLORS[status]}18` }]}>
+                    <Text style={[styles.statusBadgeText, { color: STATUS_COLORS[status] }]}>
+                      {STATUS_LABELS[status]}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.preview} numberOfLines={3}>{item.message}</Text>
+                <View style={styles.footerRow}>
+                  <Text style={styles.metaText}>{formatDate(item.createdAt)}</Text>
+                  {item.assignedToName ? <Text style={styles.assignee}>Assigned: {item.assignedToName}</Text> : null}
+                </View>
+              </AdminSurface>
+            </TouchableOpacity>
+          );
+        }}
       />
 
       <Portal>
-        <Modal
-          visible={!!selectedMessage}
-          onDismiss={() => setSelectedMessage(null)}
-          contentContainerStyle={styles.modalContainer}
-        >
-          {selectedMessage && (
+        <Modal visible={!!selectedMessage} onDismiss={() => setSelectedMessage(null)} contentContainerStyle={styles.modalContainer}>
+          {selectedMessage ? (
             <ScrollView showsVerticalScrollIndicator={false}>
               <Text style={styles.modalTitle}>{selectedMessage.fullName}</Text>
               <Text style={styles.modalMeta}>{selectedMessage.email}</Text>
@@ -262,34 +272,23 @@ export function MessagesScreen() {
               ) : null}
 
               <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Prayer Request</Text>
+                <Text style={styles.sectionLabel}>Prayer request</Text>
                 <Text style={styles.sectionValue}>{selectedMessage.message}</Text>
               </View>
 
-              <View style={styles.inlineStatusRow}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statusRow}>
                 {(['new', 'in_review', 'responded'] as const).map((item) => (
-                  <TouchableOpacity
+                  <AdminPill
                     key={item}
-                    style={[
-                      styles.inlineStatusButton,
-                      (selectedMessage.status || 'new') === item && { backgroundColor: STATUS_COLORS[item] },
-                    ]}
+                    label={STATUS_LABELS[item]}
+                    selected={(selectedMessage.status || 'new') === item}
                     onPress={() => persistMessage(item)}
-                  >
-                    <Text
-                      style={[
-                        styles.inlineStatusButtonText,
-                        (selectedMessage.status || 'new') === item && { color: colors.text.white },
-                      ]}
-                    >
-                      {STATUS_LABELS[item]}
-                    </Text>
-                  </TouchableOpacity>
+                  />
                 ))}
-              </View>
+              </ScrollView>
 
               <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Assigned To</Text>
+                <Text style={styles.sectionLabel}>Assigned to</Text>
                 <TextInput
                   value={assignedToName}
                   onChangeText={setAssignedToName}
@@ -300,7 +299,7 @@ export function MessagesScreen() {
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Internal Notes</Text>
+                <Text style={styles.sectionLabel}>Internal notes</Text>
                 <TextInput
                   value={internalNotes}
                   onChangeText={setInternalNotes}
@@ -312,7 +311,7 @@ export function MessagesScreen() {
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.sectionLabel}>Response To Devotee</Text>
+                <Text style={styles.sectionLabel}>Response to devotee</Text>
                 <TextInput
                   value={responseText}
                   onChangeText={setResponseText}
@@ -341,7 +340,7 @@ export function MessagesScreen() {
                 </Button>
               </View>
             </ScrollView>
-          )}
+          ) : null}
         </Modal>
       </Portal>
     </View>
@@ -352,30 +351,40 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background.parchment },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background.parchment },
   loadingText: { marginTop: spacing.md, color: colors.text.secondary },
-  listContent: { padding: spacing.md, paddingBottom: spacing.xl },
-  header: { marginBottom: spacing.md },
-  title: { fontSize: 24, fontWeight: '700', color: colors.primary.maroon },
-  subtitle: { marginTop: spacing.xs, color: colors.text.secondary },
-  filtersRow: { gap: spacing.sm, paddingTop: spacing.md, paddingBottom: spacing.xs },
-  filterChip: { backgroundColor: colors.background.warmWhite, borderColor: colors.border.gold as string },
-  filterChipActive: { backgroundColor: `${colors.primary.saffron}15` },
-  filterChipText: { color: colors.text.secondary },
-  filterChipTextActive: { color: colors.primary.saffron, fontWeight: '700' },
-  card: { marginBottom: spacing.md, backgroundColor: colors.background.warmWhite, borderRadius: borderRadius.lg },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
-  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent.peacock, alignItems: 'center', justifyContent: 'center' },
+  content: { padding: spacing.md, paddingBottom: spacing.xxl },
+  metricGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  filterRow: { gap: spacing.sm, paddingBottom: spacing.md, marginBottom: spacing.sm },
+  card: { marginBottom: spacing.md },
+  cardTopRow: { flexDirection: 'row', gap: spacing.sm },
+  avatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: colors.accent.peacock,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarText: { color: colors.text.white, fontWeight: '700', fontSize: 18 },
-  name: { fontSize: 16, fontWeight: '700', color: colors.text.primary },
-  metaText: { fontSize: 12, color: colors.text.secondary },
+  messageCopy: { flex: 1 },
+  name: { ...typography.titleSm, color: colors.text.primary },
+  metaText: { ...typography.bodySm, color: colors.text.secondary },
   subject: { marginTop: 2, color: colors.primary.maroon, fontWeight: '600' },
-  preview: { color: colors.text.primary, lineHeight: 22 },
-  cardFooter: { marginTop: spacing.sm, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  assignee: { fontSize: 12, color: colors.accent.peacock, fontWeight: '600' },
-  statusChip: { alignSelf: 'flex-start' },
-  statusChipText: { fontSize: 11, fontWeight: '700' },
-  emptyState: { alignItems: 'center', paddingVertical: spacing.xxl },
-  emptyTitle: { marginTop: spacing.md, fontSize: 18, fontWeight: '700', color: colors.primary.maroon },
-  emptySubtitle: { marginTop: spacing.xs, color: colors.text.secondary, textAlign: 'center' },
+  statusBadge: {
+    borderRadius: borderRadius.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    alignSelf: 'flex-start',
+  },
+  statusBadgeText: { ...typography.micro },
+  preview: { ...typography.body, color: colors.text.primary, marginTop: spacing.md },
+  footerRow: { marginTop: spacing.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  assignee: { ...typography.label, color: colors.accent.peacock },
   modalContainer: {
     backgroundColor: colors.background.warmWhite,
     margin: spacing.md,
@@ -383,11 +392,12 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     maxHeight: '88%',
   },
-  modalTitle: { fontSize: 22, fontWeight: '700', color: colors.primary.maroon },
+  modalTitle: { ...typography.titleLg, color: colors.primary.maroon },
   modalMeta: { marginTop: 4, color: colors.text.secondary },
   section: { marginTop: spacing.lg },
-  sectionLabel: { fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.8, color: colors.text.secondary, marginBottom: spacing.xs },
-  sectionValue: { fontSize: 15, color: colors.text.primary, lineHeight: 23 },
+  sectionLabel: { ...typography.micro, textTransform: 'uppercase', letterSpacing: 0.8, color: colors.text.secondary, marginBottom: spacing.xs },
+  sectionValue: { ...typography.body, color: colors.text.primary },
+  statusRow: { gap: spacing.sm, marginTop: spacing.lg },
   input: {
     backgroundColor: colors.background.parchment,
     borderRadius: borderRadius.md,
@@ -398,16 +408,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border.gold as string,
   },
   multilineInput: { minHeight: 96, textAlignVertical: 'top' },
-  inlineStatusRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg, flexWrap: 'wrap' },
-  inlineStatusButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.background.parchment,
-    borderWidth: 1,
-    borderColor: colors.border.gold as string,
-  },
-  inlineStatusButtonText: { color: colors.text.secondary, fontWeight: '700' },
   actionRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm, marginTop: spacing.xl },
   secondaryActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md },
 });

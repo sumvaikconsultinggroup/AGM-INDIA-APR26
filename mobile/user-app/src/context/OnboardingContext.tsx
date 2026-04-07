@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState, ReactNo
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ONBOARDING_STORAGE_KEY = '@app_onboarding_state';
-const CURRENT_ONBOARDING_VERSION = 2;
+const CURRENT_ONBOARDING_VERSION = 3;
 
 export interface OnboardingState {
   completed: boolean;

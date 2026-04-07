@@ -51,11 +51,13 @@ const publicApiEndpoints: { path: string; methods?: string[] }[] = [
 ];
 
 const adminOnlyApiPrefixes: string[] = [
+  "/api/admin/notification-devices",
   "/api/users",
   "/api/admin/team",
   "/api/connect",
   "/api/notifications/send",
   "/api/notifications/broadcast",
+  "/api/notifications/admin-task-reminders",
   "/api/sendemail",
   "/api/images",
   "/api/userphotos",

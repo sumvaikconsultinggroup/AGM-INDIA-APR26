@@ -7,6 +7,7 @@ import { PermissionProvider } from './src/context/PermissionContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { colors } from './src/theme';
 import { I18nProvider } from './src/i18n/I18nProvider';
+import { AdminNotificationBootstrap } from './src/components/common/AdminNotificationBootstrap';
 
 const theme = {
   ...MD3LightTheme,
@@ -28,6 +29,7 @@ export default function App() {
           <AuthProvider>
             <PermissionProvider>
               <StatusBar style="dark" />
+              <AdminNotificationBootstrap />
               <AppNavigator />
             </PermissionProvider>
           </AuthProvider>

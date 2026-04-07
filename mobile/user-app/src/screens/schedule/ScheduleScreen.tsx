@@ -13,11 +13,11 @@ import {
   TextInput,
 } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { colors, spacing, borderRadius, shadows } from '../../theme';
+import { colors, spacing, borderRadius, typography } from '../../theme';
+import { EmptyStateCard, ScreenHeader, SectionHeader, SurfaceCard } from '../../components/common';
 
 interface Event {
   _id: string;
@@ -320,10 +320,7 @@ export function ScheduleScreen() {
 
   const renderEventCard = (event: Event) => (
     <TouchableOpacity key={event._id} style={styles.eventCard}>
-      <LinearGradient
-        colors={[colors.background.warmWhite, colors.background.cream]}
-        style={styles.eventGradient}
-      >
+      <SurfaceCard compact style={styles.eventGradient}>
         <View style={styles.eventDateBadge}>
           <Text style={styles.eventDateDay}>{new Date(event.eventDate).getDate()}</Text>
           <Text style={styles.eventDateMonth}>
@@ -345,7 +342,7 @@ export function ScheduleScreen() {
             </View>
           ) : null}
         </View>
-      </LinearGradient>
+      </SurfaceCard>
     </TouchableOpacity>
   );
 
@@ -357,7 +354,7 @@ export function ScheduleScreen() {
     const location = pickLocalizedText(item.publicLocation, item.locations);
 
     return (
-      <View style={styles.scheduleItem}>
+      <SurfaceCard compact style={styles.scheduleItem}>
         <View style={styles.scheduleLeft}>
           {firstSlot?.startDate ? (
             <View style={styles.scheduleDate}>
@@ -415,7 +412,7 @@ export function ScheduleScreen() {
             </TouchableOpacity>
           ) : null}
         </View>
-      </View>
+      </SurfaceCard>
     );
   };
 
@@ -615,33 +612,43 @@ export function ScheduleScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'schedules' && styles.tabActive]}
-          onPress={() => setActiveTab('schedules')}
-        >
-          <Icon
-            name="calendar-clock"
-            size={18}
-            color={activeTab === 'schedules' ? colors.text.white : colors.text.primary}
-          />
-          <Text style={[styles.tabText, activeTab === 'schedules' && styles.tabTextActive]}>
-            {t('schedule.title')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'events' && styles.tabActive]}
-          onPress={() => setActiveTab('events')}
-        >
-          <Icon
-            name="calendar-star"
-            size={18}
-            color={activeTab === 'events' ? colors.text.white : colors.text.primary}
-          />
-          <Text style={[styles.tabText, activeTab === 'events' && styles.tabTextActive]}>
-            {t('explore.events')}
-          </Text>
-        </TouchableOpacity>
+      <ScreenHeader
+        compact
+        eyebrow={t('schedule.title')}
+        title={activeTab === 'schedules' ? t('schedule.title') : t('explore.events')}
+        subtitle={activeTab === 'schedules' ? t('schedule.emptySchedulesSubtitle') : t('schedule.emptyEventsSubtitle')}
+        icon={activeTab === 'schedules' ? 'calendar-clock' : 'calendar-star'}
+      />
+
+      <View style={styles.tabWrap}>
+        <SurfaceCard compact style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'schedules' && styles.tabActive]}
+            onPress={() => setActiveTab('schedules')}
+          >
+            <Icon
+              name="calendar-clock"
+              size={18}
+              color={activeTab === 'schedules' ? colors.text.white : colors.text.primary}
+            />
+            <Text style={[styles.tabText, activeTab === 'schedules' && styles.tabTextActive]}>
+              {t('schedule.title')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'events' && styles.tabActive]}
+            onPress={() => setActiveTab('events')}
+          >
+            <Icon
+              name="calendar-star"
+              size={18}
+              color={activeTab === 'events' ? colors.text.white : colors.text.primary}
+            />
+            <Text style={[styles.tabText, activeTab === 'events' && styles.tabTextActive]}>
+              {t('explore.events')}
+            </Text>
+          </TouchableOpacity>
+        </SurfaceCard>
       </View>
 
       {activeTab === 'events' ? (
@@ -657,17 +664,22 @@ export function ScheduleScreen() {
             />
           }
         >
-          <View style={styles.sectionHeader}>
-            <Icon name="calendar-star" size={20} color={colors.primary.maroon} />
-            <Text style={styles.sectionTitle}>{t('home.upcomingEvents')}</Text>
+          <View style={styles.sectionWrap}>
+            <SectionHeader
+              title={t('home.upcomingEvents')}
+              subtitle={t('schedule.emptyEventsSubtitle')}
+              icon="calendar-star"
+            />
           </View>
           {events.length > 0 ? (
             events.map((event) => <View key={event._id}>{renderEventCard(event)}</View>)
           ) : (
-            <View style={styles.emptyState}>
-              <Icon name="calendar-blank" size={48} color={colors.text.secondary} />
-              <Text style={styles.emptyTitle}>{t('schedule.noEvents')}</Text>
-              <Text style={styles.emptySubtitle}>{t('schedule.emptyEventsSubtitle')}</Text>
+            <View style={styles.sectionWrap}>
+              <EmptyStateCard
+                icon="calendar-blank"
+                title={t('schedule.noEvents')}
+                subtitle={t('schedule.emptyEventsSubtitle')}
+              />
             </View>
           )}
           <View style={{ height: spacing.xxl }} />
@@ -693,10 +705,12 @@ export function ScheduleScreen() {
             />
           }
           ListEmptyComponent={() => (
-            <View style={styles.emptyState}>
-              <Icon name="calendar-clock" size={48} color={colors.text.secondary} />
-              <Text style={styles.emptyTitle}>{t('schedule.noSchedulesAvailable')}</Text>
-              <Text style={styles.emptySubtitle}>{t('schedule.emptySchedulesSubtitle')}</Text>
+            <View style={styles.sectionWrap}>
+              <EmptyStateCard
+                icon="calendar-clock"
+                title={t('schedule.noSchedulesAvailable')}
+                subtitle={t('schedule.emptySchedulesSubtitle')}
+              />
             </View>
           )}
         />
@@ -712,6 +726,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.parchment,
   },
+  tabWrap: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -721,14 +739,11 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: spacing.md,
     color: colors.text.secondary,
-    fontSize: 14,
+    ...typography.bodySm,
   },
   tabContainer: {
     flexDirection: 'row',
-    padding: spacing.md,
-    backgroundColor: colors.background.warmWhite,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.gold as string,
+    padding: 0,
   },
   tab: {
     flex: 1,
@@ -744,8 +759,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary.saffron,
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...typography.bodySm,
+    fontWeight: '700',
     color: colors.text.primary,
     marginLeft: spacing.xs,
   },
@@ -756,8 +771,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    padding: spacing.md,
+    padding: spacing.lg,
     paddingBottom: spacing.xxl,
+  },
+  sectionWrap: {
+    paddingHorizontal: spacing.lg,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -766,8 +784,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    ...typography.h3,
     color: colors.primary.maroon,
     marginLeft: spacing.sm,
   },
@@ -778,24 +795,19 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     marginBottom: spacing.sm,
     borderRadius: borderRadius.sm,
+    marginHorizontal: spacing.lg,
   },
   sectionHeaderText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...typography.bodySm,
+    fontWeight: '700',
     color: colors.text.white,
   },
   eventCard: {
-    marginHorizontal: spacing.md,
+    marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
-    borderRadius: borderRadius.lg,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border.gold as string,
-    ...shadows.warm,
   },
   eventGradient: {
     flexDirection: 'row',
-    padding: spacing.md,
   },
   eventDateBadge: {
     width: 56,
@@ -821,8 +833,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   eventName: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...typography.title,
     color: colors.text.primary,
     marginBottom: spacing.xs,
   },
@@ -832,19 +843,13 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   eventMetaText: {
-    fontSize: 12,
+    ...typography.bodySm,
     color: colors.text.secondary,
     marginLeft: spacing.xs,
   },
   scheduleItem: {
     flexDirection: 'row',
-    backgroundColor: colors.background.warmWhite,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
     marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border.gold as string,
-    ...shadows.warm,
   },
   scheduleLeft: {
     alignItems: 'center',
@@ -878,22 +883,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scheduleTitle: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...typography.title,
     color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   scheduleTime: {
-    fontSize: 12,
+    ...typography.bodySm,
     color: colors.text.secondary,
     marginTop: spacing.xs,
   },
   scheduleLocation: {
-    fontSize: 12,
+    ...typography.bodySm,
     color: colors.text.secondary,
   },
   changeNote: {
-    fontSize: 12,
+    ...typography.caption,
     color: colors.status.warning,
     marginTop: spacing.xs,
   },
@@ -904,8 +908,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   capacityText: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...typography.bodySm,
+    fontWeight: '700',
     color: colors.accent.peacock,
   },
   lastMinuteBadge: {

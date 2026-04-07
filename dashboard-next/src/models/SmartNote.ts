@@ -18,6 +18,7 @@ export interface ISmartNote extends Document {
   createTask: boolean;
   createdById?: string;
   createdByName?: string;
+  assignmentNotifiedAt?: Date;
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -82,6 +83,9 @@ const SmartNoteSchema = new Schema<ISmartNote>(
     createdByName: {
       type: String,
       trim: true,
+    },
+    assignmentNotifiedAt: {
+      type: Date,
     },
     isDeleted: {
       type: Boolean,

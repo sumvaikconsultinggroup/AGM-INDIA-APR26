@@ -9,6 +9,7 @@ import {
   Image,
   Alert,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
@@ -54,15 +55,27 @@ export function BookDetailScreen() {
     }
   };
 
-  const handlePurchase = () => {
-    Alert.alert(
-      t('details.book.purchaseRequestTitle'),
-      t('details.book.purchaseRequestMessage', { title: book?.title }),
-      [{ text: t('home.welcome'), style: 'default' }]
-    );
+  const handlePurchase = async () => {
+    if (!book?.purchaseUrl) {
+      Alert.alert(t('common.error'), t('details.book.linkUnavailable'));
+      return;
+    }
+
+    try {
+      const supported = await Linking.canOpenURL(book.purchaseUrl);
+      if (!supported) {
+        Alert.alert(t('common.error'), t('details.book.linkUnavailable'));
+        return;
+      }
+
+      await Linking.openURL(book.purchaseUrl);
+    } catch (error) {
+      console.error('Error opening purchase link:', error);
+      Alert.alert(t('common.error'), t('details.book.openLinkFailed'));
+    }
   };
 
-  const isInStock = book?.inStock !== false && (book?.stock === undefined || book.stock > 0);
+  const hasPurchaseLink = Boolean(book?.purchaseUrl);
 
   if (loading) {
     return (
@@ -119,20 +132,22 @@ export function BookDetailScreen() {
             {/* Temple frame decoration */}
             <View style={styles.coverFrame} />
           </View>
-          {/* Stock Status */}
+          {/* Link Status */}
           <View
             style={[
               styles.stockBadge,
-              !isInStock && styles.stockBadgeOutOfStock,
+              !hasPurchaseLink && styles.stockBadgeOutOfStock,
             ]}
           >
             <Icon
-              name={isInStock ? 'check-circle' : 'close-circle'}
+              name={hasPurchaseLink ? 'open-in-new' : 'link-off'}
               size={14}
               color={colors.text.white}
             />
             <Text style={styles.stockText}>
-              {isInStock ? t('details.book.inStock') : t('details.book.outOfStock')}
+              {hasPurchaseLink
+                ? t('details.book.externalSellerAvailable')
+                : t('details.book.linkUnavailable')}
             </Text>
           </View>
         </View>
@@ -152,11 +167,11 @@ export function BookDetailScreen() {
 
           {/* Book Details Grid */}
           <View style={styles.detailsGrid}>
-            {book.isbn && (
+            {(book.ISBN || book.isbn) && (
               <View style={styles.detailItem}>
                 <Icon name="barcode" size={20} color={colors.gold.main} />
                 <Text style={styles.detailLabel}>{t('details.book.isbn')}</Text>
-                <Text style={styles.detailValue}>{book.isbn}</Text>
+                <Text style={styles.detailValue}>{book.ISBN || book.isbn}</Text>
               </View>
             )}
             {book.pages && (
@@ -201,18 +216,28 @@ export function BookDetailScreen() {
           <Icon name="book-heart" size={28} color={colors.gold.main} />
           <Text style={styles.quoteText}>{t('details.book.quote')}</Text>
         </View>
+
+        <View style={styles.noticeSection}>
+          <View style={styles.sectionTitleContainer}>
+            <View style={styles.goldAccent} />
+            <Text style={styles.sectionTitle}>{t('details.book.purchaseNoticeTitle')}</Text>
+          </View>
+          <View style={styles.noticeCard}>
+            <Text style={styles.noticeText}>{t('details.book.externalSellerNotice')}</Text>
+          </View>
+        </View>
       </ScrollView>
 
       {/* Purchase Button */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity
-          style={[styles.purchaseButton, !isInStock && styles.purchaseButtonDisabled]}
+          style={[styles.purchaseButton, !hasPurchaseLink && styles.purchaseButtonDisabled]}
           onPress={handlePurchase}
-          disabled={!isInStock}
+          disabled={!hasPurchaseLink}
         >
           <LinearGradient
             colors={
-              isInStock
+              hasPurchaseLink
                 ? [colors.primary.saffron, colors.primary.vermillion]
                 : [colors.text.secondary, colors.text.secondary]
             }
@@ -221,12 +246,12 @@ export function BookDetailScreen() {
             style={styles.purchaseButtonGradient}
           >
             <Icon
-              name={isInStock ? 'cart' : 'cart-off'}
+              name={hasPurchaseLink ? 'cart' : 'link-off'}
               size={22}
               color={colors.text.white}
             />
             <Text style={styles.purchaseButtonText}>
-              {isInStock ? t('details.book.purchaseBook') : t('details.book.currentlyUnavailable')}
+              {hasPurchaseLink ? t('details.book.buyNow') : t('details.book.linkUnavailable')}
             </Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -471,6 +496,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.sm,
     lineHeight: 22,
+  },
+  noticeSection: {
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.xl,
+  },
+  noticeCard: {
+    padding: spacing.md,
+    backgroundColor: colors.background.warmWhite,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border.gold as string,
+  },
+  noticeText: {
+    fontSize: 13,
+    color: colors.text.secondary,
+    lineHeight: 20,
   },
   buttonContainer: {
     padding: spacing.md,

@@ -3,6 +3,10 @@ import { Collection, Document } from 'mongodb';
 import { connectDB } from '@/lib/mongodb';
 import SmartNote from '@/models/SmartNote';
 import SevaTask from '@/models/SevaTask';
+import {
+  notifyAdminSevaTaskAssigned,
+  notifyAdminSmartNoteAssigned,
+} from '@/lib/adminTaskNotifications';
 
 async function getAdminCollection(): Promise<Collection<Document>> {
   const { connectDB: connectMongo } = await import('@/utils/mongodbConnect');
@@ -101,7 +105,40 @@ export async function POST(req: NextRequest) {
       });
 
       note.linkedSevaTaskId = String(task._id);
+      note.assignmentNotifiedAt = new Date();
       await note.save();
+
+      try {
+        await notifyAdminSevaTaskAssigned({
+          assignedToId: primaryAssignee.memberId,
+          assignedToName: primaryAssignee.name,
+          taskId: String(task._id),
+          taskTitle: title,
+          dueDate: body.dueDate,
+          priority: body.priority || 'medium',
+          city: body.city || '',
+        });
+        await SevaTaskModel.updateOne(
+          { _id: task._id },
+          { $set: { assignmentNotifiedAt: new Date() } }
+        );
+      } catch (notificationError) {
+        console.error('Error notifying assigned admin for linked seva task:', notificationError);
+      }
+    } else if (primaryAssignee) {
+      try {
+        await notifyAdminSmartNoteAssigned({
+          assignedToId: primaryAssignee.memberId,
+          assignedToName: primaryAssignee.name,
+          noteId: String(note._id),
+          noteTitle: title,
+          createdByName: body.createdByName,
+        });
+        note.assignmentNotifiedAt = new Date();
+        await note.save();
+      } catch (notificationError) {
+        console.error('Error notifying assigned admin for smart note:', notificationError);
+      }
     }
 
     return NextResponse.json({

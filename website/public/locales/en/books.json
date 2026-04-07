@@ -6,7 +6,10 @@
     "subtitle": "Explore the literary works of Swami Avdheshanand Giri Ji Maharaj."
   },
   "viewBook": "View Book",
+  "buyNow": "Buy Now",
   "buyOnAmazon": "Buy on Amazon",
+  "linkUnavailable": "Buy link unavailable",
+  "externalDisclaimer": "AvdheshanandG Mission does not sell, fulfill, or distribute these books directly. Any purchase is completed solely with the respective third-party seller, publisher, or marketplace, which remains solely responsible for pricing, availability, shipping, returns, and customer support.",
   "noBooks": "No books available at this time.",
   "allBooks": "All Books"
 }

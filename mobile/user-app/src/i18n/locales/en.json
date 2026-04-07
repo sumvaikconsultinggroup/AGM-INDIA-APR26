@@ -31,7 +31,36 @@
     },
     "dailyVicharLabel": "Daily Vichar",
     "languageHindi": "Hindi",
-    "languageEnglish": "English"
+    "languageEnglish": "English",
+    "pathways": {
+      "title": "Spiritual Pathways",
+      "subtitle": "Move beyond the tab bar into the fuller mission experience.",
+      "aboutTitle": "About Swami Ji",
+      "aboutSubtitle": "Life, lineage, and spiritual journey",
+      "missionTitle": "Mission & Teachings",
+      "missionSubtitle": "Core message, seva, and outreach",
+      "dikshaTitle": "Mantra Diksha",
+      "dikshaSubtitle": "Sacred guidance and registration path",
+      "writeTitle": "Write to Swami Ji",
+      "writeSubtitle": "Share a heartfelt message with the Ashram office"
+    },
+    "teachings": {
+      "title": "Core Teachings",
+      "subtitle": "Daily reminders drawn from Swami Ji's spiritual emphasis.",
+      "oneTitle": "Inner Discipline",
+      "oneBody": "Self-restraint, steadiness, and purity of intention prepare the seeker for lasting peace.",
+      "twoTitle": "Wisdom in Daily Life",
+      "twoBody": "Scriptural insight becomes meaningful only when it brings humility, clarity, and right action.",
+      "threeTitle": "Seva as Sadhana",
+      "threeBody": "When service is offered without ego, compassion itself becomes a form of worship."
+    },
+    "initiativesTitle": "Mission Initiatives",
+    "initiativesSubtitle": "Areas of service and outreach reflected across the wider mission.",
+    "initiatives": {
+      "one": "Spiritual education, satsang, and scripture-based guidance for seekers.",
+      "two": "Humanitarian service supporting social upliftment, care, and relief work.",
+      "three": "Cultural, ecological, and community initiatives rooted in Sanatan values."
+    }
   },
   "explore": {
     "title": "Explore",
@@ -461,7 +490,9 @@
     "placeholders": {
       "name": "Enter your name",
       "email": "your@email.com",
-      "message": "Write your message here..."
+      "message": "Write your message here...",
+      "subject": "What would you like to write about?",
+      "writeToSwami": "Write your message for Swami Ji or the Ashram office..."
     },
     "errors": {
       "nameRequired": "Name is required",
@@ -469,8 +500,12 @@
       "emailValid": "Please enter a valid email",
       "messageRequired": "Message is required",
       "messageMin": "Message must be at least 10 characters",
-      "submitFailed": "Failed to send message"
-    }
+      "submitFailed": "Failed to send message",
+      "subjectRequired": "Please enter a subject"
+    },
+    "subject": "Subject",
+    "writeToSwamiTitle": "Write to Swami Ji",
+    "writeToSwamiSubtitle": "Share your message, blessings request, or spiritual note with the Ashram office so it may be received with care."
   },
   "panchangNotifications": {
     "headerTitle": "Notification Settings",
@@ -531,10 +566,13 @@
       "genre": "Genre",
       "aboutThisBook": "About This Book",
       "quote": "Books are the carriers of civilization. Without books, history is silent.",
-      "purchaseBook": "Purchase Book",
-      "currentlyUnavailable": "Currently Unavailable",
-      "purchaseRequestTitle": "Purchase Request",
-      "purchaseRequestMessage": "Thank you for your interest in \"{{title}}\".\n\nOur team will contact you shortly to complete your purchase. May this sacred knowledge illuminate your path."
+      "buyNow": "Buy Now",
+      "linkUnavailable": "Buy Link Unavailable",
+      "openLinkFailed": "Unable to open the external book link right now.",
+      "externalSellerAvailable": "External Seller Link Available",
+      "purchaseNoticeTitle": "Purchase Notice",
+      "externalSellerNoticeShort": "AvdheshanandG Mission only displays these books and their external purchase links. Sales and fulfilment are handled solely by the respective seller or marketplace.",
+      "externalSellerNotice": "AvdheshanandG Mission does not sell, fulfill, or distribute these books directly. Any purchase is completed solely with the respective third-party seller, publisher, or marketplace, which remains solely responsible for pricing, availability, shipping, returns, and customer support."
     },
     "podcast": {
       "title": "Podcast",
@@ -663,5 +701,176 @@
         "monthLoadFailed": "Unable to load live monthly Panchang data. Check backend connection."
       }
     }
+  },
+  "appDrawer": {
+    "openMenu": "Open app menu",
+    "eyebrow": "AvdheshanandG Mission",
+    "title": "Mission Guide",
+    "subtitle": "Browse the wider spiritual journey, teachings, legal pages, and service pathways from one place.",
+    "sections": {
+      "browse": "Browse",
+      "mission": "Mission",
+      "policies": "Policies"
+    },
+    "items": {
+      "aboutSwami": "About Swami Ji",
+      "missionTeachings": "Mission & Teachings",
+      "mantraDiksha": "Mantra Diksha",
+      "writeToSwami": "Write to Swami Ji",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    },
+    "footerTitle": "A calmer way to explore",
+    "footerText": "The mobile app now mirrors more of the website's trust and context layer so devotees can understand the mission, not just consume content."
+  },
+  "aboutSwami": {
+    "eyebrow": "Spiritual Legacy",
+    "title": "About Swami Ji",
+    "subtitle": "A life rooted in tapasya, lineage, service, and compassionate spiritual leadership.",
+    "heroTitle": "A modern spiritual guide anchored in an ancient tradition",
+    "heroText": "Swami Avdheshanand Giri Ji Maharaj represents a living continuity of Vedantic wisdom, disciplined sadhana, and selfless service. His journey unites renunciation, scriptural depth, and active care for society.",
+    "biographyTitle": "Life Journey",
+    "biographySubtitle": "Key moments that shaped his spiritual path and responsibility toward the world.",
+    "milestones": {
+      "early": {
+        "title": "Early Spiritual Inclination",
+        "description": "From a young age, Swami Ji displayed unusual inwardness, discipline, and attraction toward spiritual life."
+      },
+      "himalaya": {
+        "title": "Journey to the Himalayas",
+        "description": "He embraced tapasya, contemplation, and scriptural study in search of truth beyond worldly comfort."
+      },
+      "lineage": {
+        "title": "Sannyas and Lineage",
+        "description": "He received Sannyas Diksha within the sacred Juna Akhara tradition and emerged as a respected spiritual leader."
+      },
+      "global": {
+        "title": "Global Spiritual Leadership",
+        "description": "Today he continues to guide seekers in India and abroad through wisdom, compassion, and grounded action."
+      }
+    },
+    "recognitionsTitle": "Recognitions & Influence",
+    "recognitionsSubtitle": "A few markers of the wider respect Swami Ji has earned across spiritual and public life.",
+    "recognitions": {
+      "one": "Recognized globally for advancing Sanatan Dharma with clarity and compassion.",
+      "two": "Honoured for contributions to spiritual literature, discourse, and public thought.",
+      "three": "Respected across Akharas, institutions, and communities for principled leadership.",
+      "four": "Known for integrating scriptural wisdom with seva, education, and social upliftment."
+    },
+    "thoughtsTitle": "Guiding Thoughts",
+    "thoughtsSubtitle": "Themes that return again and again in Swami Ji's message to seekers.",
+    "thoughts": {
+      "one": "We are like waves longing to merge back into the ocean of the Divine.",
+      "two": "Discipline, restraint, and humility open the way to genuine peace.",
+      "three": "Through seva, remembrance, and right living, the divine becomes visible in all."
+    },
+    "cta": "Write to Swami Ji"
+  },
+  "missionScreen": {
+    "eyebrow": "Mission",
+    "title": "Mission & Teachings",
+    "subtitle": "A wider look at the vision, values, and service-oriented expression of the mission.",
+    "teachingsTitle": "Teaching Direction",
+    "teachingsSubtitle": "How the mission translates wisdom into lived guidance.",
+    "teachings": {
+      "one": {
+        "title": "Vedantic Insight",
+        "description": "Teachings return to oneness, self-awareness, disciplined living, and devotion rooted in direct experience."
+      },
+      "two": {
+        "title": "Meditative Practice",
+        "description": "Silence, mantra, prayer, and contemplative discipline are offered as practical ways to deepen inner life."
+      },
+      "three": {
+        "title": "Seva & Responsibility",
+        "description": "The mission treats selfless service as a natural expression of spiritual maturity and compassion."
+      }
+    },
+    "initiativesTitle": "Initiatives",
+    "initiativesSubtitle": "Work that carries the mission into society.",
+    "initiatives": {
+      "one": "Spiritual discourses, satsang, and guidance for seekers across age groups.",
+      "two": "Social upliftment through educational, humanitarian, and community-facing outreach.",
+      "three": "Support for values-based living through books, media, and spiritual programming.",
+      "four": "Encouragement of ecological awareness, dharmic culture, and compassionate service."
+    },
+    "presenceTitle": "Global Presence",
+    "presenceSubtitle": "The mission's presence continues to reach devotees through travel, programs, and digital platforms.",
+    "presence": {
+      "one": "Major ashram activity centered around Haridwar and connected spiritual locations.",
+      "two": "Regular outreach through events, talks, and media that reach devotees across India.",
+      "three": "A growing digital presence through articles, books, videos, live sessions, and mission updates."
+    }
+  },
+  "legal": {
+    "policyEyebrow": "Policy",
+    "lastUpdated": "Last updated: April 4, 2026",
+    "effectiveDate": "Effective date: April 4, 2026",
+    "privacy": {
+      "title": "Privacy Policy",
+      "subtitle": "How platform information is collected, protected, and used across the mission's digital products.",
+      "sections": {
+        "collect": {
+          "title": "Information We Collect",
+          "body": "We collect information you provide directly, including contact details, registrations, volunteer submissions, and donation details required to process your requests securely."
+        },
+        "use": {
+          "title": "How We Use Information",
+          "body": "We use your information to manage services, communicate updates, improve user experience, support mission operations, and maintain safety and fraud prevention controls."
+        },
+        "share": {
+          "title": "Data Sharing",
+          "body": "We do not sell personal information. Limited information may be shared with trusted providers for secure hosting, communications, payments, or analytics under appropriate safeguards."
+        },
+        "choices": {
+          "title": "Your Choices",
+          "body": "You may request correction or deletion of personal data where legally permitted. For such requests, please contact the mission through the platform."
+        }
+      }
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "subtitle": "The operating terms and responsibilities for using AvdheshanandG Mission's digital platforms.",
+      "sections": {
+        "use": {
+          "title": "Use of Platform",
+          "body": "By using the platform, you agree to use it lawfully, respectfully, and without attempting misuse, harmful disruption, or unauthorized access."
+        },
+        "content": {
+          "title": "Content and Availability",
+          "body": "We work to keep information accurate and services available, though features may evolve, pause, or change during maintenance or operational updates."
+        },
+        "donations": {
+          "title": "Donations and Registrations",
+          "body": "Donation processing, registrations, and some connected services may involve third-party providers. Users are responsible for submitting accurate information and reviewing details before completion."
+        },
+        "liability": {
+          "title": "Limitation of Liability",
+          "body": "To the extent permitted by law, the platform is provided as-is without guarantees of uninterrupted availability, and liability is limited for indirect or consequential loss."
+        }
+      }
+    }
+  },
+  "mantraDikshaScreen": {
+    "eyebrow": "Sacred Path",
+    "title": "Mantra Diksha Registration",
+    "subtitle": "Understand the significance of the process and begin your registration guidance through the Ashram office.",
+    "introTitle": "A sacred commitment, not a casual form",
+    "introText": "Mantra Diksha is approached with reverence, preparedness, and inner sincerity. This screen is the beginning of your registration journey so the Ashram team can guide you appropriately.",
+    "readinessTitle": "Before You Begin",
+    "readinessSubtitle": "A few expectations devotees should keep in heart before proceeding.",
+    "readiness": {
+      "one": "Approach the process with faith, humility, and seriousness of intention.",
+      "two": "Be prepared to share identity details and supporting documents as required.",
+      "three": "The final process may involve scheduling, review, and guidance from the Ashram side.",
+      "four": "This path is meant for sincere seekers who are ready for discipline and practice."
+    },
+    "registrationTitle": "Registration Guidance",
+    "registrationSubtitle": "How the mobile journey works right now.",
+    "registrationText": "The Ashram office will help guide the full registration process, document requirements, and next steps. Use the button below to start the conversation and receive direction for the formal application.",
+    "cta": "Start Registration Guidance",
+    "contactTitle": "Mantra Diksha Registration",
+    "contactSubtitle": "Share your intention to begin the Mantra Diksha registration process. The Ashram office will guide the required steps and documentation.",
+    "contactPlaceholder": "Please share your intention, background, and any relevant details for Mantra Diksha registration..."
   }
 }

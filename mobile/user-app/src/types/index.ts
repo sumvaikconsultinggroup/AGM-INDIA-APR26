@@ -28,6 +28,8 @@ export interface Book {
   description?: string;
   price: number;
   coverImage?: string;
+  purchaseUrl?: string;
+  ISBN?: string;
   isbn?: string;
   pages?: number;
   language?: string;

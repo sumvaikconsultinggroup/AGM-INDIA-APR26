@@ -108,6 +108,7 @@ export default function EditBookPage() {
     language: book.language,
     ISBN: book.ISBN,
     description: book.description,
+    purchaseUrl: book.purchaseUrl || '',
     coverImage: book.coverImage,
     pages: book.pages,
     price: book.price,

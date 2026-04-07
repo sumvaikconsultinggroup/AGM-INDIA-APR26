@@ -1,0 +1,115 @@
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import { borderRadius, colors, shadows, spacing, typography } from '../../theme';
+
+interface ScreenHeaderProps {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  icon?: React.ComponentProps<typeof Icon>['name'];
+  compact?: boolean;
+  rightActionIcon?: React.ComponentProps<typeof Icon>['name'];
+  onRightActionPress?: () => void;
+  rightActionLabel?: string;
+}
+
+export function ScreenHeader({
+  eyebrow,
+  title,
+  subtitle,
+  icon = 'brightness-5',
+  compact = false,
+  rightActionIcon,
+  onRightActionPress,
+  rightActionLabel,
+}: ScreenHeaderProps) {
+  return (
+    <LinearGradient
+      colors={[colors.primary.saffron, colors.primary.maroon]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.wrap, compact && styles.compact]}
+    >
+      <View style={styles.topRow}>
+        <View style={styles.iconSeal}>
+          <Icon name={icon} size={compact ? 20 : 24} color={colors.gold.light} />
+        </View>
+        {rightActionIcon && onRightActionPress ? (
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={onRightActionPress}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={rightActionLabel}
+          >
+            <Icon name={rightActionIcon} size={18} color={colors.text.white} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+      {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
+      <Text style={[styles.title, compact && styles.compactTitle]}>{title}</Text>
+      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+    </LinearGradient>
+  );
+}
+
+const styles = StyleSheet.create({
+  wrap: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    borderRadius: 28,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
+    ...shadows.temple,
+  },
+  compact: {
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing.lg,
+  },
+  iconSeal: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  actionButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eyebrow: {
+    ...typography.label,
+    color: 'rgba(255,255,255,0.82)',
+    marginBottom: spacing.sm,
+  },
+  title: {
+    ...typography.h1,
+    color: colors.text.white,
+  },
+  compactTitle: {
+    fontSize: 24,
+    lineHeight: 30,
+  },
+  subtitle: {
+    ...typography.body,
+    color: 'rgba(255,255,255,0.88)',
+    marginTop: spacing.sm,
+  },
+});

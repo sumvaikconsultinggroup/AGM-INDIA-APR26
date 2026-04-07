@@ -19,8 +19,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { WebView } from 'react-native-webview';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useAppShell } from '../../context/AppShellContext';
 import api from '../../services/api';
-import { colors, spacing, borderRadius, shadows } from '../../theme';
+import { colors, spacing, borderRadius, shadows, typography } from '../../theme';
+import { AppButton, ScreenHeader, SectionHeader, SurfaceCard } from '../../components/common';
 
 const { width } = Dimensions.get('window');
 type LocalizedText = Record<string, string | undefined>;
@@ -218,6 +220,7 @@ function buildCheckoutHtml({
 
 export function DonateScreen() {
   const { t, i18n } = useTranslation();
+  const { openDrawer } = useAppShell();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [recentDonations, setRecentDonations] = useState<RecentDonation[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
@@ -426,16 +429,15 @@ export function DonateScreen() {
           />
         }
       >
-        <LinearGradient
-          colors={[colors.primary.saffron, colors.primary.maroon]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
-        >
-          <Icon name="hand-heart" size={42} color={colors.gold.light} />
-          <Text style={styles.headerTitle}>{t('donate.supportMission')}</Text>
-          <Text style={styles.headerSubtitle}>{t('donate.supportMissionSubtitle')}</Text>
-        </LinearGradient>
+        <ScreenHeader
+          eyebrow={t('home.donationSpotlight')}
+          title={t('donate.supportMission')}
+          subtitle={t('donate.supportMissionSubtitle')}
+          icon="hand-heart"
+          rightActionIcon="menu"
+          onRightActionPress={openDrawer}
+          rightActionLabel={t('appDrawer.openMenu')}
+        />
 
         {recentDonations.length > 0 && (
           <ScrollView
@@ -496,17 +498,7 @@ export function DonateScreen() {
                   <Text style={styles.successValue}>{successState.paymentId}</Text>
                 </View>
               </View>
-              <TouchableOpacity style={styles.primaryButton} onPress={handleShare}>
-                <LinearGradient
-                  colors={[colors.gold.main, colors.gold.dark]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.primaryButtonGradient}
-                >
-                  <Icon name="share-variant" size={18} color={colors.text.white} />
-                  <Text style={styles.primaryButtonText}>{t('donate.success.share')}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
+              <AppButton label={t('donate.success.share')} onPress={handleShare} icon="share-variant" />
             </View>
           ) : (
             <>
@@ -532,7 +524,11 @@ export function DonateScreen() {
                 ))}
               </View>
 
-              <Text style={styles.sectionTitle}>{t('donate.formTitle')}</Text>
+              <SectionHeader
+                title={t('donate.formTitle')}
+                subtitle={mode === 'subscription' ? t('donate.monthly') : t('donate.oneTime')}
+                icon={mode === 'subscription' ? 'repeat' : 'gift-outline'}
+              />
 
               <View style={styles.formGrid}>
                 <TextInput
@@ -661,37 +657,26 @@ export function DonateScreen() {
 
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-              <TouchableOpacity style={styles.primaryButton} onPress={handleCheckout} disabled={submitting}>
-                <LinearGradient
-                  colors={[colors.gold.main, colors.gold.dark]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.primaryButtonGradient}
-                >
-                  {submitting ? (
-                    <ActivityIndicator color={colors.text.white} />
-                  ) : (
-                    <>
-                      <Icon
-                        name={mode === 'subscription' ? 'repeat' : 'gift'}
-                        size={20}
-                        color={colors.text.white}
-                      />
-                      <Text style={styles.primaryButtonText}>
-                        {mode === 'subscription'
-                          ? t('donate.monthlyButton', { amount: formatCurrency(form.amount) })
-                          : t('donate.payButton', { amount: formatCurrency(form.amount) })}
-                      </Text>
-                    </>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
+              <AppButton
+                label={
+                  mode === 'subscription'
+                    ? t('donate.monthlyButton', { amount: formatCurrency(form.amount) })
+                    : t('donate.payButton', { amount: formatCurrency(form.amount) })
+                }
+                onPress={handleCheckout}
+                loading={submitting}
+                icon={mode === 'subscription' ? 'repeat' : 'gift'}
+              />
             </>
           )}
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('donate.activeCampaigns')}</Text>
+          <SectionHeader
+            title={t('donate.activeCampaigns')}
+            subtitle={t('donate.supportMissionSubtitle')}
+            icon="bullseye-arrow"
+          />
           {campaigns.map((campaign) => {
             const progress = calculateProgress(campaign);
             const daysLeft = calculateDaysLeft(campaign);
@@ -770,16 +755,16 @@ export function DonateScreen() {
         </View>
 
         <View style={styles.infoSection}>
-          <View style={styles.infoCard}>
+          <SurfaceCard compact style={styles.infoCard}>
             <Icon name="shield-check" size={22} color={colors.gold.dark} />
             <Text style={styles.infoTitle}>{t('donate.secureCheckoutTitle')}</Text>
             <Text style={styles.infoSubtitle}>{t('donate.secureCheckoutSubtitle')}</Text>
-          </View>
-          <View style={styles.infoCard}>
+          </SurfaceCard>
+          <SurfaceCard compact style={styles.infoCard}>
             <Icon name="file-certificate" size={22} color={colors.gold.dark} />
             <Text style={styles.infoTitle}>{t('donate.taxBenefitsTitle')}</Text>
             <Text style={styles.infoSubtitle}>{t('donate.taxBenefitsSubtitle')}</Text>
-          </View>
+          </SurfaceCard>
         </View>
 
         <View style={{ height: spacing.xxl }} />
@@ -828,26 +813,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: spacing.md,
     color: colors.text.secondary,
-  },
-  header: {
-    paddingTop: spacing.xxl,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    marginTop: spacing.md,
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.text.white,
-    textAlign: 'center',
-  },
-  headerSubtitle: {
-    marginTop: spacing.sm,
-    fontSize: 15,
-    lineHeight: 22,
-    color: 'rgba(255,255,255,0.9)',
-    textAlign: 'center',
+    ...typography.bodySm,
   },
   socialProofRow: {
     paddingHorizontal: spacing.lg,
@@ -867,7 +833,7 @@ const styles = StyleSheet.create({
   },
   socialProofText: {
     maxWidth: width * 0.7,
-    fontSize: 12,
+    ...typography.bodySm,
     color: colors.text.primary,
   },
   section: {
@@ -897,6 +863,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary.maroon,
   },
   toggleText: {
+    ...typography.bodySm,
     color: colors.text.primary,
     fontWeight: '600',
   },
@@ -923,6 +890,7 @@ const styles = StyleSheet.create({
     borderColor: colors.gold.main,
   },
   quickAmountText: {
+    ...typography.bodySm,
     color: colors.text.primary,
     fontWeight: '600',
   },
@@ -930,8 +898,7 @@ const styles = StyleSheet.create({
     color: colors.primary.maroon,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...typography.h3,
     color: colors.text.primary,
     marginBottom: spacing.md,
   },
@@ -945,7 +912,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.parchment,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    fontSize: 14,
+    ...typography.body,
     color: colors.text.primary,
     marginBottom: spacing.sm,
   },
@@ -962,8 +929,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border.gold as string,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...typography.title,
     color: colors.text.primary,
     marginBottom: spacing.sm,
   },
@@ -985,9 +951,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary.maroon,
   },
   dedicationOptionText: {
+    ...typography.bodySm,
     color: colors.text.primary,
     fontWeight: '600',
-    fontSize: 12,
   },
   dedicationOptionTextActive: {
     color: colors.text.white,
@@ -1009,37 +975,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   preferenceTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+    ...typography.title,
     color: colors.text.primary,
   },
   preferenceSubtitle: {
     marginTop: 2,
-    fontSize: 12,
+    ...typography.bodySm,
     color: colors.text.secondary,
   },
   errorText: {
     marginTop: spacing.md,
     color: colors.status.error,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  primaryButton: {
-    marginTop: spacing.lg,
-    borderRadius: borderRadius.xl,
-    overflow: 'hidden',
-  },
-  primaryButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-  },
-  primaryButtonText: {
-    color: colors.text.white,
-    fontSize: 15,
-    fontWeight: '700',
+    ...typography.bodySm,
   },
   successCard: {
     borderRadius: borderRadius.xl,
@@ -1051,14 +998,12 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     marginTop: spacing.sm,
-    fontSize: 22,
-    fontWeight: '800',
+    ...typography.h2,
     color: colors.text.primary,
   },
   successSubtitle: {
     marginTop: spacing.sm,
-    fontSize: 14,
-    lineHeight: 21,
+    ...typography.body,
     color: colors.text.secondary,
     textAlign: 'center',
   },
@@ -1077,14 +1022,14 @@ const styles = StyleSheet.create({
   },
   successLabel: {
     color: colors.text.secondary,
-    fontSize: 13,
+    ...typography.bodySm,
   },
   successValue: {
+    ...typography.bodySm,
     flex: 1,
     textAlign: 'right',
     color: colors.text.primary,
     fontWeight: '700',
-    fontSize: 13,
   },
   campaignCard: {
     marginBottom: spacing.lg,
@@ -1121,7 +1066,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   progressBadgeText: {
-    fontSize: 11,
+    ...typography.caption,
     fontWeight: '700',
     color: colors.primary.maroon,
   },
@@ -1132,19 +1077,17 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   daysBadgeText: {
-    fontSize: 11,
+    ...typography.caption,
     fontWeight: '700',
     color: colors.text.white,
   },
   campaignTitle: {
-    fontSize: 24,
-    fontWeight: '800',
+    ...typography.h1,
     color: colors.text.white,
   },
   campaignSubtitle: {
     marginTop: spacing.xs,
-    fontSize: 13,
-    lineHeight: 18,
+    ...typography.bodySm,
     color: 'rgba(255,255,255,0.88)',
   },
   campaignBody: {
@@ -1152,8 +1095,7 @@ const styles = StyleSheet.create({
   },
   campaignDescription: {
     color: colors.text.secondary,
-    lineHeight: 20,
-    fontSize: 13,
+    ...typography.bodySm,
   },
   progressBar: {
     marginTop: spacing.md,
@@ -1174,7 +1116,7 @@ const styles = StyleSheet.create({
   },
   progressStat: {
     flex: 1,
-    fontSize: 12,
+    ...typography.caption,
     color: colors.text.secondary,
   },
   campaignFooter: {

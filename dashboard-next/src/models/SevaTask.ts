@@ -16,6 +16,8 @@ export interface ISevaTask extends Document {
   createdById?: string;
   createdByName?: string;
   completionNotes?: string;
+  assignmentNotifiedAt?: Date;
+  dueReminderSentAt?: Date;
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -91,6 +93,12 @@ const SevaTaskSchema = new Schema<ISevaTask>(
       type: String,
       trim: true,
       default: '',
+    },
+    assignmentNotifiedAt: {
+      type: Date,
+    },
+    dueReminderSentAt: {
+      type: Date,
     },
     isDeleted: {
       type: Boolean,

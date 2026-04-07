@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import SevaTask from '@/models/SevaTask';
+import { notifyAdminSevaTaskAssigned } from '@/lib/adminTaskNotifications';
 
 export async function GET(req: NextRequest) {
   try {
@@ -50,6 +51,23 @@ export async function POST(req: NextRequest) {
       createdById: body.createdById,
       createdByName: body.createdByName,
     });
+
+    if (task.assignedToId || task.assignedToName) {
+      try {
+        await notifyAdminSevaTaskAssigned({
+          assignedToId: task.assignedToId,
+          assignedToName: task.assignedToName,
+          taskId: String(task._id),
+          taskTitle: task.title,
+          dueDate: task.dueDate,
+          priority: task.priority,
+          city: task.city,
+        });
+        await SevaTaskModel.updateOne({ _id: task._id }, { $set: { assignmentNotifiedAt: new Date() } });
+      } catch (notificationError) {
+        console.error('Error sending seva task assignment notification:', notificationError);
+      }
+    }
 
     return NextResponse.json({
       success: true,

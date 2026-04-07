@@ -31,6 +31,7 @@ interface BookFormProps {
     ISBN?: string;
     description?: string;
     coverImage?: string;
+    purchaseUrl?: string;
     pages?: number;
     price?: number;
     stock?: {
@@ -49,6 +50,7 @@ interface BookFormData {
   language: string;
   ISBN: string;
   description: string;
+  purchaseUrl: string;
   coverImage?: FileList;
   pages: number;
   price: number;
@@ -92,6 +94,7 @@ export function BookForm({ initialData }: BookFormProps) {
       language: initialData?.language || 'English',
       ISBN: initialData?.ISBN || '',
       description: initialData?.description || '',
+      purchaseUrl: initialData?.purchaseUrl || '',
       pages: initialData?.pages || 0,
       price: initialData?.price || 0,
       stockIn: initialData?.stock?.stockIn || 0,
@@ -127,6 +130,7 @@ export function BookForm({ initialData }: BookFormProps) {
       formData.append('language', data.language);
       formData.append('ISBN', data.ISBN);
       formData.append('description', data.description);
+      formData.append('purchaseUrl', data.purchaseUrl || '');
       formData.append('pages', data.pages.toString());
       formData.append('price', data.price.toString()); // Add price to form data
       
@@ -359,6 +363,28 @@ export function BookForm({ initialData }: BookFormProps) {
                 />
                 {errors.price && (
                   <p className="text-sm text-red-500">{errors.price.message}</p>
+                )}
+              </div>
+
+              <div className="grid gap-3">
+                <Label htmlFor="purchaseUrl">Buy Link</Label>
+                <Input
+                  id="purchaseUrl"
+                  type="url"
+                  placeholder="https://www.amazon.in/..."
+                  {...register('purchaseUrl', {
+                    validate: (value) =>
+                      !value ||
+                      /^https?:\/\/.+/i.test(value) ||
+                      'Buy link must start with http:// or https://',
+                  })}
+                  aria-invalid={errors.purchaseUrl ? 'true' : 'false'}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Add the marketplace or publisher URL where this book can be purchased. AvdheshanandG Mission only displays this external link and is not the seller.
+                </p>
+                {errors.purchaseUrl && (
+                  <p className="text-sm text-red-500">{errors.purchaseUrl.message}</p>
                 )}
               </div>
             </div>

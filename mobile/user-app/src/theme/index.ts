@@ -46,6 +46,74 @@ export const fonts = {
   // Will be replaced with custom spiritual fonts
 };
 
+export const typography = {
+  display: {
+    fontFamily: fonts.bold,
+    fontSize: 34,
+    lineHeight: 40,
+    fontWeight: '800' as const,
+    letterSpacing: -0.8,
+  },
+  h1: {
+    fontFamily: fonts.bold,
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '800' as const,
+    letterSpacing: -0.4,
+  },
+  h2: {
+    fontFamily: fonts.bold,
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '700' as const,
+    letterSpacing: -0.2,
+  },
+  h3: {
+    fontFamily: fonts.bold,
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '700' as const,
+  },
+  title: {
+    fontFamily: fonts.medium,
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '700' as const,
+  },
+  body: {
+    fontFamily: fonts.regular,
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '400' as const,
+  },
+  bodySm: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '400' as const,
+  },
+  label: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700' as const,
+    letterSpacing: 0.7,
+    textTransform: 'uppercase' as const,
+  },
+  button: {
+    fontFamily: fonts.medium,
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '700' as const,
+  },
+  caption: {
+    fontFamily: fonts.regular,
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '500' as const,
+  },
+};
+
 export const spacing = {
   xs: 4,
   sm: 8,

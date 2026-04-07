@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { BookOpen, Loader2, Mail, ShoppingCart, Star } from 'lucide-react';
+import { BookOpen, ExternalLink, Loader2, Star } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../lib/api';
@@ -54,6 +54,8 @@ interface Book {
   price?: string | number;
   rating?: number;
   category?: string;
+  genre?: string;
+  purchaseUrl?: string;
 }
 
 export default function BooksPage() {
@@ -94,11 +96,6 @@ export default function BooksPage() {
 
   const visibleBooks = filteredBooks.slice(0, visibleCount);
   const canLoadMore = visibleCount < filteredBooks.length;
-
-  const buildBookInquiryMailto = (title: string) => {
-    const subject = encodeURIComponent(`Book enquiry: ${title}`);
-    return `mailto:office@avdheshanandg.org?subject=${subject}`;
-  };
 
   const formatPrice = (price?: string | number) => {
     if (!price) return '₹0';
@@ -178,7 +175,7 @@ export default function BooksPage() {
                       className="object-cover transition-transform duration-500 hover:scale-[1.03]"
                     />
                     <div className="absolute left-4 top-4 rounded-full bg-spiritual-maroon/88 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white">
-                      {book.category || 'Book'}
+                      {book.category || book.genre || 'Book'}
                     </div>
                   </div>
 
@@ -205,10 +202,21 @@ export default function BooksPage() {
 
                     <div className="mt-6 flex items-center justify-between gap-3">
                       <span className="font-display text-2xl text-gradient-gold">{formatPrice(book.price)}</span>
-                      <a href={buildBookInquiryMailto(book.title)} className="btn-primary px-4 py-2.5 text-sm">
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        Enquire
-                      </a>
+                      {book.purchaseUrl ? (
+                        <a
+                          href={book.purchaseUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn-primary px-4 py-2.5 text-sm"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          {t('buyNow')}
+                        </a>
+                      ) : (
+                        <span className="rounded-full border border-[rgba(122,86,26,0.16)] px-4 py-2.5 text-sm font-medium text-spiritual-warmGray">
+                          {t('linkUnavailable')}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </motion.article>
@@ -232,9 +240,14 @@ export default function BooksPage() {
 
       <section className="section-padding bg-temple-warm">
         <div className="container-custom max-w-3xl">
+          <div className="mb-8 rounded-[24px] border border-[rgba(122,86,26,0.14)] bg-white/92 p-5 text-center shadow-[0_16px_40px_rgba(60,34,12,0.06)]">
+            <p className="text-sm leading-relaxed text-spiritual-warmGray md:text-base">
+              {t('externalDisclaimer')}
+            </p>
+          </div>
           <div className="rounded-[30px] border border-[rgba(122,86,26,0.12)] bg-white/90 p-8 text-center shadow-[0_20px_48px_rgba(60,34,12,0.08)] md:p-10">
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#f3d894,#b57b1d)] text-white shadow-[0_14px_34px_rgba(181,123,29,0.26)]">
-              <Mail className="h-8 w-8" />
+              <BookOpen className="h-8 w-8" />
             </div>
             <h3 className="font-display text-3xl text-spiritual-maroon">Reading as inner transformation</h3>
             <p className="mt-4 font-spiritual text-2xl leading-relaxed text-spiritual-maroon">

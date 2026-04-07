@@ -2,17 +2,16 @@ import React from 'react';
 import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, View, ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { useAuth } from '../context/AuthContext';
-import { usePermissions } from '../context/PermissionContext';
-import type { ModuleId } from '../context/PermissionContext';
-import { colors, spacing, borderRadius } from '../theme';
+import { colors } from '../theme';
 import { useI18n } from '../i18n/I18nProvider';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
+import { MoreScreen } from '../screens/more/MoreScreen';
 import { UsersScreen } from '../screens/users/UsersScreen';
 import { EventsScreen } from '../screens/events/EventsScreen';
 import { DonationsScreen } from '../screens/donations/DonationsScreen';
@@ -43,7 +42,7 @@ const linking: LinkingOptions<any> = {
           Dashboard: '',
           Events: 'events',
           Donations: 'donations',
-          Content: 'content',
+          SmartNotes: 'smart-notes',
           More: 'more',
         },
       },
@@ -70,150 +69,12 @@ function TabIcon({ label, focused, color }: { label: string; focused: boolean; c
   const icons: Record<string, React.ComponentProps<typeof Icon>['name']> = {
     Dashboard: 'view-dashboard',
     Events: 'calendar-month',
-    Content: 'text-box-multiple',
     Donations: 'hand-heart',
+    SmartNotes: 'note-text-outline',
     More: 'apps',
   };
   return <Icon name={icons[label] || 'circle'} size={focused ? 23 : 21} color={color} />;
 }
-
-// Icon mapping for More screen items (enterprise-grade, no emojis)
-const MODULE_ICONS: Record<string, React.ComponentProps<typeof Icon>['name']> = {
-  ScheduleStack: 'calendar-clock',
-  AppointmentInboxStack: 'clipboard-list-outline',
-  ArticlesStack: 'newspaper-variant-outline',
-  VideosStack: 'video-outline',
-  PodcastsStack: 'microphone-outline',
-  BooksStack: 'book-open-page-variant-outline',
-  RoomsStack: 'door-open',
-  UsersStack: 'account-group-outline',
-  VolunteersStack: 'hand-heart-outline',
-  MessagesStack: 'message-text-outline',
-  BroadcasterStack: 'bullhorn-outline',
-  MantraDikshaStack: 'meditation',
-  SevaBoardStack: 'clipboard-check-outline',
-  SmartNotesStack: 'note-text-outline',
-  TeamStack: 'shield-account-outline',
-};
-
-// Module ID mapping for permission checks
-const SCREEN_TO_MODULE: Record<string, ModuleId> = {
-  ScheduleStack: 'schedule',
-  AppointmentInboxStack: 'schedule',
-  ArticlesStack: 'articles',
-  VideosStack: 'videos',
-  PodcastsStack: 'podcasts',
-  BooksStack: 'books',
-  RoomsStack: 'rooms',
-  UsersStack: 'users',
-  VolunteersStack: 'volunteers',
-  MessagesStack: 'messages',
-  BroadcasterStack: 'notifications',
-  MantraDikshaStack: 'mantraDiksha',
-  SevaBoardStack: 'sevaBoard',
-  SmartNotesStack: 'smartNotes',
-  TeamStack: 'users',
-};
-
-// "More" screen — grid of all remaining admin sections (RBAC-filtered)
-function MoreScreen({ navigation }: any) {
-  const { t } = useI18n();
-  const { canAccessModule, role } = usePermissions();
-
-  const allItems = [
-    { label: t('tabs.schedule'), screen: 'ScheduleStack' },
-    { label: t('admin.appointments'), screen: 'AppointmentInboxStack' },
-    { label: t('admin.articles'), screen: 'ArticlesStack' },
-    { label: t('admin.videos'), screen: 'VideosStack' },
-    { label: t('admin.podcasts'), screen: 'PodcastsStack' },
-    { label: t('admin.books'), screen: 'BooksStack' },
-    { label: t('admin.rooms'), screen: 'RoomsStack' },
-    { label: t('admin.users'), screen: 'UsersStack' },
-    { label: t('admin.volunteers'), screen: 'VolunteersStack' },
-    { label: t('admin.prayerInbox'), screen: 'MessagesStack' },
-    { label: t('admin.broadcaster'), screen: 'BroadcasterStack' },
-    { label: t('admin.mantraDiksha'), screen: 'MantraDikshaStack' },
-    { label: t('admin.sevaBoard'), screen: 'SevaBoardStack' },
-    { label: t('admin.smartNotes'), screen: 'SmartNotesStack' },
-    { label: 'Team', screen: 'TeamStack' },
-  ];
-
-  // Filter items based on RBAC permissions
-  const items = allItems.filter(item => {
-    const moduleId = SCREEN_TO_MODULE[item.screen];
-    return moduleId ? canAccessModule(moduleId) : true;
-  });
-
-  return (
-    <ScrollView style={moreStyles.container} contentContainerStyle={moreStyles.content}>
-      <View style={moreStyles.header}>
-        <Text style={moreStyles.title}>{t('admin.allSections')}</Text>
-        <View style={moreStyles.roleBadge}>
-          <Text style={moreStyles.roleBadgeText}>{role.toUpperCase()}</Text>
-        </View>
-      </View>
-      <View style={moreStyles.grid}>
-        {items.map((item) => (
-          <TouchableOpacity
-            key={item.label}
-            style={moreStyles.card}
-            onPress={() => navigation.navigate(item.screen)}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={t('admin.openSection', { section: item.label })}
-          >
-            <Icon
-              name={MODULE_ICONS[item.screen] || 'circle-outline'}
-              size={28}
-              color={colors.primary.saffron}
-              style={{ marginBottom: spacing.xs }}
-            />
-            <Text style={moreStyles.cardLabel}>{item.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      {items.length === 0 && (
-        <View style={moreStyles.emptyState}>
-          <Icon name="lock-outline" size={48} color={colors.text.secondary} />
-          <Text style={moreStyles.emptyText}>No additional sections available for your role.</Text>
-        </View>
-      )}
-    </ScrollView>
-  );
-}
-
-const moreStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background.parchment },
-  content: { padding: spacing.lg },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg },
-  title: { fontSize: 22, fontWeight: '700', color: colors.primary.maroon },
-  roleBadge: {
-    backgroundColor: colors.primary.saffron,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-  },
-  roleBadgeText: { fontSize: 10, fontWeight: '700', color: '#fff', letterSpacing: 1 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
-  card: {
-    width: '30%',
-    aspectRatio: 1,
-    backgroundColor: colors.background.warmWhite,
-    borderRadius: borderRadius.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border.gold as string,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-  },
-  cardLabel: { fontSize: 12, fontWeight: '600', color: colors.text.primary, textAlign: 'center' },
-  emptyState: { alignItems: 'center', marginTop: spacing.xxl },
-  emptyText: { fontSize: 14, color: colors.text.secondary, marginTop: spacing.md, textAlign: 'center' },
-});
 
 // Wrap each screen in its own stack for proper header
 function makeStack(name: string, Component: React.ComponentType<any>, titleKey: string) {
@@ -264,20 +125,24 @@ function AdminTabs() {
           borderTopWidth: 1,
           paddingBottom: bottomPad,
           paddingTop: 6,
-          height: 56 + bottomPad,
+          height: 62 + bottomPad,
         },
         tabBarIcon: ({ focused, color }) => (
           <TabIcon label={route.name} focused={focused} color={color} />
         ),
         headerStyle: { backgroundColor: colors.background.warmWhite },
         headerTintColor: colors.primary.maroon,
-        headerTitleStyle: { fontWeight: '600' as const },
+        headerTitleStyle: { fontWeight: '700' as const },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+        },
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: t('tabs.dashboard') }} />
       <Tab.Screen name="Events" component={EventsScreen} options={{ title: t('tabs.events') }} />
       <Tab.Screen name="Donations" component={DonationsScreen} options={{ title: t('tabs.donations') }} />
-      <Tab.Screen name="Content" component={ArticlesScreen} options={{ title: t('tabs.content') }} />
+      <Tab.Screen name="SmartNotes" component={SmartNotesScreen} options={{ title: t('admin.smartNotes') }} />
       <Tab.Screen name="More" component={MoreScreen} options={{ title: t('tabs.more'), headerShown: false }} />
     </Tab.Navigator>
   );

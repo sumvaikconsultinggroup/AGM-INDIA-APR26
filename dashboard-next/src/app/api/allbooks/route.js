@@ -83,6 +83,7 @@ export async function POST(req) {
     const language = formData.get('language')?.toString() || '';
     const ISBN = formData.get('ISBN')?.toString() || '';
     const description = formData.get('description')?.toString() || '';
+    const purchaseUrl = formData.get('purchaseUrl')?.toString().trim() || '';
     const pages = Number(formData.get('pages'));
     const price = Number(formData.get('price'));
     const coverImageFile = formData.get('coverImage');
@@ -182,6 +183,7 @@ export async function POST(req) {
       language: language.trim(),
       ISBN,
       description: description.trim(),
+      purchaseUrl: purchaseUrl || undefined,
       pages,
       price,
       coverImage, // This will now be a Cloudinary URL

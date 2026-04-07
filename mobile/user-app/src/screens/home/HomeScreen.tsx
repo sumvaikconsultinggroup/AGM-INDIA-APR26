@@ -16,13 +16,15 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../../services/api';
-import { colors, spacing, borderRadius, shadows } from '../../theme';
+import { useAppShell } from '../../context/AppShellContext';
+import { colors, spacing, borderRadius, shadows, typography } from '../../theme';
 import DailyVicharCard from './DailyVicharCard';
 import PanchangCard from './PanchangCard';
 import LanguageDrawer from '../../components/LanguageDrawer';
+import { EmptyStateCard, ScreenHeader, SectionHeader, SurfaceCard } from '../../components/common';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.72;
+const CARD_WIDTH = width * 0.74;
 
 interface Event {
   _id: string;
@@ -54,6 +56,7 @@ export function HomeScreen() {
   const navigation = useNavigation<any>();
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { openDrawer } = useAppShell();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<Event[]>([]);
@@ -71,11 +74,9 @@ export function HomeScreen() {
 
       setEvents((eventsRes.data || []).slice(0, 5));
       setArticles((articlesRes.data || []).slice(0, 5));
-      
+
       const campaigns = campaignsRes.data || [];
-      if (campaigns.length > 0) {
-        setFeaturedCampaign(campaigns[0]);
-      }
+      setFeaturedCampaign(campaigns.length > 0 ? campaigns[0] : null);
     } catch (error) {
       console.error('Error fetching home data:', error);
     } finally {
@@ -112,7 +113,65 @@ export function HomeScreen() {
     { icon: 'hand-heart' as const, labelKey: 'home.quickLinksItems.volunteer', screen: 'VolunteerForm' },
   ];
 
-  const navigateToQuickLink = (item: typeof quickLinks[0]) => {
+  const pathwayLinks = [
+    {
+      icon: 'account-star-outline' as const,
+      title: t('home.pathways.aboutTitle'),
+      subtitle: t('home.pathways.aboutSubtitle'),
+      onPress: () => navigation.navigate('AboutSwami'),
+    },
+    {
+      icon: 'book-heart-outline' as const,
+      title: t('home.pathways.missionTitle'),
+      subtitle: t('home.pathways.missionSubtitle'),
+      onPress: () => navigation.navigate('Mission'),
+    },
+    {
+      icon: 'om' as const,
+      title: t('home.pathways.dikshaTitle'),
+      subtitle: t('home.pathways.dikshaSubtitle'),
+      onPress: () => navigation.navigate('MantraDiksha'),
+    },
+    {
+      icon: 'email-heart-outline' as const,
+      title: t('home.pathways.writeTitle'),
+      subtitle: t('home.pathways.writeSubtitle'),
+      onPress: () =>
+        navigation.navigate('ContactForm', {
+          prefillSubject: 'Message for Swami Ji',
+          titleOverride: t('appDrawer.items.writeToSwami'),
+          introTitleOverride: t('contact.writeToSwamiTitle'),
+          introTextOverride: t('contact.writeToSwamiSubtitle'),
+          messagePlaceholder: t('contact.placeholders.writeToSwami'),
+        }),
+    },
+  ];
+
+  const teachings = [
+    {
+      icon: 'meditation' as const,
+      title: t('home.teachings.oneTitle'),
+      body: t('home.teachings.oneBody'),
+    },
+    {
+      icon: 'book-open-page-variant-outline' as const,
+      title: t('home.teachings.twoTitle'),
+      body: t('home.teachings.twoBody'),
+    },
+    {
+      icon: 'hand-heart-outline' as const,
+      title: t('home.teachings.threeTitle'),
+      body: t('home.teachings.threeBody'),
+    },
+  ];
+
+  const initiatives = [
+    t('home.initiatives.one'),
+    t('home.initiatives.two'),
+    t('home.initiatives.three'),
+  ];
+
+  const navigateToQuickLink = (item: (typeof quickLinks)[0]) => {
     if (item.tab) {
       navigation.navigate(item.tab);
     } else if (item.category) {
@@ -144,154 +203,177 @@ export function HomeScreen() {
         />
       }
     >
-      {/* Hero Banner */}
-      <LinearGradient
-        colors={[colors.primary.saffron, colors.primary.maroon]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.heroBanner, { paddingTop: Math.max(insets.top + spacing.lg, spacing.xxl) }]}
-      >
+      <View style={[styles.utilityRow, { paddingTop: Math.max(insets.top + spacing.sm, spacing.lg) }]}>
         <TouchableOpacity
-          style={styles.heroMenuButton}
+          style={styles.menuButton}
+          onPress={openDrawer}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={t('appDrawer.openMenu')}
+        >
+          <Icon name="menu" size={20} color={colors.primary.maroon} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.languageButton}
           onPress={() => setLanguageDrawerVisible(true)}
           activeOpacity={0.85}
           accessibilityRole="button"
           accessibilityLabel={t('profile.language')}
         >
-          <Icon name="menu" size={22} color={colors.text.white} />
+          <Icon name="translate" size={18} color={colors.primary.maroon} />
+          <Text style={styles.languageButtonText}>{t('profile.language')}</Text>
         </TouchableOpacity>
-        <Text style={styles.omSymbol}>ॐ</Text>
-        <Text style={styles.heroGreeting}>{t('home.welcome')}</Text>
-        <Text style={styles.heroQuote}>
-          {t('home.heroQuote')}
-        </Text>
-        <View style={styles.heroDecoration} />
-      </LinearGradient>
+      </View>
 
-      {/* Daily Vichar Card */}
+      <ScreenHeader
+        eyebrow={t('home.dailyVicharLabel')}
+        title={t('home.welcome')}
+        subtitle={t('home.heroQuote')}
+        icon="brightness-5"
+        rightActionIcon="menu"
+        onRightActionPress={openDrawer}
+        rightActionLabel={t('appDrawer.openMenu')}
+      />
+
+      <View style={styles.section}>
+        <SectionHeader
+          title={t('home.pathways.title')}
+          subtitle={t('home.pathways.subtitle')}
+          icon="star-four-points"
+        />
+        <View style={styles.pathwaysGrid}>
+          {pathwayLinks.map((item) => (
+            <TouchableOpacity
+              key={item.title}
+              style={styles.pathwayItem}
+              onPress={item.onPress}
+              accessibilityRole="button"
+              accessibilityLabel={item.title}
+            >
+              <SurfaceCard compact style={styles.pathwayCard}>
+                <View style={styles.pathwayIconWrap}>
+                  <Icon name={item.icon} size={22} color={colors.primary.saffron} />
+                </View>
+                <Text style={styles.pathwayTitle}>{item.title}</Text>
+                <Text style={styles.pathwaySubtitle}>{item.subtitle}</Text>
+              </SurfaceCard>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
       <DailyVicharCard />
-
-      {/* Today's Panchang Card */}
       <PanchangCard onPress={() => navigation.navigate('Panchang')} />
 
-      {/* Featured Events Section */}
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('home.upcomingEvents')}</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Schedule')}
-            accessibilityRole="button"
-            accessibilityLabel={t('home.seeAllUpcomingEvents')}
-          >
-            <Text style={styles.seeAll}>{t('home.seeAll')}</Text>
-          </TouchableOpacity>
-        </View>
+        <SectionHeader
+          title={t('home.upcomingEvents')}
+          subtitle={t('schedule.emptyEventsSubtitle')}
+          actionLabel={t('home.seeAll')}
+          onActionPress={() => navigation.navigate('Schedule')}
+          icon="calendar-star"
+        />
         {events.length > 0 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScroll}
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
             {events.map((event) => (
-              <TouchableOpacity 
-                key={event._id} 
+              <TouchableOpacity
+                key={event._id}
                 style={styles.eventCard}
                 onPress={() => navigation.navigate('EventDetail', { eventId: event._id })}
                 accessibilityRole="button"
                 accessibilityLabel={`${event.eventName}, ${formatDate(event.eventDate)}`}
               >
-                <View style={styles.eventImagePlaceholder}>
-                  {event.eventImage ? (
-                    <Image source={{ uri: event.eventImage }} style={styles.eventImage} />
-                  ) : (
-                    <Icon name="calendar-star" size={32} color={colors.gold.main} />
-                  )}
-                </View>
-                <View style={styles.eventContent}>
-                  <Text style={styles.eventName} numberOfLines={2}>
-                    {event.eventName}
-                  </Text>
-                  <View style={styles.eventMeta}>
-                    <Icon name="calendar" size={14} color={colors.text.secondary} />
-                    <Text style={styles.eventDate}>{formatDate(event.eventDate)}</Text>
+                <SurfaceCard compact style={styles.eventCardSurface}>
+                  <View style={styles.eventImagePlaceholder}>
+                    {event.eventImage ? (
+                      <Image source={{ uri: event.eventImage }} style={styles.eventImage} />
+                    ) : (
+                      <Icon name="calendar-star" size={32} color={colors.gold.main} />
+                    )}
                   </View>
-                  {event.eventLocation && (
-                    <View style={styles.eventMeta}>
-                      <Icon name="map-marker" size={14} color={colors.text.secondary} />
-                      <Text style={styles.eventLocation} numberOfLines={1}>
-                        {event.eventLocation}
-                      </Text>
+                  <View style={styles.eventContent}>
+                    <Text style={styles.eventName} numberOfLines={2}>
+                      {event.eventName}
+                    </Text>
+                    <View style={styles.metaRow}>
+                      <Icon name="calendar" size={14} color={colors.text.secondary} />
+                      <Text style={styles.metaText}>{formatDate(event.eventDate)}</Text>
                     </View>
-                  )}
-                </View>
+                    {event.eventLocation ? (
+                      <View style={styles.metaRow}>
+                        <Icon name="map-marker" size={14} color={colors.text.secondary} />
+                        <Text style={styles.metaText} numberOfLines={1}>
+                          {event.eventLocation}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </SurfaceCard>
               </TouchableOpacity>
             ))}
           </ScrollView>
         ) : (
-          <View style={styles.emptyState}>
-            <Icon name="calendar-blank" size={40} color={colors.text.secondary} />
-            <Text style={styles.emptyText}>{t('home.noUpcomingEvents')}</Text>
-          </View>
+          <EmptyStateCard
+            icon="calendar-blank"
+            title={t('home.noUpcomingEvents')}
+            subtitle={t('schedule.emptyEventsSubtitle')}
+          />
         )}
       </View>
 
-      {/* Latest Articles Section */}
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('home.latestArticles')}</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Explore', { category: 'Articles' })}
-            accessibilityRole="button"
-            accessibilityLabel={t('home.seeAllArticles')}
-          >
-            <Text style={styles.seeAll}>{t('home.seeAll')}</Text>
-          </TouchableOpacity>
-        </View>
+        <SectionHeader
+          title={t('home.latestArticles')}
+          subtitle={t('explore.checkBackLater')}
+          actionLabel={t('home.seeAll')}
+          onActionPress={() => navigation.navigate('Explore', { category: 'Articles' })}
+          icon="file-document-outline"
+        />
         {articles.length > 0 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScroll}
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
             {articles.map((article) => (
-              <TouchableOpacity 
-                key={article._id} 
+              <TouchableOpacity
+                key={article._id}
                 style={styles.articleCard}
                 onPress={() => navigation.navigate('ArticleDetail', { articleId: article._id })}
                 accessibilityRole="button"
                 accessibilityLabel={article.title}
               >
-                <View style={styles.articleImagePlaceholder}>
-                  {article.coverImage ? (
-                    <Image source={{ uri: article.coverImage }} style={styles.articleImage} />
-                  ) : (
-                    <Icon name="file-document" size={28} color={colors.gold.main} />
-                  )}
-                </View>
-                <Text style={styles.articleTitle} numberOfLines={2}>
-                  {article.title}
-                </Text>
-                <Text style={styles.articleExcerpt} numberOfLines={2}>
-                  {article.description || ''}
-                </Text>
-                <Text style={styles.articleDate}>{formatDate(article.publishedDate)}</Text>
+                <SurfaceCard compact style={styles.articleCardSurface}>
+                  <View style={styles.articleImagePlaceholder}>
+                    {article.coverImage ? (
+                      <Image source={{ uri: article.coverImage }} style={styles.articleImage} />
+                    ) : (
+                      <Icon name="file-document" size={28} color={colors.gold.main} />
+                    )}
+                  </View>
+                  <Text style={styles.articleTitle} numberOfLines={2}>
+                    {article.title}
+                  </Text>
+                  <Text style={styles.articleExcerpt} numberOfLines={2}>
+                    {article.description || ''}
+                  </Text>
+                  <Text style={styles.articleDate}>{formatDate(article.publishedDate)}</Text>
+                </SurfaceCard>
               </TouchableOpacity>
             ))}
           </ScrollView>
         ) : (
-          <View style={styles.emptyState}>
-            <Icon name="file-document-outline" size={40} color={colors.text.secondary} />
-            <Text style={styles.emptyText}>{t('home.noArticlesAvailable')}</Text>
-          </View>
+          <EmptyStateCard
+            icon="file-document-outline"
+            title={t('home.noArticlesAvailable')}
+            subtitle={t('explore.checkBackLater')}
+          />
         )}
       </View>
 
-      {/* Donation Spotlight */}
-      {featuredCampaign && (
+      {featuredCampaign ? (
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('home.donationSpotlight')}</Text>
-          </View>
+          <SectionHeader
+            title={t('home.donationSpotlight')}
+            subtitle={t('donate.supportMissionSubtitle')}
+            icon="hand-heart"
+          />
           <TouchableOpacity
             style={styles.donationCard}
             onPress={() => navigation.navigate('Donate')}
@@ -308,21 +390,18 @@ export function HomeScreen() {
                 <Icon name="hand-heart" size={24} color={colors.primary.maroon} />
                 <Text style={styles.donationTitle}>{featuredCampaign.title}</Text>
               </View>
-              {featuredCampaign.description && (
+              {featuredCampaign.description ? (
                 <Text style={styles.donationDescription} numberOfLines={2}>
                   {featuredCampaign.description}
                 </Text>
-              )}
+              ) : null}
               <View style={styles.progressContainer}>
                 <View style={styles.progressBar}>
                   <View
                     style={[
                       styles.progressFill,
                       {
-                        width: `${Math.min(
-                          (featuredCampaign.achieved / featuredCampaign.goal) * 100,
-                          100
-                        )}%`,
+                        width: `${Math.min((featuredCampaign.achieved / featuredCampaign.goal) * 100, 100)}%`,
                       },
                     ]}
                   />
@@ -332,7 +411,9 @@ export function HomeScreen() {
                     ₹{featuredCampaign.achieved.toLocaleString('en-IN')}
                   </Text>
                   <Text style={styles.progressGoal}>
-                    of ₹{featuredCampaign.goal.toLocaleString('en-IN')}
+                    {t('donate.goalValue', {
+                      amount: `₹${featuredCampaign.goal.toLocaleString('en-IN')}`,
+                    })}
                   </Text>
                 </View>
               </View>
@@ -343,36 +424,72 @@ export function HomeScreen() {
             </LinearGradient>
           </TouchableOpacity>
         </View>
-      )}
+      ) : null}
 
-      {/* Quick Links */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('home.quickLinks')}</Text>
+        <SectionHeader
+          title={t('home.teachings.title')}
+          subtitle={t('home.teachings.subtitle')}
+          icon="lightbulb-on-outline"
+        />
+        {teachings.map((teaching) => (
+          <SurfaceCard key={teaching.title} compact style={styles.teachingCard}>
+            <View style={styles.teachingTopRow}>
+              <View style={styles.teachingIconWrap}>
+                <Icon name={teaching.icon} size={20} color={colors.primary.saffron} />
+              </View>
+              <Text style={styles.teachingTitle}>{teaching.title}</Text>
+            </View>
+            <Text style={styles.teachingBody}>{teaching.body}</Text>
+          </SurfaceCard>
+        ))}
+      </View>
+
+      <View style={styles.section}>
+        <SectionHeader
+          title={t('home.initiativesTitle')}
+          subtitle={t('home.initiativesSubtitle')}
+          icon="seed-outline"
+        />
+        <SurfaceCard>
+          {initiatives.map((initiative) => (
+            <View key={initiative} style={styles.initiativeRow}>
+              <Icon name="chevron-double-right" size={18} color={colors.gold.dark} />
+              <Text style={styles.initiativeText}>{initiative}</Text>
+            </View>
+          ))}
+        </SurfaceCard>
+      </View>
+
+      <View style={styles.section}>
+        <SectionHeader
+          title={t('home.quickLinks')}
+          subtitle={t('onboarding.welcomeSubtitle')}
+          icon="apps"
+        />
         <View style={styles.quickLinksGrid}>
-          {quickLinks.map((item, index) => (
+          {quickLinks.map((item) => (
             <TouchableOpacity
-              key={index}
+              key={item.labelKey}
               style={styles.quickLinkItem}
               onPress={() => navigateToQuickLink(item)}
               accessibilityRole="button"
               accessibilityLabel={t(item.labelKey)}
             >
-              <View style={styles.quickLinkIcon}>
-                <Icon name={item.icon} size={24} color={colors.primary.saffron} />
-              </View>
-              <Text style={styles.quickLinkLabel}>{t(item.labelKey)}</Text>
+              <SurfaceCard compact style={styles.quickLinkCard}>
+                <View style={styles.quickLinkIcon}>
+                  <Icon name={item.icon} size={24} color={colors.primary.saffron} />
+                </View>
+                <Text style={styles.quickLinkLabel}>{t(item.labelKey)}</Text>
+              </SurfaceCard>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      {/* Bottom Spacing */}
       <View style={{ height: spacing.xxl }} />
 
-      <LanguageDrawer
-        visible={languageDrawerVisible}
-        onClose={() => setLanguageDrawerVisible(false)}
-      />
+      <LanguageDrawer visible={languageDrawerVisible} onClose={() => setLanguageDrawerVisible(false)} />
     </ScrollView>
   );
 }
@@ -389,92 +506,90 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.parchment,
   },
   loadingText: {
+    ...typography.bodySm,
     marginTop: spacing.md,
     color: colors.text.secondary,
-    fontSize: 14,
   },
-  heroBanner: {
-    padding: spacing.xl,
-    paddingTop: spacing.xxl,
+  utilityRow: {
+    flexDirection: 'row',
+    paddingHorizontal: spacing.lg,
     alignItems: 'center',
-    borderBottomLeftRadius: borderRadius.xl,
-    borderBottomRightRadius: borderRadius.xl,
-    position: 'relative',
+    justifyContent: 'space-between',
   },
-  heroMenuButton: {
-    position: 'absolute',
-    top: spacing.lg,
-    right: spacing.lg,
+  menuButton: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: '#FFF2DC',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.24)',
+    borderColor: '#F0D3A2',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  omSymbol: {
-    fontSize: 48,
-    color: colors.gold.light,
-    marginBottom: spacing.sm,
+  languageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.background.warmWhite,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border.gold as string,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
-  heroGreeting: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: colors.text.white,
-    marginBottom: spacing.sm,
-  },
-  heroQuote: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    paddingHorizontal: spacing.lg,
-    lineHeight: 20,
-  },
-  heroDecoration: {
-    width: 60,
-    height: 3,
-    backgroundColor: colors.gold.light,
-    borderRadius: 2,
-    marginTop: spacing.lg,
+  languageButtonText: {
+    ...typography.bodySm,
+    color: colors.primary.maroon,
+    fontWeight: '600',
   },
   section: {
-    padding: spacing.lg,
-    paddingBottom: 0,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
   },
-  sectionHeader: {
+  pathwaysGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    alignItems: 'center',
+  },
+  pathwayItem: {
+    width: '48%',
     marginBottom: spacing.md,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+  pathwayCard: {
+    minHeight: 152,
+    justifyContent: 'space-between',
+  },
+  pathwayIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFF2DB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  pathwayTitle: {
+    ...typography.title,
     color: colors.primary.maroon,
   },
-  seeAll: {
-    fontSize: 14,
-    color: colors.primary.saffron,
-    fontWeight: '600',
+  pathwaySubtitle: {
+    ...typography.bodySm,
+    color: colors.text.secondary,
+    marginTop: spacing.xs,
   },
   horizontalScroll: {
     paddingRight: spacing.lg,
   },
   eventCard: {
     width: CARD_WIDTH,
-    backgroundColor: colors.background.warmWhite,
-    borderRadius: borderRadius.lg,
     marginRight: spacing.md,
+  },
+  eventCardSurface: {
+    padding: 0,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border.gold as string,
-    ...shadows.warm,
   },
   eventImagePlaceholder: {
-    height: 100,
+    height: 112,
     backgroundColor: colors.background.sandstone,
     justifyContent: 'center',
     alignItems: 'center',
@@ -488,39 +603,30 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   eventName: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...typography.title,
     color: colors.text.primary,
     marginBottom: spacing.sm,
   },
-  eventMeta: {
+  metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: spacing.xs,
   },
-  eventDate: {
-    fontSize: 12,
+  metaText: {
+    ...typography.bodySm,
     color: colors.text.secondary,
     marginLeft: spacing.xs,
-  },
-  eventLocation: {
-    fontSize: 12,
-    color: colors.text.secondary,
-    marginLeft: spacing.xs,
-    flex: 1,
+    flexShrink: 1,
   },
   articleCard: {
-    width: CARD_WIDTH * 0.75,
-    backgroundColor: colors.background.warmWhite,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    width: CARD_WIDTH * 0.78,
     marginRight: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border.gold as string,
-    ...shadows.warm,
+  },
+  articleCardSurface: {
+    minHeight: 210,
   },
   articleImagePlaceholder: {
-    height: 80,
+    height: 96,
     backgroundColor: colors.background.sandstone,
     borderRadius: borderRadius.md,
     justifyContent: 'center',
@@ -534,37 +640,21 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   articleTitle: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...typography.title,
     color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   articleExcerpt: {
-    fontSize: 12,
+    ...typography.bodySm,
     color: colors.text.secondary,
-    lineHeight: 18,
     marginBottom: spacing.sm,
   },
   articleDate: {
-    fontSize: 11,
+    ...typography.caption,
     color: colors.gold.dark,
-    fontWeight: '500',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-    backgroundColor: colors.background.warmWhite,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.border.gold as string,
-  },
-  emptyText: {
-    marginTop: spacing.sm,
-    fontSize: 14,
-    color: colors.text.secondary,
   },
   donationCard: {
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     overflow: 'hidden',
     ...shadows.temple,
   },
@@ -577,16 +667,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   donationTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    ...typography.h3,
     color: colors.primary.maroon,
     marginLeft: spacing.sm,
     flex: 1,
   },
   donationDescription: {
-    fontSize: 13,
+    ...typography.bodySm,
     color: colors.text.primary,
-    lineHeight: 18,
     marginBottom: spacing.md,
   },
   progressContainer: {
@@ -594,7 +682,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 8,
-    backgroundColor: 'rgba(128, 0, 32, 0.2)',
+    backgroundColor: 'rgba(128, 0, 32, 0.16)',
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -609,12 +697,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   progressAmount: {
-    fontSize: 14,
-    fontWeight: '700',
+    ...typography.title,
     color: colors.primary.maroon,
   },
   progressGoal: {
-    fontSize: 12,
+    ...typography.bodySm,
     color: colors.text.primary,
   },
   donateButtonContainer: {
@@ -623,43 +710,75 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.primary.maroon,
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.md,
-    alignSelf: 'flex-start',
   },
   donateButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...typography.button,
     color: colors.text.white,
-    marginRight: spacing.xs,
+    marginRight: spacing.sm,
+  },
+  teachingCard: {
+    marginBottom: spacing.md,
+  },
+  teachingTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  teachingIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FFF2DB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  teachingTitle: {
+    ...typography.title,
+    color: colors.primary.maroon,
+    flex: 1,
+  },
+  teachingBody: {
+    ...typography.body,
+    color: colors.text.secondary,
+  },
+  initiativeRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
+  initiativeText: {
+    ...typography.body,
+    color: colors.text.secondary,
+    flex: 1,
   },
   quickLinksGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: spacing.md,
-    marginHorizontal: -spacing.xs,
+    justifyContent: 'space-between',
   },
   quickLinkItem: {
-    width: '33.33%',
+    width: '48%',
+    marginBottom: spacing.md,
+  },
+  quickLinkCard: {
+    minHeight: 124,
     alignItems: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xs,
+    justifyContent: 'center',
   },
   quickLinkIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.background.warmWhite,
-    justifyContent: 'center',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.background.cream,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border.gold as string,
+    justifyContent: 'center',
     marginBottom: spacing.sm,
-    ...shadows.warm,
   },
   quickLinkLabel: {
-    fontSize: 12,
-    fontWeight: '500',
+    ...typography.body,
     color: colors.text.primary,
     textAlign: 'center',
   },
